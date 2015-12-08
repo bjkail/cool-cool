@@ -24,7 +24,12 @@ else
   for file in "${files[@]}"; do
     cat < "$file" >> "$tmpfile" || exit 1
   done
-  cmd+=("$(cygpath -m "$tmpfile")")
+
+  if test "$OSTYPE" = cygwin; then
+    cmd+=("$(cygpath -m "$tmpfile")")
+  else
+    cmd+=("$tmpfile")
+  fi
 fi
 
 if $bootstrap; then

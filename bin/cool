@@ -1,0 +1,37 @@
+#!/bin/bash
+
+bootstrap=
+files=()
+for arg in "$@"; do
+  case $1 in
+  --) shift; files+=("$@"); break;;
+  --bootstrap) bootstrap=--bootstrap;;
+  -*) echo "$0: $1: unrecognized option" >&2; exit 1;;
+  *) files+=("$1")
+  esac
+  shift
+done
+
+if ((${#files[@]} == 0)); then
+  tmpfile=
+else
+  tmpfile=$(mktemp --tmpdir XXXXXXXXXX.cl)
+  trap 'rm "$tmpfile"' EXIT
+  for file in "${files[@]}"; do
+    cat < "$file" >> "$tmpfile" || exit 1
+  done
+  bootstrap=
+fi
+
+dir=$(dirname "$0")
+{
+  if test -z "$bootstrap"; then
+    if test -z "$tmpfile"; then
+      cat
+    else
+      for file in "${files[@]}"; do
+        cat "$file"
+      done
+    fi
+  fi
+} | "$dir"/interpreter-wrapper $bootstrap "$dir"/../cool.cl "$dir"/../lib/*.cl

@@ -1,0 +1,34 @@
+#!/bin/bash
+# Wrapper around Cool Interpreter to support multiple input files.  Set the
+# COOL_INTERPRETER environment variable to the path of the Cool Interpreter.
+
+bootstrap=false
+
+cmd=("${COOL_INTERPRETER-cool}")
+files=()
+while test $# -ne 0; do
+  case $1 in
+  --) shift; files+=("$@"); break;;
+  --bootstrap) bootstrap=true;;
+  -*) cmd+=("$1");;
+  *) files+=("$1")
+  esac
+  shift
+done
+
+if ((${#files[@]} == 0)); then
+  bootstrap=false
+else
+  tmpfile=$(mktemp --tmpdir XXXXXXXXXX.cl)
+  trap 'rm "$tmpfile"' EXIT
+  for file in "${files[@]}"; do
+    cat < "$file" >> "$tmpfile" || exit 1
+  done
+  cmd+=("$(cygpath -m "$tmpfile")")
+fi
+
+if $bootstrap; then
+  "${cmd[@]}" < "$tmpfile"
+else
+  "${cmd[@]}"
+fi

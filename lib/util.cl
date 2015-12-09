@@ -13,8 +13,7 @@ class IntUtil {
 class StringUtil {
    intUtil : IntUtil <- new IntUtil;
 
-   -- Workaround for interpreter bug that causes blackslashed characters in
-   -- strings to include literal backslashes.
+   -- Support UVA Cool Interpreter dialect.
    initEscapedChar(s : String) : String {
       if s.length() = 1 then
          s

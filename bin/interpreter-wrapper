@@ -2,7 +2,10 @@
 # Wrapper around Cool Interpreter to support multiple input files.  Set the
 # COOL_INTERPRETER environment variable to the path of the Cool Interpreter.
 
+set -o pipefail
+
 bootstrap=false
+formaterrors=false
 
 cmd=("${COOL_INTERPRETER-cool}")
 files=()
@@ -10,6 +13,7 @@ while test $# -ne 0; do
   case $1 in
   --) shift; files+=("$@"); break;;
   --bootstrap) bootstrap=true;;
+  --format-errors) formaterrors=true;;
   -*) cmd+=("$1");;
   *) files+=("$1")
   esac
@@ -21,8 +25,10 @@ if ((${#files[@]} == 0)); then
 else
   tmpfile=$(mktemp --tmpdir XXXXXXXXXX.cl)
   trap 'rm "$tmpfile"' EXIT
+
+  filenumlines=()
   for file in "${files[@]}"; do
-    cat < "$file" >> "$tmpfile" || exit 1
+    filenumlines[$((i++))]=$(cat < "$file" | tee -a "$tmpfile" | wc -l) || exit 1
   done
 
   if test "$OSTYPE" = cygwin; then
@@ -32,8 +38,36 @@ else
   fi
 fi
 
-if $bootstrap; then
-  "${cmd[@]}" < "$tmpfile"
+run() {
+  if $bootstrap; then
+    "${cmd[@]}" < "$tmpfile"
+  else
+    "${cmd[@]}"
+  fi
+}
+
+if $formaterrors; then
+  run | while read -r line; do
+    if [[ "$line" =~ ^"ERROR: "[0-9]+": "(Parser|Type-Check|Exception)": " ]]; then
+      line=${line#ERROR: }
+      error=${line#*: }
+      errorline=${line%%: *}
+
+      i=0
+      for file in "${files[@]}"; do
+        errorfile=$file
+        numlines=${filenumlines[$((i++))]}
+        if ((errorline <= numlines)); then
+          break
+        fi
+        ((errorline -= numlines))
+      done
+
+      echo "ERROR: $errorfile:$errorline: $error"
+    else
+      echo $line
+    fi
+  done
 else
-  "${cmd[@]}"
+  run
 fi

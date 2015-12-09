@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -e -o pipefail
+
+dir=$(dirname "$0")
+run_test() {
+  file=$1
+  shift
+  echo -n "$file: "
+  echo \
+    | "$dir"/../bin/interpreter-wrapper \
+      --format-errors \
+      "$dir"/unittest.cl \
+      "$dir"/../lib/util.cl \
+      "$dir"/"$file" "$@" \
+    | {
+      success=false
+      while read -r line; do
+        case $line in
+	"TEST PASSED"*) success=true;;
+	"ERROR: "*": Exception: case without matching branch: TestAssertionFailed(...)") continue
+	esac
+	echo "$line"
+      done
+      $success
+    }
+}
+
+run_test util-unittest.cl
+run_test linked-list-unittest.cl "$dir"/../lib/collection.cl "$dir"/../lib/linked-list.cl
+run_test io-unittest.cl "$dir"/../lib/io.cl "$dir"/../lib/collection.cl "$dir"/../lib/linked-list.cl

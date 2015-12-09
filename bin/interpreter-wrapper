@@ -70,7 +70,7 @@ if $formaterrors; then
 
       echo "ERROR: $errorfile:$errorline: $error"
     else
-      echo $line
+      echo "$line"
     fi
   done
 else

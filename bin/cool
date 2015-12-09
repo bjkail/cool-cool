@@ -1,11 +1,13 @@
 #!/bin/bash
 
 bootstrap=
+formaterrors=
 files=()
 for arg in "$@"; do
   case $1 in
   --) shift; files+=("$@"); break;;
   --bootstrap) bootstrap=--bootstrap;;
+  --format-errors) formaterrors=--format-errors;;
   -*) echo "$0: $1: unrecognized option" >&2; exit 1;;
   *) files+=("$1")
   esac
@@ -34,4 +36,4 @@ dir=$(dirname "$0")
       done
     fi
   fi
-} | "$dir"/interpreter-wrapper $bootstrap "$dir"/../cool.cl "$dir"/../lib/*.cl
+} | "$dir"/interpreter-wrapper $formaterrors $bootstrap "$dir"/../cool.cl "$dir"/../lib/*.cl

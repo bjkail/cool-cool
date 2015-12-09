@@ -18,22 +18,25 @@ class LinkedListNode {
 
 class LinkedListIterator inherits Iterator {
    current : LinkedListNode;
+   head : LinkedListNode;
 
-   init(head : LinkedListNode) : SELF_TYPE {{
-      current <- head;
+   init(head_ : LinkedListNode) : SELF_TYPE {{
+      head <- head_;
       self;
    }};
 
-   next() : Bool {
+   next() : Bool {{
       if isvoid current then
-         false
-      else
          {
-            current <- current.next();
-            isvoid current;
+            current <- head;
+            head <- let void : LinkedListNode in void;
          }
-      fi
-   };
+      else
+         current <- current.next()
+      fi;
+
+      not isvoid current;
+   }};
 
    get() : Object {
       current.value()

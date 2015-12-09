@@ -30,7 +30,7 @@ dir=$(dirname "$0")
       cat
     else
       for file in "${files[@]}"; do
-        cat "$file"
+        cat < "$file"
       done
     fi
   fi

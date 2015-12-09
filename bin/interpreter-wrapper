@@ -2,12 +2,17 @@
 # Wrapper around Cool Interpreter to support multiple input files.  Set the
 # COOL_INTERPRETER environment variable to the path of the Cool Interpreter.
 
+if test "${COOL_INTERPRETER+x}" != x; then
+  echo "$0: COOL_INTERPRETER is unset" >&2
+  exit 1
+fi
+
 set -o pipefail
 
 bootstrap=false
 formaterrors=false
 
-cmd=("${COOL_INTERPRETER-cool}")
+cmd=("$COOL_INTERPRETER")
 files=()
 while test $# -ne 0; do
   case $1 in

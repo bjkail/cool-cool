@@ -291,9 +291,24 @@ class Parser {
       self;
    }};
 
+   readTokenImpl() : Token {
+      let token : Token <- tokenizer.next(),
+            tokenError : TokenError <- token.asError() in
+         {
+            while not isvoid tokenError loop
+               {
+                  error(tokenError.value());
+                  token <- tokenizer.next();
+                  tokenError <- token.asError();
+               }
+            pool;
+            token;
+         }
+   };
+
    readToken() : Token {
       if isvoid token then
-         tokenizer.next()
+         readTokenImpl()
       else
          let result : Token <- token in
             {
@@ -305,7 +320,7 @@ class Parser {
 
    skipToken() : Bool {{
       if isvoid token then
-         tokenizer.next()
+         abort()
       else
          token <- let void : Token in void
       fi;
@@ -314,7 +329,7 @@ class Parser {
 
    peekToken() : Token {
       if isvoid token then
-         token <- tokenizer.next()
+         token <- readTokenImpl()
       else
          token
       fi

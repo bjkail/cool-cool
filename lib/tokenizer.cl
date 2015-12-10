@@ -1,6 +1,7 @@
 class Token {
    toString() : String { "<invalid token>" };
    isEof() : Bool { false };
+   asError() : TokenError { let void : TokenError in void };
    asPunct() : TokenPunct { let void : TokenPunct in void };
    asBinaryOp() : TokenBinaryOp { let void : TokenBinaryOp in void };
    asKeyword() : TokenKeyword { let void : TokenKeyword in void };
@@ -15,18 +16,6 @@ class TokenEof inherits Token {
    toString() : String { "EOF" };
 };
 
-class TokenError inherits Token {
-   s : String <- "<invalid error>";
-
-   init(s_ : String) : SELF_TYPE {{
-      s <- s_;
-      self;
-   }};
-
-   toString() : String { "ERROR: ".concat(s) };
-   isEof() : Bool { true };
-};
-
 class TokenStringValued inherits Token {
    value : String;
 
@@ -37,6 +26,11 @@ class TokenStringValued inherits Token {
 
    toString() : String { value };
    value() : String { value };
+};
+
+class TokenError inherits TokenStringValued {
+   toString() : String { "ERROR: ".concat(value) };
+   asError() : TokenError { self };
 };
 
 class TokenPunct inherits TokenStringValued {

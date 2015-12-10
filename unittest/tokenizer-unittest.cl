@@ -118,7 +118,7 @@ class Main inherits Test {
             tokenString : TokenString <- token.asString() in
          {
             if isvoid tokenString then
-               failContext(context.concat(" void"), "expected=".concat(tokenToString(new TokenString.init(value)))
+               failContext(context.concat(" void"), "expected=".concat(tokenToString(new TokenString.init(0, value)))
                      .concat(", actual=").concat(tokenToString(token)))
             else false fi;
             assertStringEquals(context, value, tokenString.value());
@@ -299,7 +299,7 @@ class Main inherits Test {
                };
 
             assertTokenError("", "line 1: unexpected EOF in string", newTokenizer("\""));
-            assertTokenError("", "line 2: unexpected newline in string", newTokenizer("\"\n\""));
+            assertTokenError("", "line 1: unexpected newline in string", newTokenizer("\"\n\""));
          }
       else false fi
    };

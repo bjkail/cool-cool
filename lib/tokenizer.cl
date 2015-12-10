@@ -76,7 +76,19 @@ class TokenInteger inherits Token {
    asInteger() : TokenInteger { self };
 };
 
-class TokenString inherits TokenStringValued {
+class TokenString inherits Token {
+   line : Int;
+   line() : Int { line };
+
+   value : String;
+   value() : String { value };
+
+   init(line_ : Int, value_ : String) : SELF_TYPE {{
+      line <- line_;
+      value <- value_;
+      self;
+   }};
+
    toString() : String {
       let doubleQuote : String <- new StringUtil.doubleQuote() in
          doubleQuote.concat(value).concat(doubleQuote)
@@ -146,8 +158,12 @@ class Tokenizer {
          loop false pool
    };
 
-   newTokenError(s : String) : TokenError {
+   newTokenErrorAt(line : Int, s : String) : TokenError {
       new TokenError.init("line ".concat(stringUtil.fromInt(line)).concat(": ").concat(s))
+   };
+
+   newTokenError(s : String) : TokenError {
+      newTokenErrorAt(line, s)
    };
 
    isWhitespace(c : String) : Bool {
@@ -251,13 +267,14 @@ class Tokenizer {
 
    readParenComment() : Token {
       let continue : Bool <- true,
+            line_ : Int <- line,
             token : Token in
          {
             while continue loop
                let c : String <- readChar() in
                   if c = "" then
                      {
-                        token <- newTokenError("unexpected EOF in enclosing comment");
+                        token <- newTokenErrorAt(line_, "unexpected EOF in enclosing comment");
                         continue <- false;
                      }
                   else
@@ -385,19 +402,20 @@ class Tokenizer {
    readString() : Token {
       let s : String,
             token : Token,
+            line_ : Int <- line,
             c : String <- readChar() in
          {
             let continue : Bool <- true in
                while continue loop
                   if c = "" then
                      {
-                        token <- newTokenError("unexpected EOF in string");
+                        token <- newTokenErrorAt(line_, "unexpected EOF in string");
                         continue <- false;
                      }
                   else
                      if c = "\n" then
                         {
-                           token <- newTokenError("unexpected newline in string");
+                           token <- newTokenErrorAt(line_, "unexpected newline in string");
                            continue <- false;
                         }
                      else
@@ -425,7 +443,7 @@ class Tokenizer {
                                  s <- s.concat(c)
                               else
                                  if isvoid token then
-                                    token <- newTokenError("maximum string constant length exceeded")
+                                    token <- newTokenErrorAt(line_, "maximum string constant length exceeded")
                                  else false fi
                               fi;
 
@@ -437,7 +455,7 @@ class Tokenizer {
                pool;
 
             if isvoid token then
-               new TokenString.init(s)
+               new TokenString.init(line_, s)
             else
                token
             fi;

@@ -1,3 +1,8 @@
+class ParsedNode {
+   line : Int;
+   line() : Int { line };
+};
+
 class ParsedProgram {
    classes : Collection <- new LinkedList;
    classes() : Collection { classes };
@@ -8,7 +13,7 @@ class ParsedProgram {
    }};
 };
 
-class ParsedClass {
+class ParsedClass inherits ParsedNode {
    type : String;
    type() : String { type };
 
@@ -18,7 +23,8 @@ class ParsedClass {
    features : Collection <- new LinkedList;
    features() : Collection { features };
 
-   init(type_ : String, inherits__ : String, features_ : Collection) : SELF_TYPE {{
+   init(line_ : Int, type_ : String, inherits__ : String, features_ : Collection) : SELF_TYPE {{
+      line <- line_;
       type <- type_;
       inherits_ <- inherits__;
       features <- features_;
@@ -26,7 +32,7 @@ class ParsedClass {
    }};
 };
 
-class ParsedFeature {
+class ParsedFeature inherits ParsedNode {
    id : String;
    id() : String { id };
 
@@ -38,7 +44,8 @@ class ParsedAttribute inherits ParsedFeature {
    type : String;
    expr : ParsedExpr;
 
-   init(id_ : String, type_ : String, expr_ : ParsedExpr) : SELF_TYPE {{
+   init(line_ : Int, id_ : String, type_ : String, expr_ : ParsedExpr) : SELF_TYPE {{
+      line <- line_;
       id <- id_;
       type <- type_;
       expr <- expr_;
@@ -48,14 +55,15 @@ class ParsedAttribute inherits ParsedFeature {
    asAttribute() : ParsedAttribute { self };
 };
 
-class ParsedFormal {
+class ParsedFormal inherits ParsedNode {
    id : String;
    id() : String { id };
 
    type : String;
    type() : String { type };
 
-   init(id_ : String, type_ : String) : SELF_TYPE {{
+   init(line_ : Int, id_ : String, type_ : String) : SELF_TYPE {{
+      line <- line_;
       id <- id_;
       type <- type_;
       self;
@@ -72,7 +80,8 @@ class ParsedMethod inherits ParsedFeature {
    expr : ParsedExpr;
    expr() : ParsedExpr { expr };
 
-   init(id_ : String, formals_ : Collection, returnType_ : String, expr_ : ParsedExpr) : SELF_TYPE {{
+   init(line_ : Int, id_ : String, formals_ : Collection, returnType_ : String, expr_ : ParsedExpr) : SELF_TYPE {{
+      line <- line_;
       id <- id_;
       formals <- formals_;
       returnType <- returnType_;
@@ -83,7 +92,7 @@ class ParsedMethod inherits ParsedFeature {
    asMethod() : ParsedMethod { self };
 };
 
-class ParsedExpr {
+class ParsedExpr inherits ParsedNode {
    x() : Bool { false };
 };
 
@@ -94,7 +103,8 @@ class ParsedErrorExpr inherits ParsedExpr {
 class ParsedBlockExpr inherits ParsedExpr {
    exprs : Collection;
 
-   init(exprs_ : Collection) : SELF_TYPE {{
+   init(line_ : Int, exprs_ : Collection) : SELF_TYPE {{
+      line <- line_;
       exprs <- exprs_;
       self;
    }};
@@ -105,7 +115,8 @@ class ParsedIfExpr inherits ParsedExpr {
    then_ : ParsedExpr;
    else_ : ParsedExpr;
 
-   init(expr_ : ParsedExpr, then__ : ParsedExpr, else__ : ParsedExpr) : SELF_TYPE {{
+   init(line_ : Int, expr_ : ParsedExpr, then__ : ParsedExpr, else__ : ParsedExpr) : SELF_TYPE {{
+      line <- line_;
       expr <- expr_;
       then_ <- then__;
       else_ <- else__;
@@ -117,19 +128,21 @@ class ParsedWhileExpr inherits ParsedExpr {
    expr : ParsedExpr;
    loop_ : ParsedExpr;
 
-   init(expr_ : ParsedExpr, loop__ : ParsedExpr) : SELF_TYPE {{
+   init(line_ : Int, expr_ : ParsedExpr, loop__ : ParsedExpr) : SELF_TYPE {{
+      line <- line_;
       expr <- expr_;
       loop_ <- loop__;
       self;
    }};
 };
 
-class ParsedVar {
+class ParsedVar inherits ParsedNode {
    id : String;
    type : String;
    expr : ParsedExpr;
 
-   init(id_ : String, type_ : String, expr_ : ParsedExpr) : SELF_TYPE {{
+   init(line_ : Int, id_ : String, type_ : String, expr_ : ParsedExpr) : SELF_TYPE {{
+      line <- line_;
       id <- id_;
       type <- type_;
       expr <- expr_;
@@ -141,7 +154,8 @@ class ParsedLetExpr inherits ParsedExpr {
    vars : Collection;
    expr : ParsedExpr;
 
-   init(vars_ : Collection, expr_ : ParsedExpr) : SELF_TYPE {{
+   init(line_ : Int, vars_ : Collection, expr_ : ParsedExpr) : SELF_TYPE {{
+      line <- line_;
       vars <- vars_;
       expr <- expr_;
       self;
@@ -152,7 +166,8 @@ class ParsedCaseExpr inherits ParsedExpr {
    expr : ParsedExpr;
    branches : Collection;
 
-   init(expr_ : ParsedExpr, branches_ : Collection) : SELF_TYPE {{
+   init(line_ : Int, expr_ : ParsedExpr, branches_ : Collection) : SELF_TYPE {{
+      line <- line_;
       expr <- expr_;
       branches <- branches_;
       self;
@@ -166,7 +181,8 @@ class ParsedAssignmentExpr inherits ParsedExpr {
    expr : ParsedExpr;
    expr() : ParsedExpr { expr };
 
-   init(id_ : String, expr_ : ParsedExpr) : SELF_TYPE {{
+   init(line_ : Int, id_ : String, expr_ : ParsedExpr) : SELF_TYPE {{
+      line <- line_;
       id <- id_;
       expr <- expr_;
       self;
@@ -181,7 +197,8 @@ class ParsedIdExpr inherits ParsedExpr {
    id : String;
    id() : String { id };
 
-   init(id_ : String) : SELF_TYPE {{
+   init(line_ : Int, id_ : String) : SELF_TYPE {{
+      line <- line_;
       id <- id_;
       self;
    }};
@@ -190,7 +207,8 @@ class ParsedIdExpr inherits ParsedExpr {
 class ParsedNewExpr inherits ParsedExpr {
    type : String;
 
-   init(type_ : String) : SELF_TYPE {{
+   init(line_ : Int, type_ : String) : SELF_TYPE {{
+      line <- line_;
       type <- type_;
       self;
    }};
@@ -209,7 +227,8 @@ class ParsedDispatchExpr inherits ParsedExpr {
    arguments : Collection;
    arguments() : Collection { arguments };
 
-   init(target_ : ParsedExpr, type_ : String, id_ : String, arguments_ : Collection) : SELF_TYPE {{
+   init(line_ : Int, target_ : ParsedExpr, type_ : String, id_ : String, arguments_ : Collection) : SELF_TYPE {{
+      line <- line_;
       target <- target_;
       type <- type_;
       id <- id_;
@@ -225,7 +244,8 @@ class ParsedUnaryExpr inherits ParsedExpr {
    expr : ParsedExpr;
    expr() : ParsedExpr { expr };
 
-   init(op_ : String, expr_ : ParsedExpr) : SELF_TYPE {{
+   init(line_ : Int, op_ : String, expr_ : ParsedExpr) : SELF_TYPE {{
+      line <- line_;
       op <- op_;
       expr <- expr_;
       self;
@@ -242,7 +262,8 @@ class ParsedBinaryExpr inherits ParsedExpr {
    right : ParsedExpr;
    right() : ParsedExpr { right };
 
-   init(op_ : String, left_ : ParsedExpr, right_ : ParsedExpr) : SELF_TYPE {{
+   init(line_ : Int, op_ : String, left_ : ParsedExpr, right_ : ParsedExpr) : SELF_TYPE {{
+      line <- line_;
       op <- op_;
       left <- left_;
       right <- right_;
@@ -254,7 +275,8 @@ class ParsedConstantBoolExpr inherits ParsedExpr {
    value : Bool;
    value() : Bool { value };
 
-   init(value_ : Bool) : SELF_TYPE {{
+   init(line_ : Int, value_ : Bool) : SELF_TYPE {{
+      line <- line_;
       value <- value_;
       self;
    }};
@@ -264,7 +286,8 @@ class ParsedConstantIntExpr inherits ParsedExpr {
    value : Int;
    value() : Int { value };
 
-   init(value_ : Int) : SELF_TYPE {{
+   init(line_ : Int, value_ : Int) : SELF_TYPE {{
+      line <- line_;
       value <- value_;
       self;
    }};
@@ -274,7 +297,8 @@ class ParsedConstantStringExpr inherits ParsedExpr {
    value : String;
    value() : String { value };
 
-   init(value_ : String) : SELF_TYPE {{
+   init(line_ : Int, value_ : String) : SELF_TYPE {{
+      line <- line_;
       value <- value_;
       self;
    }};
@@ -335,11 +359,15 @@ class Parser {
       fi
    };
 
+   line() : Int {
+      tokenizer.line()
+   };
+
    error(s : String) : Bool {{
       if not error then
          {
             new IO.out_string("PARSE ERROR: line ")
-                  .out_string(stringUtil.fromInt(tokenizer.line()))
+                  .out_string(stringUtil.fromInt(line()))
                   .out_string(": ")
                   .out_string(s)
                   .out_string("\n");
@@ -466,7 +494,7 @@ class Parser {
    };
 
    -- Parse after "("
-   parseDispatchArguments(target : ParsedExpr, type : String, id : String) : ParsedExpr {
+   parseDispatchArguments(line : Int, target : ParsedExpr, type : String, id : String) : ParsedExpr {
       let arguments : Collection <- new LinkedList in
          {
             if not tryParsePunct(")") then
@@ -479,21 +507,22 @@ class Parser {
                }
             else false fi;
 
-            new ParsedDispatchExpr.init(target, type, id, arguments);
+            new ParsedDispatchExpr.init(line, target, type, id, arguments);
          }
    };
 
    -- Parse after "."
-   parseDispatch(target : ParsedExpr, type : String) : ParsedExpr {
+   parseDispatch(line : Int, target : ParsedExpr, type : String) : ParsedExpr {
       let id : String <- parseId(" for dispatch method") in
          {
             parsePunct("(", " for dispatch expression");
-            parseDispatchArguments(target, type, id);
+            parseDispatchArguments(line, target, type, id);
          }
    };
 
    parseIfExpr() : ParsedExpr {
-      let expr : ParsedExpr <- parseExpr(" for 'if'") in
+      let expr : ParsedExpr <- parseExpr(" for 'if'"),
+            line : Int <- line() in
          {
             parseKeyword("then", " for 'if' expression");
             let then_ : ParsedExpr <- parseExpr(" for 'then'") in
@@ -502,26 +531,28 @@ class Parser {
                   let else_ : ParsedExpr <- parseExpr(" for 'else'") in
                      {
                         parseKeyword("fi", " for 'if' expression");
-                        new ParsedIfExpr.init(expr, then_, else_);
+                        new ParsedIfExpr.init(line, expr, then_, else_);
                      };
                };
          }
    };
 
    parseWhileExpr() : ParsedExpr {
-      let expr : ParsedExpr <- parseExpr(" for 'while'") in
+      let expr : ParsedExpr <- parseExpr(" for 'while'"),
+            line : Int <- line() in
          {
             parseKeyword("loop", " for 'while' expression");
             let loop_ : ParsedExpr <- parseExpr(" for 'loop'") in
                {
                   parseKeyword("pool", " for 'while' expression");
-                  new ParsedWhileExpr.init(expr, loop_);
+                  new ParsedWhileExpr.init(line, expr, loop_);
                };
          }
    };
 
    parseLetVar() : ParsedVar {
-      let id : String <- parseId(" for 'let' variable") in
+      let id : String <- parseId(" for 'let' variable"),
+            line : Int <- line() in
          {
             parsePunct(":", " for 'let' variable type");
             let type : String <- parseType(" for 'let' variable"),
@@ -531,13 +562,14 @@ class Parser {
                      expr <- parseExpr(" for 'let' variable initialization")
                   else false fi;
 
-                  new ParsedVar.init(id, type, expr);
+                  new ParsedVar.init(line, id, type, expr);
                };
          }
    };
 
    parseLetExpr() : ParsedExpr {
-      let vars : Collection <- new LinkedList.add(parseLetVar()) in
+      let line : Int <- line(),
+            vars : Collection <- new LinkedList.add(parseLetVar()) in
          {
             while tryParsePunct(",") loop
                vars.add(parseLetVar())
@@ -545,25 +577,27 @@ class Parser {
 
             parseKeyword("in", " for 'let' expression");
             let expr : ParsedExpr <- parseExpr(" for 'let' expression") in
-               new ParsedLetExpr.init(vars, expr);
+               new ParsedLetExpr.init(line, vars, expr);
          }
    };
 
    parseCaseBranch() : ParsedVar {
-      let id : String <- parseId(" for 'case' branch") in
+      let id : String <- parseId(" for 'case' branch"),
+            line : Int <- line() in
          {
             parsePunct(":", " for 'case' branch");
             let type : String <- parseType(" for 'case' branch") in
                {
                   parsePunct("=>", " for 'case' branch");
                   let expr : ParsedExpr <- parseExpr(" for 'case' branch") in
-                     new ParsedVar.init(id, type, expr);
+                     new ParsedVar.init(line, id, type, expr);
                };
          }
    };
 
    parseCaseExpr() : ParsedExpr {
-      let expr : ParsedExpr <- parseExpr(" for 'case' expression") in
+      let line : Int <- line(),
+            expr : ParsedExpr <- parseExpr(" for 'case' expression") in
          {
             parseKeyword("of", " for 'case' expression");
             let branches : Collection <- new LinkedList.add(parseCaseBranch()) in
@@ -576,7 +610,7 @@ class Parser {
                      }
                   pool;
 
-                  new ParsedCaseExpr.init(expr, branches);
+                  new ParsedCaseExpr.init(line, expr, branches);
                };
          }
    };
@@ -595,19 +629,19 @@ class Parser {
                   parseCaseExpr()
                else
                   if value = "new" then
-                     new ParsedNewExpr.init(parseType(" for 'new'"))
+                     new ParsedNewExpr.init(line(), parseType(" for 'new'"))
                   else
                      if value = "isvoid" then
-                        new ParsedUnaryExpr.init("isvoid", parseExprImpl(" for 'isvoid'", 6))
+                        new ParsedUnaryExpr.init(line(), "isvoid", parseExprImpl(" for 'isvoid'", 6))
                      else
                         if value = "not" then
-                           new ParsedUnaryExpr.init("not", parseExprImpl(" for 'not'", 2))
+                           new ParsedUnaryExpr.init(line(), "not", parseExprImpl(" for 'not'", 2))
                         else
                            if value = "true" then
-                              new ParsedConstantBoolExpr.init(true)
+                              new ParsedConstantBoolExpr.init(line(), true)
                            else
                               if value = "false" then
-                                 new ParsedConstantBoolExpr.init(false)
+                                 new ParsedConstantBoolExpr.init(line(), false)
                               else
                                  let void : ParsedExpr in void
                               fi
@@ -622,7 +656,8 @@ class Parser {
    };
 
    parseBlock() : ParsedExpr {
-      let exprs : Collection <- new LinkedList.add(parseExpr(" for block")) in
+      let line : Int <- line(),
+            exprs : Collection <- new LinkedList.add(parseExpr(" for block")) in
          {
             parsePunct(";", " after expression in block");
             while not if tryParsePunct("}") then
@@ -636,7 +671,7 @@ class Parser {
                }
             pool;
 
-            new ParsedBlockExpr.init(exprs);
+            new ParsedBlockExpr.init(line, exprs);
          }
    };
 
@@ -651,7 +686,7 @@ class Parser {
 
    parsePunctExpr(value : String) : ParsedExpr {
       if value = "~" then
-         new ParsedUnaryExpr.init("~", parseExprImpl(" for complement", 7))
+         new ParsedUnaryExpr.init(line(), "~", parseExprImpl(" for complement", 7))
       else
          if value = "{" then
             parseBlock()
@@ -667,6 +702,7 @@ class Parser {
 
    parseSimpleExpr(where : String) : ParsedExpr {
       let token : Token <- readToken(),
+            line : Int <- tokenizer.line(),
             tokenId : TokenId <- token.asId() in
          if not isvoid tokenId then
             let id : String <- tokenId.value(),
@@ -675,20 +711,20 @@ class Parser {
                   if tokenPunct.value() = "(" then
                      {
                         skipToken();
-                        parseDispatchArguments(new ParsedSelfExpr, "", id);
+                        parseDispatchArguments(line, new ParsedSelfExpr, "", id);
                      }
                   else
                      if tokenPunct.value() = "<-" then
                         {
                            skipToken();
-                           new ParsedAssignmentExpr.init(id, parseExprImpl(" for assignment", 1));
+                           new ParsedAssignmentExpr.init(line(), id, parseExprImpl(" for assignment", 1));
                         }
                      else
-                        new ParsedIdExpr.init(id)
+                        new ParsedIdExpr.init(line(), id)
                      fi
                   fi
                else
-                  new ParsedIdExpr.init(id)
+                  new ParsedIdExpr.init(line(), id)
                fi
 
          else
@@ -719,11 +755,11 @@ class Parser {
                      else
                         let tokenInteger : TokenInteger <- token.asInteger() in
                            if not isvoid tokenInteger then
-                              new ParsedConstantIntExpr.init(tokenInteger.value())
+                              new ParsedConstantIntExpr.init(line(), tokenInteger.value())
                            else
                               let tokenString : TokenString <- token.asString() in
                                  if not isvoid tokenString then
-                                    new ParsedConstantStringExpr.init(tokenString.value())
+                                    new ParsedConstantStringExpr.init(line(), tokenString.value())
                                  else
                                     {
                                        errorToken(token, "expected expression".concat(where));
@@ -746,7 +782,7 @@ class Parser {
                      if tokenPunct.value() = "." then
                         {
                            skipToken();
-                           expr <- parseDispatch(expr, "");
+                           expr <- parseDispatch(tokenizer.line(), expr, "");
                         }
                      else
                         if tokenPunct.value() = "@" then
@@ -755,7 +791,7 @@ class Parser {
                               let type : String <- parseType(" for static dispatch type") in
                                  {
                                     parsePunct(".", " for dispatch method");
-                                    expr <- parseDispatch(expr, type);
+                                    expr <- parseDispatch(tokenizer.line(), expr, type);
                                  };
                            }
                         else
@@ -783,6 +819,7 @@ class Parser {
       -- 8. "@"
       -- 9. "."
 
+      -- [right, op, opLine, left, ...]
       let stack : LinkedList <- new LinkedList.addFirst(new TokenBinaryOp).addFirst(parsePostfixExpr(where)) in
          {
             --new IO.out_string("> parseExprImpl\n")
@@ -791,15 +828,18 @@ class Parser {
                   {
                      --new IO.out_string(": parseExprImpl: op=").out_string(tokenBinaryOp.toString()).out_string("\n");
                      skipToken();
-                     let expr : ParsedExpr <- parsePostfixExpr("") in
+                     let line : Int <- line(),
+                           expr : ParsedExpr <- parsePostfixExpr("") in
                         {
                            while tokenBinaryOp.prec() < case stack.get(1) of x : TokenBinaryOp => x.prec(); esac loop
                               let right : ParsedExpr <- case stack.removeFirst() of x : ParsedExpr => x; esac,
                                     tokenBinaryOp0 : TokenBinaryOp <- case stack.removeFirst() of x : TokenBinaryOp => x; esac,
+                                    tokenBinaryOp0Line : Int <- case stack.removeFirst() of x : Int => x; esac,
                                     left : ParsedExpr <- case stack.removeFirst() of x : ParsedExpr => x; esac in
-                                 stack.addFirst(new ParsedBinaryExpr.init(tokenBinaryOp0.value(), left, right))
+                                 stack.addFirst(new ParsedBinaryExpr.init(tokenBinaryOp0Line, tokenBinaryOp0.value(), left, right))
                            pool;
 
+                           stack.addFirst(line);
                            stack.addFirst(tokenBinaryOp);
                            stack.addFirst(expr);
                         };
@@ -812,8 +852,9 @@ class Parser {
             while not 0 = case stack.get(1) of x : TokenBinaryOp => x.prec(); esac loop
                let right : ParsedExpr <- case stack.removeFirst() of x : ParsedExpr => x; esac,
                      tokenBinaryOp0 : TokenBinaryOp <- case stack.removeFirst() of x : TokenBinaryOp => x; esac,
+                     tokenBinaryOp0Line : Int <- case stack.removeFirst() of x : Int => x; esac,
                      left : ParsedExpr <- case stack.removeFirst() of x : ParsedExpr => x; esac in
-                  stack.addFirst(new ParsedBinaryExpr.init(tokenBinaryOp0.value(), left, right))
+                  stack.addFirst(new ParsedBinaryExpr.init(tokenBinaryOp0Line, tokenBinaryOp0.value(), left, right))
             pool;
 
             --new IO.out_string("< parseExprImpl, peek=").out_string(peekToken().toString()).out_string("\n");
@@ -826,7 +867,7 @@ class Parser {
    };
 
    -- Parse after "("
-   parseMethod(id : String) : ParsedMethod {
+   parseMethod(line : Int, id : String) : ParsedMethod {
       let formals : Collection <- new LinkedList,
             returnType : String,
             expr : ParsedExpr in
@@ -835,10 +876,11 @@ class Parser {
                   continue : Bool <- not id = "" in
                while continue loop
                   {
-                     if parsePunct(":", " for formal parameter type") then
-                        let type : String <- parseType(" for formal parameter") in
-                           formals.add(new ParsedFormal.init(id, type))
-                     else false fi;
+                     let line : Int <- line() in
+                        if parsePunct(":", " for formal parameter type") then
+                           let type : String <- parseType(" for formal parameter") in
+                              formals.add(new ParsedFormal.init(line, id, type))
+                        else false fi;
 
                      if tryParsePunct(",") then
                         id <- parseId(" for formal parameter")
@@ -855,12 +897,12 @@ class Parser {
             expr <- parseExpr(" for method definition");
             parsePunct("}", " for method definition");
 
-            new ParsedMethod.init(id, formals, returnType, expr);
+            new ParsedMethod.init(line, id, formals, returnType, expr);
          }
    };
 
    -- Parse after ":"
-   parseAttribute(id : String) : ParsedAttribute {
+   parseAttribute(line : Int, id : String) : ParsedAttribute {
       let type : String <- parseType(" for attribute"),
             expr : ParsedExpr in
          {
@@ -868,12 +910,13 @@ class Parser {
                expr <- parseExpr(" for attribute initialization")
             else false fi;
 
-            new ParsedAttribute.init(id, type, expr);
+            new ParsedAttribute.init(line, id, type, expr);
          }
    };
 
    parseFeature() : ParsedFeature {
-      let id : String <- tryParseId() in
+      let id : String <- tryParseId(),
+            line : Int <- line() in
          if id = "" then
             let void : ParsedFeature in void
          else
@@ -883,10 +926,10 @@ class Parser {
                {
                   if not isvoid tokenPunct then
                      if tokenPunct.value() = "(" then
-                        feature <- parseMethod(id)
+                        feature <- parseMethod(line, id)
                      else
                         if tokenPunct.value() = ":" then
-                           feature <- parseAttribute(id)
+                           feature <- parseAttribute(line, id)
                         else false fi
                      fi
                   else false fi;
@@ -905,6 +948,7 @@ class Parser {
    parseClass() : ParsedClass {{
       parseKeyword("class", " in program");
       let type : String <- parseType(" for class definition"),
+            line : Int <- line(),
             inherits_ : String,
             features : Collection <- new LinkedList in
          {
@@ -930,7 +974,7 @@ class Parser {
                }
             else false fi;
 
-            new ParsedClass.init(type, inherits_, features);
+            new ParsedClass.init(line, type, inherits_, features);
          };
    }};
 

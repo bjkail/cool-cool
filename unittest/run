@@ -29,3 +29,4 @@ run_test() {
 run_test util-unittest.cl
 run_test linked-list-unittest.cl "$dir"/../lib/collection.cl "$dir"/../lib/linked-list.cl
 run_test io-unittest.cl "$dir"/../lib/io.cl "$dir"/../lib/collection.cl "$dir"/../lib/linked-list.cl
+run_test tokenizer-unittest.cl "$dir"/../lib/tokenizer.cl "$dir"/../lib/io.cl

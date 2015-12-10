@@ -382,37 +382,59 @@ class Tokenizer {
       fi
    };
 
-   readString(c : String) : Token {
+   readString() : Token {
       let s : String,
-            token : Token in
+            token : Token,
+            c : String <- readChar() in
          {
-            c <- readChar();
-            while not c = stringUtil.doubleQuote() loop
-               {
-                  if c = stringUtil.backslash() then
+            let continue : Bool <- true in
+               while continue loop
+                  if c = "" then
                      {
-                        c <- readChar();
-                        if c = "" then
-                           {
-                              token <- newTokenError("unexpected EOF in string");
-                              c <- stringUtil.doubleQuote();
-                           }
-                        else if c = "b" then c <- "\b"
-                        else if c = "t" then c <- "\t"
-                        else if c = "n" then c <- "\n"
-                        else if c = "f" then c <- "\f"
-                        else
-                           false
-                        fi fi fi fi fi;
+                        token <- newTokenError("unexpected EOF in string");
+                        continue <- false;
                      }
-                  else false fi;
+                  else
+                     if c = "\n" then
+                        {
+                           token <- newTokenError("unexpected newline in string");
+                           continue <- false;
+                        }
+                     else
+                        if c = stringUtil.doubleQuote() then
+                           continue <- false
+                        else
+                           {
+                              if c = stringUtil.backslash() then
+                                 {
+                                    c <- readChar();
+                                    if c = "b" then c <- "\b"
+                                    else if c = "t" then c <- "\t"
+                                    else if c = "n" then c <- "\n"
+                                    else if c = "f" then c <- "\f"
+                                    else
+                                       false
+                                    fi fi fi fi;
+                                 }
+                              else
+                                 -- XXX: No way to represent NUL.
+                                 false
+                              fi;
 
-                  -- TODO: multiline string error.
+                              if s.length() < 1024 then
+                                 s <- s.concat(c)
+                              else
+                                 if isvoid token then
+                                    token <- newTokenError("maximum string constant length exceeded")
+                                 else false fi
+                              fi;
 
-                  s <- s.concat(c);
-                  c <- readChar();
-               }
-            pool;
+                              c <- readChar();
+                           }
+                        fi
+                     fi
+                  fi
+               pool;
 
             if isvoid token then
                new TokenString.init(s)
@@ -501,7 +523,7 @@ class Tokenizer {
                               token
                            else
                               if c = stringUtil.doubleQuote() then
-                                 readString(c)
+                                 readString()
                               else
                                  if isUpper(c) then
                                     new TokenType.init(readIdentName(c))

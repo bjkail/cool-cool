@@ -9,8 +9,8 @@ class ParsedProgram {
 };
 
 class ParsedClass {
-   id : String;
-   id() : String { id };
+   type : String;
+   type() : String { type };
 
    inherits_ : String;
    inherits_() : String { inherits_ };
@@ -18,8 +18,8 @@ class ParsedClass {
    features : Collection <- new LinkedList;
    features() : Collection { features };
 
-   init(id_ : String, inherits__ : String, features_ : Collection) : SELF_TYPE {{
-      id <- id_;
+   init(type_ : String, inherits__ : String, features_ : Collection) : SELF_TYPE {{
+      type <- type_;
       inherits_ <- inherits__;
       features <- features_;
       self;
@@ -904,7 +904,7 @@ class Parser {
 
    parseClass() : ParsedClass {{
       parseKeyword("class", " in program");
-      let id : String <- parseType(" for class definition"),
+      let type : String <- parseType(" for class definition"),
             inherits_ : String,
             features : Collection <- new LinkedList in
          {
@@ -930,7 +930,7 @@ class Parser {
                }
             else false fi;
 
-            new ParsedClass.init(id, inherits_, features);
+            new ParsedClass.init(type, inherits_, features);
          };
    }};
 

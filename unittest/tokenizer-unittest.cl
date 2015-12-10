@@ -15,7 +15,7 @@ class Main inherits Test {
    }};
 
    newTokenizer(s : String) : Tokenizer {
-      new Tokenizer.init(new StringInputStream.init(s))
+      new Tokenizer.init(new TestStringInputStream.init(s))
    };
 
    assertTokenEof(context : String, t : Tokenizer) : Object {
@@ -302,52 +302,5 @@ class Main inherits Test {
             assertTokenError("", "line 1: unexpected newline in string", newTokenizer("\"\n\""));
          }
       else false fi
-   };
-};
-
-class StringInputStream inherits InputStream {
-   stringUtil : StringUtil <- new StringUtil;
-   s : String;
-   pos : Int;
-
-   init(s_ : String) : SELF_TYPE {{
-      s <- s_;
-      self;
-   }};
-
-   read() : String {
-      if pos = s.length() then
-         ""
-      else
-         let c : String <- s.substr(pos, 1) in
-            {
-               -- Support UVA Cool Interpreter dialect.
-               if "\\".length() = 2 then
-                  if c = stringUtil.backslash() then
-                     let c2 : String <- s.substr(pos + 1, 1) in
-                        if if c2 = stringUtil.backslash() then
-                              true
-                           else
-                              c2 = stringUtil.doubleQuote()
-                        fi then
-                           {
-                              c <- c2;
-                              pos <- pos + 1;
-                           }
-                        else
-                           if c2 = "n" then
-                              {
-                                 c <- "\n";
-                                 pos <- pos + 1;
-                              }
-                           else false fi
-                        fi
-                  else false fi
-               else false fi;
-
-               pos <- pos + 1;
-               c;
-            }
-      fi
    };
 };

@@ -94,3 +94,50 @@ class Test {
 class TestAssertionFailed {
    x : Bool;
 };
+
+class TestStringInputStream inherits InputStream {
+   stringUtil : StringUtil <- new StringUtil;
+   s : String;
+   pos : Int;
+
+   init(s_ : String) : SELF_TYPE {{
+      s <- s_;
+      self;
+   }};
+
+   read() : String {
+      if pos = s.length() then
+         ""
+      else
+         let c : String <- s.substr(pos, 1) in
+            {
+               -- Support UVA Cool Interpreter dialect.
+               if "\\".length() = 2 then
+                  if c = stringUtil.backslash() then
+                     let c2 : String <- s.substr(pos + 1, 1) in
+                        if if c2 = stringUtil.backslash() then
+                              true
+                           else
+                              c2 = stringUtil.doubleQuote()
+                        fi then
+                           {
+                              c <- c2;
+                              pos <- pos + 1;
+                           }
+                        else
+                           if c2 = "n" then
+                              {
+                                 c <- "\n";
+                                 pos <- pos + 1;
+                              }
+                           else false fi
+                        fi
+                  else false fi
+               else false fi;
+
+               pos <- pos + 1;
+               c;
+            }
+      fi
+   };
+};

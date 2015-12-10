@@ -42,6 +42,8 @@ class ParsedFeature inherits ParsedNode {
 
 class ParsedAttribute inherits ParsedFeature {
    type : String;
+   type() : String { type };
+
    expr : ParsedExpr;
 
    init(line_ : Int, id_ : String, type_ : String, expr_ : ParsedExpr) : SELF_TYPE {{
@@ -92,8 +94,25 @@ class ParsedMethod inherits ParsedFeature {
    asMethod() : ParsedMethod { self };
 };
 
+class ParsedExprVisitor {
+   visitBlock(expr : ParsedBlockExpr) : Object { new Object.abort() };
+   visitIf(expr : ParsedIfExpr) : Object { new Object.abort() };
+   visitWhile(expr : ParsedWhileExpr) : Object { new Object.abort() };
+   visitLet(expr : ParsedLetExpr) : Object { new Object.abort() };
+   visitCase(expr : ParsedCaseExpr) : Object { new Object.abort() };
+   visitAssignment(expr : ParsedAssignmentExpr) : Object { new Object.abort() };
+   visitId(expr : ParsedIdExpr) : Object { new Object.abort() };
+   visitNew(expr : ParsedNewExpr) : Object { new Object.abort() };
+   visitDispatch(expr : ParsedDispatchExpr) : Object { new Object.abort() };
+   visitUnary(expr : ParsedUnaryExpr) : Object { new Object.abort() };
+   visitBinary(expr : ParsedBinaryExpr) : Object { new Object.abort() };
+   visitConstantBool(expr : ParsedConstantBoolExpr) : Object { new Object.abort() };
+   visitConstantInt(expr : ParsedConstantIntExpr) : Object { new Object.abort() };
+   visitConstantString(expr : ParsedConstantStringExpr) : Object { new Object.abort() };
+};
+
 class ParsedExpr inherits ParsedNode {
-   x() : Bool { false };
+   accept(visitor : ParsedExprVisitor) : Object { new Object.abort() };
 };
 
 class ParsedErrorExpr inherits ParsedExpr {
@@ -102,18 +121,26 @@ class ParsedErrorExpr inherits ParsedExpr {
 
 class ParsedBlockExpr inherits ParsedExpr {
    exprs : Collection;
+   exprs() : Collection { exprs };
 
    init(line_ : Int, exprs_ : Collection) : SELF_TYPE {{
       line <- line_;
       exprs <- exprs_;
       self;
    }};
+
+   accept(visitor : ParsedExprVisitor) : Object { visitor.visitBlock(self) };
 };
 
 class ParsedIfExpr inherits ParsedExpr {
    expr : ParsedExpr;
+   expr() : ParsedExpr { expr };
+
    then_ : ParsedExpr;
+   then_() : ParsedExpr { then_ };
+
    else_ : ParsedExpr;
+   else_() : ParsedExpr { else_ };
 
    init(line_ : Int, expr_ : ParsedExpr, then__ : ParsedExpr, else__ : ParsedExpr) : SELF_TYPE {{
       line <- line_;
@@ -122,11 +149,16 @@ class ParsedIfExpr inherits ParsedExpr {
       else_ <- else__;
       self;
    }};
+
+   accept(visitor : ParsedExprVisitor) : Object { visitor.visitIf(self) };
 };
 
 class ParsedWhileExpr inherits ParsedExpr {
    expr : ParsedExpr;
+   expr() : ParsedExpr { expr };
+
    loop_ : ParsedExpr;
+   loop_() : ParsedExpr { loop_ };
 
    init(line_ : Int, expr_ : ParsedExpr, loop__ : ParsedExpr) : SELF_TYPE {{
       line <- line_;
@@ -134,12 +166,19 @@ class ParsedWhileExpr inherits ParsedExpr {
       loop_ <- loop__;
       self;
    }};
+
+   accept(visitor : ParsedExprVisitor) : Object { visitor.visitWhile(self) };
 };
 
 class ParsedVar inherits ParsedNode {
    id : String;
+   id() : String { id };
+
    type : String;
+   type() : String { id };
+
    expr : ParsedExpr;
+   expr() : ParsedExpr { expr };
 
    init(line_ : Int, id_ : String, type_ : String, expr_ : ParsedExpr) : SELF_TYPE {{
       line <- line_;
@@ -152,7 +191,10 @@ class ParsedVar inherits ParsedNode {
 
 class ParsedLetExpr inherits ParsedExpr {
    vars : Collection;
+   vars() : Collection { vars };
+
    expr : ParsedExpr;
+   expr() : ParsedExpr { expr };
 
    init(line_ : Int, vars_ : Collection, expr_ : ParsedExpr) : SELF_TYPE {{
       line <- line_;
@@ -160,11 +202,16 @@ class ParsedLetExpr inherits ParsedExpr {
       expr <- expr_;
       self;
    }};
+
+   accept(visitor : ParsedExprVisitor) : Object { visitor.visitLet(self) };
 };
 
 class ParsedCaseExpr inherits ParsedExpr {
    expr : ParsedExpr;
+   expr() : ParsedExpr { expr };
+
    branches : Collection;
+   branches() : Collection { branches };
 
    init(line_ : Int, expr_ : ParsedExpr, branches_ : Collection) : SELF_TYPE {{
       line <- line_;
@@ -172,6 +219,8 @@ class ParsedCaseExpr inherits ParsedExpr {
       branches <- branches_;
       self;
    }};
+
+   accept(visitor : ParsedExprVisitor) : Object { visitor.visitCase(self) };
 };
 
 class ParsedAssignmentExpr inherits ParsedExpr {
@@ -187,10 +236,8 @@ class ParsedAssignmentExpr inherits ParsedExpr {
       expr <- expr_;
       self;
    }};
-};
 
-class ParsedSelfExpr inherits ParsedExpr {
-   x() : Bool { false };
+   accept(visitor : ParsedExprVisitor) : Object { visitor.visitAssignment(self) };
 };
 
 class ParsedIdExpr inherits ParsedExpr {
@@ -202,16 +249,21 @@ class ParsedIdExpr inherits ParsedExpr {
       id <- id_;
       self;
    }};
+
+   accept(visitor : ParsedExprVisitor) : Object { visitor.visitId(self) };
 };
 
 class ParsedNewExpr inherits ParsedExpr {
    type : String;
+   type() : String { type };
 
    init(line_ : Int, type_ : String) : SELF_TYPE {{
       line <- line_;
       type <- type_;
       self;
    }};
+
+   accept(visitor : ParsedExprVisitor) : Object { visitor.visitNew(self) };
 };
 
 class ParsedDispatchExpr inherits ParsedExpr {
@@ -235,6 +287,8 @@ class ParsedDispatchExpr inherits ParsedExpr {
       arguments <- arguments_;
       self;
    }};
+
+   accept(visitor : ParsedExprVisitor) : Object { visitor.visitDispatch(self) };
 };
 
 class ParsedUnaryExpr inherits ParsedExpr {
@@ -250,6 +304,8 @@ class ParsedUnaryExpr inherits ParsedExpr {
       expr <- expr_;
       self;
    }};
+
+   accept(visitor : ParsedExprVisitor) : Object { visitor.visitUnary(self) };
 };
 
 class ParsedBinaryExpr inherits ParsedExpr {
@@ -269,6 +325,8 @@ class ParsedBinaryExpr inherits ParsedExpr {
       right <- right_;
       self;
    }};
+
+   accept(visitor : ParsedExprVisitor) : Object { visitor.visitBinary(self) };
 };
 
 class ParsedConstantBoolExpr inherits ParsedExpr {
@@ -280,6 +338,8 @@ class ParsedConstantBoolExpr inherits ParsedExpr {
       value <- value_;
       self;
    }};
+
+   accept(visitor : ParsedExprVisitor) : Object { visitor.visitConstantBool(self) };
 };
 
 class ParsedConstantIntExpr inherits ParsedExpr {
@@ -291,6 +351,8 @@ class ParsedConstantIntExpr inherits ParsedExpr {
       value <- value_;
       self;
    }};
+
+   accept(visitor : ParsedExprVisitor) : Object { visitor.visitConstantInt(self) };
 };
 
 class ParsedConstantStringExpr inherits ParsedExpr {
@@ -302,6 +364,8 @@ class ParsedConstantStringExpr inherits ParsedExpr {
       value <- value_;
       self;
    }};
+
+   accept(visitor : ParsedExprVisitor) : Object { visitor.visitConstantString(self) };
 };
 
 class Parser {
@@ -711,7 +775,7 @@ class Parser {
                   if tokenPunct.value() = "(" then
                      {
                         skipToken();
-                        parseDispatchArguments(line, new ParsedSelfExpr, "", id);
+                        parseDispatchArguments(line, let void : ParsedExpr in void, "", id);
                      }
                   else
                      if tokenPunct.value() = "<-" then

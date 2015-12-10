@@ -445,8 +445,8 @@ class Tokenizer {
                            }
                         else
                            let newN : Int <- (n * 10) + digit in
-                              if n < 0 then
-                                 let s : String <- stringUtil.fromInt(n) in
+                              if newN < 0 then
+                                 let s : String <- stringUtil.fromInt(n).concat(c) in
                                     {
                                        while continue loop
                                           let c : String <- readChar() in

@@ -10,3 +10,8 @@ class Iterable {
 class Collection inherits Iterable {
    add(o : Object) : SELF_TYPE {{ new Object.abort(); self; }};
 };
+
+class StringMap {
+   getWithString(key : String) : Object { let void : Object in void };
+   putWithString(key : String, value : Object) : Object { new Object.abort() };
+};

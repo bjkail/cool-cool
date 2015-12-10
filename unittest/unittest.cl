@@ -44,6 +44,18 @@ class Test {
       fail(if context = "" then "" else context.concat(": ") fi.concat(s))
    };
 
+   assertVoid(context : String, actual : Object) : Object {
+      if not isvoid actual then
+         failContext(context, "expected=void, actual=".concat(actual.type_name()))
+      else false fi
+   };
+
+   assertNotVoid(context : String, actual : Bool) : Object {
+      if isvoid actual then
+         failContext(context, "expected=not void, actual=void")
+      else false fi
+   };
+
    assertFalse(context : String, actual : Bool) : Object {
       if actual then
          failContext(context, "expected=false, actual=true")

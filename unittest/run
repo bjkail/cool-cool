@@ -33,5 +33,6 @@ run_test() {
 
 run_test util-unittest.cl
 run_test linked-list-unittest.cl
+run_test string-list-map-unittest.cl
 run_test io-unittest.cl
 run_test tokenizer-unittest.cl

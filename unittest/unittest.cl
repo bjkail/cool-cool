@@ -21,6 +21,7 @@ class Test {
             test_ = single
       fi then
          {
+            test <- test_;
             num <- num + 1;
             true;
          }
@@ -31,6 +32,8 @@ class Test {
 
    fail(s : String) : Object {{
       new IO.out_string("TEST FAILED: ")
+            .out_string(test)
+            .out_string(": ")
             .out_string(s)
             .out_string("\n");
       -- Force runtime error.

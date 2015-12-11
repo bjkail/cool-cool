@@ -999,7 +999,7 @@ class Parser {
                   else false fi;
 
                   if isvoid feature then
-                     error("expected '(' or ':' for feature")
+                     errorToken(token, "expected '(' or ':' for feature")
                   else
                      parsePunct(";", " after feature")
                   fi;

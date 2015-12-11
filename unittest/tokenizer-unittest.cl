@@ -5,6 +5,7 @@ class Main inherits Test {
       testParenComment();
       testLineComment();
 
+      testEofDirective();
       testEscapeDirective();
       testFileDirective();
 
@@ -19,6 +20,11 @@ class Main inherits Test {
 
    newTokenizer(s : String) : Tokenizer {
       new Tokenizer.init(new TestStringInputStream.init(s))
+   };
+
+   newIOTokenizer(lines : Collection) : Tokenizer {
+      let is : IOInputStream <- new TestIOInputStream.init(new TestIO.init(lines)) in
+         new Tokenizer.init(is).setDirectiveListener(new TestDirectiveListener.init(is))
    };
 
    assertTokenEof(context : String, t : Tokenizer) : Object {
@@ -161,6 +167,22 @@ class Main inherits Test {
             assertTokenEof("space", newTokenizer("-- "));
             assertTokenPunct("newline", ".", newTokenizer("--\n."));
             assertTokenPunct("chars", ".", newTokenizer("-- x-- *) .\n."));
+         }
+      else false fi
+   };
+
+   testEofDirective() : Object {
+      if begin("eofDirective") then
+         {
+            let t : Tokenizer <- newIOTokenizer(new LinkedList
+                     .add("--cool:eof=1")
+                     .add(".")
+                     .add("")
+                     .add(".")) in
+               {
+                  assertTokenPunct("", ".", t);
+                  assertTokenEof("", t);
+               };
          }
       else false fi
    };
@@ -521,5 +543,18 @@ class Main inherits Test {
             assertTokenError("", "line 1: unexpected newline in string", newTokenizer("\"\n\""));
          }
       else false fi
+   };
+};
+
+class TestDirectiveListener inherits TokenizerDirectiveListener {
+   is : IOInputStream;
+
+   init(is_ : IOInputStream) : SELF_TYPE {{
+      is <- is_;
+      self;
+   }};
+
+   setEmptyLineEofCount(n : Int) : Object {
+      is.setEmptyLineEofCount(n)
    };
 };

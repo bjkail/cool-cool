@@ -97,6 +97,10 @@ class TokenString inherits Token {
    asString() : TokenString { self };
 };
 
+class TokenizerDirectiveListener {
+   setEmptyLineEofCount(n : Int) : Object { false };
+};
+
 class TokenizerLineMapFile {
    file : String;
    file() : String { file };
@@ -168,6 +172,13 @@ class Tokenizer {
    crChar : String; -- "\r"
 
    lowerIdentName : String;
+
+   directiveListener : TokenizerDirectiveListener;
+
+   setDirectiveListener(listener : TokenizerDirectiveListener) : SELF_TYPE {{
+      directiveListener <- listener;
+      self;
+   }};
 
    init(is_ : InputStream) : SELF_TYPE {{
       is <- is_;
@@ -372,6 +383,15 @@ class Tokenizer {
          }
    };
 
+   readEofDirective() : Object {
+      let tokenInteger : TokenInteger <- readInteger("0").asInteger() in
+         if not isvoid tokenInteger then
+            if not isvoid directiveListener then
+               directiveListener.setEmptyLineEofCount(tokenInteger.value())
+            else false fi
+         else false fi
+   };
+
    readEscapeDirective() : Object {
       while matchChar(":") loop
          if matchChar(stringUtil.backslash()) then
@@ -412,17 +432,25 @@ class Tokenizer {
 
    readDirective() : Object {
       if matchChar("e") then
-         if matchChar("s") then
-            if matchChar("c") then
-               if matchChar("a") then
-                  if matchChar("p") then
-                     if matchChar("e") then
-                        readEscapeDirective()
+         if matchChar("o") then
+            if matchChar("f") then
+               if matchChar("=") then
+                  readEofDirective()
+               else false fi
+            else false fi
+         else
+            if matchChar("s") then
+               if matchChar("c") then
+                  if matchChar("a") then
+                     if matchChar("p") then
+                        if matchChar("e") then
+                           readEscapeDirective()
+                        else false fi
                      else false fi
                   else false fi
                else false fi
             else false fi
-         else false fi
+         fi
       else
          if matchChar("f") then
             if matchChar("i") then

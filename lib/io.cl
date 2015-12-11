@@ -7,7 +7,8 @@ class InputStream {
 -- InputStream implemented using IO.in_string.
 class IOInputStream inherits InputStream {
    -- The number of consecutive empty lines until a file is considered empty.
-   constEmptyLineEofCount : Int <- 1024;
+   emptyLineEofCount : Int <- 1024;
+   setEmptyLineEofCount(count : Int) : Object { emptyLineEofCount <- count };
 
    io : IO <- new IO;
    -- True if at end of input.
@@ -57,7 +58,7 @@ class IOInputStream inherits InputStream {
                               if line = "" then
                                  {
                                     linefeeds <- linefeeds + 1;
-                                    if not linefeeds < constEmptyLineEofCount then
+                                    if not linefeeds < emptyLineEofCount then
                                        {
                                           eof <- true;
                                           continue <- false;

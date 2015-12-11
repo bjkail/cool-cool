@@ -63,29 +63,3 @@ class Main inherits Test {
       else false fi
    };
 };
-
--- Custom IO instance that uses a LinkedList
-class TestIO inherits IO {
-   iter : Iterator;
-
-   init(lines : Collection) : SELF_TYPE {{
-      iter <- lines.iterator();
-      self;
-   }};
-
-   in_string() : String {
-      if iter.next() then
-         case iter.get() of x : String => x; esac
-      else
-         ""
-      fi
-   };
-};
-
-class TestIOInputStream inherits IOInputStream {
-   init(io_ : IO) : SELF_TYPE {{
-      -- Use a custom IO instance.
-      io <- io_;
-      self;
-   }};
-};

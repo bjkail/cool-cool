@@ -109,6 +109,8 @@ class Tokenizer {
    ffChar : String; -- "\f"
    crChar : String; -- "\r"
 
+   lowerIdentName : String;
+
    init(is_ : InputStream) : SELF_TYPE {{
       is <- is_;
       self;
@@ -185,34 +187,34 @@ class Tokenizer {
       fi fi
    };
 
-   isUpper(c : String) : Bool {
-      if c = "A" then true else
-      if c = "B" then true else
-      if c = "C" then true else
-      if c = "D" then true else
-      if c = "E" then true else
-      if c = "F" then true else
-      if c = "G" then true else
-      if c = "H" then true else
-      if c = "I" then true else
-      if c = "J" then true else
-      if c = "K" then true else
-      if c = "L" then true else
-      if c = "M" then true else
-      if c = "N" then true else
-      if c = "O" then true else
-      if c = "P" then true else
-      if c = "Q" then true else
-      if c = "R" then true else
-      if c = "S" then true else
-      if c = "T" then true else
-      if c = "U" then true else
-      if c = "V" then true else
-      if c = "W" then true else
-      if c = "X" then true else
-      if c = "Y" then true else
-      if c = "Z" then true else
-         false
+   upperCharToLower(c : String) : String {
+      if c = "A" then "a" else
+      if c = "B" then "b" else
+      if c = "C" then "c" else
+      if c = "D" then "d" else
+      if c = "E" then "e" else
+      if c = "F" then "f" else
+      if c = "G" then "g" else
+      if c = "H" then "h" else
+      if c = "I" then "i" else
+      if c = "J" then "j" else
+      if c = "K" then "k" else
+      if c = "L" then "l" else
+      if c = "M" then "m" else
+      if c = "N" then "n" else
+      if c = "O" then "o" else
+      if c = "P" then "p" else
+      if c = "Q" then "q" else
+      if c = "R" then "r" else
+      if c = "S" then "s" else
+      if c = "T" then "t" else
+      if c = "U" then "u" else
+      if c = "V" then "v" else
+      if c = "W" then "w" else
+      if c = "X" then "x" else
+      if c = "Y" then "y" else
+      if c = "Z" then "z" else
+         ""
       fi fi fi fi fi
       fi fi fi fi fi
       fi fi fi fi fi
@@ -254,22 +256,6 @@ class Tokenizer {
       fi fi fi fi fi
       fi fi fi fi fi
       fi fi fi fi fi
-      fi
-   };
-
-   isIdentPart(c : String) : Bool {
-      if isUpper(c) then
-         true
-      else
-         if isLower(c) then
-            true
-         else
-            if 0 <= stringUtil.toDigit(c) then
-               true
-            else
-               c = "_"
-            fi
-         fi
       fi
    };
 
@@ -370,28 +356,53 @@ class Tokenizer {
       let void : Token in void;
    }};
 
-   readIdentName(c : String) : String {
+   readIdentName(c : String, lower : String) : String {{
+      lowerIdentName <- lower;
+
       let s : String <- c in
          {
-            c <- readChar();
-            while isIdentPart(c) loop
-               {
-                  s <- s.concat(c);
-                  c <- readChar();
-               }
-            pool;
-            unreadChar(c);
+            let continue : Bool <- true in
+               while continue loop
+                  let c : String <- readChar(),
+                        lower : String <- upperCharToLower(c) in
+                     if not lower = "" then
+                        {
+                           s <- s.concat(c);
+                           lowerIdentName <- lowerIdentName.concat(lower);
+                        }
+                     else
+                        if if isLower(c) then
+                              true
+                           else
+                              if 0 <= stringUtil.toDigit(c) then
+                                 true
+                              else
+                                 c = "_"
+                              fi
+                           fi
+                        then
+                           {
+                              s <- s.concat(c);
+                              lowerIdentName <- lowerIdentName.concat(c);
+                           }
+                        else
+                           {
+                              continue <- false;
+                              unreadChar(c);
+                           }
+                        fi
+                     fi
+               pool;
 
             s;
-         }
-   };
+         };
+   }};
 
    isKeyword(s : String) : Bool {
       if s = "case" then true else
       if s = "class" then true else
       if s = "else" then true else
       if s = "esac" then true else
-      if s = "false" then true else
       if s = "fi" then true else
       if s = "if" then true else
       if s = "in" then true else
@@ -404,13 +415,24 @@ class Tokenizer {
       if s = "of" then true else
       if s = "pool" then true else
       if s = "then" then true else
-      if s = "true" then true else
       if s = "while" then true else
          false
       fi fi fi fi fi
       fi fi fi fi fi
       fi fi fi fi fi
-      fi fi fi fi
+      fi fi
+   };
+
+   isKeywordOrConstantBool(s : String) : Bool {
+      if isKeyword(s) then
+         true
+      else
+         if s = "false" then
+            true
+         else
+            s = "true"
+         fi
+      fi
    };
 
    -- Read token for a character that cannot be part of a multi-character token
@@ -620,20 +642,26 @@ class Tokenizer {
                               if c = stringUtil.doubleQuote() then
                                  readString()
                               else
-                                 if isUpper(c) then
-                                    new TokenType.init(readIdentName(c))
-                                 else
-                                    if isLower(c) then
-                                       let name : String <- readIdentName(c) in
-                                          if isKeyword(name) then
-                                             new TokenKeyword.init(name)
+                                 let lower : String <- upperCharToLower(c) in
+                                    if not lower = "" then
+                                       let name : String <- readIdentName(c, lower) in
+                                          if isKeyword(lowerIdentName) then
+                                             new TokenKeyword.init(lowerIdentName)
                                           else
-                                             new TokenId.init(name)
+                                             new TokenType.init(name)
                                           fi
                                     else
-                                       newTokenError("invalid character: [".concat(c).concat("]"))
+                                       if isLower(c) then
+                                          let name : String <- readIdentName(c, c) in
+                                             if isKeywordOrConstantBool(lowerIdentName) then
+                                                new TokenKeyword.init(lowerIdentName)
+                                             else
+                                                new TokenId.init(name)
+                                             fi
+                                       else
+                                          newTokenError("invalid character: [".concat(c).concat("]"))
+                                       fi
                                     fi
-                                 fi
                               fi
                            fi
                      fi

@@ -8,6 +8,7 @@ class Iterable {
 };
 
 class Collection inherits Iterable {
+   size() : Int { 0 };
    add(o : Object) : SELF_TYPE {{ new Object.abort(); self; }};
 };
 

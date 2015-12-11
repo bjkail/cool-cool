@@ -105,4 +105,95 @@ class LinkedList inherits Collection {
             oldHead.value();
          }
    };
+
+   sortMerge(comparator : Comparator, node1 : LinkedListNode, node2 : LinkedListNode) : LinkedListNode {
+      let head : LinkedListNode,
+            tail : LinkedListNode in
+         {
+            let cmp : Int <- comparator.compare(node1.value(), node2.value()) in
+               if cmp <= 0 then
+                  {
+                     head <- node1;
+                     node1 <- node1.next();
+                  }
+               else
+                  {
+                     head <- node2;
+                     node2 <- node2.next();
+                  }
+               fi;
+            tail <- head;
+
+            let continue : Bool <- true in
+               while continue loop
+                  if isvoid node1 then
+                     {
+                        tail.setNext(node2);
+                        continue <- false;
+                     }
+                  else
+                     if isvoid node2 then
+                        {
+                           tail.setNext(node1);
+                           continue <- false;
+                        }
+                     else
+                        let cmp : Int <- comparator.compare(node1.value(), node2.value()) in
+                           if cmp <= 0 then
+                              {
+                                 tail.setNext(node1);
+                                 tail <- node1;
+                                 node1 <- node1.next();
+                              }
+                           else
+                              {
+                                 tail.setNext(node2);
+                                 tail <- node2;
+                                 node2 <- node2.next();
+                              }
+                           fi
+                     fi
+                  fi
+               pool;
+
+            head;
+         }
+   };
+
+   sortImpl(comparator : Comparator, head : LinkedListNode) : LinkedListNode {
+      if isvoid head then
+         head
+      else
+         if isvoid head.next() then
+            head
+         else
+            let slow : LinkedListNode <- head,
+                  fast : LinkedListNode <- head in
+               {
+                  while if not isvoid fast.next() then
+                        not isvoid fast.next().next()
+                     else false
+                  fi loop
+                     {
+                        slow <- slow.next();
+                        fast <- fast.next().next();
+                     }
+                  pool;
+
+                  let head2 : LinkedListNode <- slow.next() in
+                     {
+                        slow.setNext(let void : LinkedListNode in void);
+                        sortMerge(comparator,
+                              sortImpl(comparator, head),
+                              sortImpl(comparator, head2));
+                     };
+               }
+         fi
+      fi
+   };
+
+   sort(comparator : Comparator) : SELF_TYPE {{
+      head <- sortImpl(comparator, head);
+      self;
+   }};
 };

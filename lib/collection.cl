@@ -24,3 +24,7 @@ class StringMap {
    putWithString(key : String, value : Object) : Object { new Object.abort() };
    putNewWithString(key : String, value : Object) : Object { new Object.abort() };
 };
+
+class Comparator {
+   compare(o1 : Object, o2 : Object) : Int {{ new Object.abort(); 0; }};
+};

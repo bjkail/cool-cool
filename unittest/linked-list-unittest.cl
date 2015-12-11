@@ -5,6 +5,7 @@ class Main inherits Test {
       testGet();
       testAddFirst();
       testRemoveFirst();
+      testSort();
    }};
 
    testSize() : Object {
@@ -92,5 +93,65 @@ class Main inherits Test {
                assertFalse("iterator", list.iterator().next());
             }
       else false fi
+   };
+
+   assertSortInts(context : String, list : LinkedList) : Object {
+      let size : Int <- list.size() in
+         {
+            list.sort(new TestIntComparator);
+
+            let iter : Iterator <- list.iterator(),
+                  i : Int in
+               {
+                  while iter.next() loop
+                     {
+                        assertIntEquals(context, i, case iter.get() of x : Int => x; esac);
+                        i <- i + 1;
+                     }
+                  pool;
+                  assertIntEquals(context.concat(" size"), size, i);
+               };
+         }
+   };
+
+   testSort() : Object {
+      if begin("sort") then
+         {
+            assertSortInts("empty", new LinkedList);
+
+            let list : LinkedList <- new LinkedList,
+                  i : Int,
+                  stringUtil : StringUtil <- new StringUtil in
+               while i < 8 loop
+                  {
+                     assertSortInts(new StringUtil.fromInt(i), list.add(i));
+                     i <- i + 1;
+                  }
+               pool;
+
+            assertSortInts("sorted", new LinkedList.add(0).add(1).add(2).add(3).add(4).add(5).add(6).add(7));
+            assertSortInts("revers", new LinkedList.add(7).add(6).add(5).add(4).add(3).add(2).add(1).add(0));
+            assertSortInts("mixed1", new LinkedList.add(0).add(7).add(1).add(6).add(2).add(5).add(3).add(4));
+            assertSortInts("mixed1", new LinkedList.add(7).add(0).add(6).add(1).add(5).add(2).add(4).add(3));
+            assertSortInts("mixed2", new LinkedList.add(4).add(3).add(5).add(2).add(6).add(1).add(7).add(0));
+            assertSortInts("mixed3", new LinkedList.add(2).add(5).add(0).add(3).add(6).add(1).add(4).add(7));
+         }
+      else false fi
+   };
+};
+
+class TestIntComparator inherits Comparator {
+   compare(o1 : Object, o2 : Object) : Int {
+      let n1 : Int <- case o1 of x : Int => x; esac,
+            n2 : Int <- case o2 of x : Int => x; esac in
+         if n1 = n2 then
+            0
+         else
+            if n1 < n2 then
+               0-1
+            else
+               1
+            fi
+         fi
    };
 };

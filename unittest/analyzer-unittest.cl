@@ -9,7 +9,7 @@ class Main inherits Test {
    assertAnalyzerErrorImpl(context : String, error : String, program : String) : Object {
       let tokenizer : Tokenizer <- new Tokenizer.init(new TestStringInputStream.init(program)),
             parser : Parser <- new Parser.init(tokenizer),
-            analyzer : TestAnalyzer <- new TestAnalyzer.analyze(parser.parse()) in
+            analyzer : TestAnalyzer <- new TestAnalyzer.init(tokenizer.lineMap()).analyze(parser.parse()) in
          assertStringEquals(context, error, analyzer.errorString())
    };
 

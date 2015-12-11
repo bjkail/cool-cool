@@ -960,6 +960,13 @@ class Analyzer {
          }
    };
 
+   lineMap : TokenizerLineMap;
+
+   init(lineMap_ : TokenizerLineMap) : SELF_TYPE {{
+      lineMap <- lineMap_;
+      self;
+   }};
+
    error : Bool;
 
    error(s : String) : Object {{
@@ -970,7 +977,7 @@ class Analyzer {
    }};
 
    errorAt(node : ParsedNode, s : String) : Object {
-      error("line ".concat(stringUtil.fromInt(node.line())).concat(": ").concat(s))
+      error(lineMap.lineToString(node.line()).concat(": ").concat(s))
    };
 
    getType(node : ParsedNode, where : String, name : String) : AnalyzedType {

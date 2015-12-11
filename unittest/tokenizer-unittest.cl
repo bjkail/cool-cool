@@ -4,7 +4,9 @@ class Main inherits Test {
       testError();
       testParenComment();
       testLineComment();
+
       testEscapeDirective();
+      testFileDirective();
 
       testPunct();
       testBinaryOp();
@@ -200,6 +202,64 @@ class Main inherits Test {
 
             let t : Tokenizer <- newTokenizer("--cool:escape:\\v=@\n\"") in
                assertTokenError("line", "line 1: unexpected EOF in string", t);
+         }
+      else false fi
+   };
+
+   testFileDirective() : Object {
+      if begin("fileDirective") then
+         {
+            let t : Tokenizer <- newTokenizer(".\n."),
+                  flm : TokenizerLineMap <- t.lineMap() in
+               {
+                  assertTokenPunct("default 1", ".", t);
+                  assertIntEquals("default 1 total", 1, t.line());
+                  assertStringEquals("default 1", "line 1", flm.lineToString(1));
+
+                  assertTokenPunct("default 2", ".", t);
+                  assertIntEquals("default 2 total", 2, t.line());
+                  assertStringEquals("default 2", "line 1", flm.lineToString(1));
+                  assertStringEquals("default 2", "line 2", flm.lineToString(2));
+               };
+
+            let t : Tokenizer <- newTokenizer("--cool:file=a\n.\n."),
+                  flm : TokenizerLineMap <- t.lineMap() in
+               {
+                  assertTokenPunct("single a1", ".", t);
+                  assertIntEquals("single a1 total", 1, t.line());
+                  assertStringEquals("single a1", "a: line 1", flm.lineToString(1));
+
+                  assertTokenPunct("single a2", ".", t);
+                  assertIntEquals("single a2 total", 2, t.line());
+                  assertStringEquals("single a2", "a: line 1", flm.lineToString(1));
+                  assertStringEquals("single a2", "a: line 2", flm.lineToString(2));
+               };
+
+            let t : Tokenizer <- newTokenizer("--cool:file=a\n.\n.\n--cool:file=b\n.\n."),
+                  flm : TokenizerLineMap <- t.lineMap() in
+               {
+                  assertTokenPunct("multi a1", ".", t);
+                  assertIntEquals("multi a1 total", 1, t.line());
+                  assertStringEquals("multi a1", "a: line 1", flm.lineToString(1));
+
+                  assertTokenPunct("multi a2", ".", t);
+                  assertIntEquals("multi a2 total", 2, t.line());
+                  assertStringEquals("multi a2", "a: line 1", flm.lineToString(1));
+                  assertStringEquals("multi a2", "a: line 2", flm.lineToString(2));
+
+                  assertTokenPunct("multi b1", ".", t);
+                  assertIntEquals("multi b1 total", 3, t.line());
+                  assertStringEquals("multi b1", "a: line 1", flm.lineToString(1));
+                  assertStringEquals("multi b1", "a: line 2", flm.lineToString(2));
+                  assertStringEquals("multi b1", "b: line 1", flm.lineToString(3));
+
+                  assertTokenPunct("multi b2", ".", t);
+                  assertIntEquals("multi b2 total", 4, t.line());
+                  assertStringEquals("multi b2", "a: line 1", flm.lineToString(1));
+                  assertStringEquals("multi b2", "a: line 2", flm.lineToString(2));
+                  assertStringEquals("multi b2", "b: line 1", flm.lineToString(3));
+                  assertStringEquals("multi b2", "b: line 2", flm.lineToString(4));
+               };
          }
       else false fi
    };

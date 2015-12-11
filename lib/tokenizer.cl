@@ -97,11 +97,69 @@ class TokenString inherits Token {
    asString() : TokenString { self };
 };
 
+class TokenizerLineMapFile {
+   file : String;
+   file() : String { file };
+
+   firstTotalLine : Int;
+   firstTotalLine() : Int { firstTotalLine };
+
+   init(file_ : String, firstTotalLine_ : Int) : SELF_TYPE {{
+      file <- file_;
+      firstTotalLine <- firstTotalLine_;
+      self;
+   }};
+};
+
+class TokenizerLineMap {
+   stringUtil : StringUtil;
+   files : LinkedList <- new LinkedList.addFirst(new TokenizerLineMapFile.init("", 1));
+
+   init(stringUtil_ : StringUtil) : SELF_TYPE {{
+      stringUtil <- stringUtil_;
+      self;
+   }};
+
+   beginFile(file : String, firstTotalLine : Int) : Object {
+      files.addFirst(new TokenizerLineMapFile.init(file, firstTotalLine))
+   };
+
+   lineToString(totalLine : Int) : String {
+      let continue : Bool <- true,
+            iter : Iterator <- files.iterator(),
+            file : String,
+            line : Int,
+            result : String in
+         {
+            while continue loop
+               if iter.next() then
+                  let mapFile : TokenizerLineMapFile <- case iter.get() of x : TokenizerLineMapFile => x; esac,
+                        firstTotalLine : Int <- mapFile.firstTotalLine() in
+                     if firstTotalLine <= totalLine then
+                        {
+                           file <- mapFile.file();
+                           line <- totalLine - firstTotalLine + 1;
+                           continue <- false;
+                        }
+                     else false fi
+               else
+                  continue <- false
+               fi
+            pool;
+
+            if file = "" then "" else file.concat(": ") fi.concat("line ").concat(stringUtil.fromInt(line));
+         }
+   };
+};
+
 class Tokenizer {
    stringUtil : StringUtil <- new StringUtil;
    is : InputStream;
    next : String;
    line : Int <- 1;
+
+   lineMap : TokenizerLineMap <- new TokenizerLineMap.init(stringUtil);
+   lineMap() : TokenizerLineMap { lineMap };
 
    bsChar : String; -- "\b"
    tabChar : String; -- "\t"
@@ -166,8 +224,32 @@ class Tokenizer {
          loop false pool
    };
 
+   readLine() : String {
+      let s : String,
+            continue : Bool <- true in
+         {
+            while
+               let c : String <- readChar() in
+                  if c = "" then
+                     false
+                  else
+                     if c = "\n" then
+                        false
+                     else
+                        {
+                           s <- s.concat(c);
+                           true;
+                        }
+                     fi
+                  fi
+            loop false pool;
+
+            s;
+         }
+   };
+
    newTokenErrorAt(line : Int, s : String) : TokenError {
-      new TokenError.init("line ".concat(stringUtil.fromInt(line)).concat(": ").concat(s))
+      new TokenError.init(lineMap.lineToString(line).concat(": ").concat(s))
    };
 
    newTokenError(s : String) : TokenError {
@@ -320,6 +402,14 @@ class Tokenizer {
       pool
    };
 
+   readFileDirective() : Object {
+      let file : String <- readLine() in
+         {
+            unreadChar("\n");
+            lineMap.beginFile(file, line);
+         }
+   };
+
    readDirective() : Object {
       if matchChar("e") then
          if matchChar("s") then
@@ -333,7 +423,19 @@ class Tokenizer {
                else false fi
             else false fi
          else false fi
-      else false fi
+      else
+         if matchChar("f") then
+            if matchChar("i") then
+               if matchChar("l") then
+                  if matchChar("e") then
+                     if matchChar("=") then
+                        readFileDirective()
+                     else false fi
+                  else false fi
+               else false fi
+            else false fi
+         else false fi
+      fi
    };
 
    readLineComment() : Token {{

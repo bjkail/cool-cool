@@ -430,8 +430,8 @@ class Parser {
    error(s : String) : Bool {{
       if not error then
          {
-            new IO.out_string("PARSE ERROR: line ")
-                  .out_string(stringUtil.fromInt(line()))
+            new IO.out_string("PARSE ERROR: ")
+                  .out_string(tokenizer.lineMap().lineToString(tokenizer.line()))
                   .out_string(": ")
                   .out_string(s)
                   .out_string("\n");

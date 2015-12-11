@@ -4,6 +4,7 @@ class Main inherits Test {
       testError();
       testParenComment();
       testLineComment();
+      testEscapeDirective();
 
       testPunct();
       testBinaryOp();
@@ -158,6 +159,47 @@ class Main inherits Test {
             assertTokenEof("space", newTokenizer("-- "));
             assertTokenPunct("newline", ".", newTokenizer("--\n."));
             assertTokenPunct("chars", ".", newTokenizer("-- x-- *) .\n."));
+         }
+      else false fi
+   };
+
+   testEscapeDirective() : Object {
+      if begin("escapeDirective") then
+         {
+            let t : Tokenizer <- newTokenizer("--cool:escape:\\b=@\n\"\\b\"") in
+               {
+                  assertTokenString("bs", "@", t);
+                  assertTokenEof("bs", t);
+               };
+
+            let t : Tokenizer <- newTokenizer("--cool:escape:\\f=@\n@.@\"\\f\"") in
+               {
+                  assertTokenPunct("ff", ".", t);
+                  assertTokenString("ff", "@", t);
+                  assertTokenEof("ff", t);
+               };
+
+            let t : Tokenizer <- newTokenizer("--cool:escape:\\r=@\n@.@") in
+               {
+                  assertTokenPunct("cr", ".", t);
+                  assertTokenEof("cr", t);
+               };
+
+            let t : Tokenizer <- newTokenizer("--cool:escape:\\t=@\n@.@\"\\t\"") in
+               {
+                  assertTokenPunct("tab", ".", t);
+                  assertTokenString("tab", "@", t);
+                  assertTokenEof("tab", t);
+               };
+
+            let t : Tokenizer <- newTokenizer("--cool:escape:\\v=@\n@.@") in
+               {
+                  assertTokenPunct("vt", ".", t);
+                  assertTokenEof("vt", t);
+               };
+
+            let t : Tokenizer <- newTokenizer("--cool:escape:\\v=@\n\"") in
+               assertTokenError("line", "line 1: unexpected EOF in string", t);
          }
       else false fi
    };

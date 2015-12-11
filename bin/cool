@@ -27,6 +27,7 @@ fi
 
 dir=$(dirname "$0")
 {
+  printf -- '--cool:escape:\\b=\b:\\t=\t:\\v=\v:\\f=\f:\\r=\r:\n'
   if test -z "$bootstrap"; then
     if test -z "$tmpfile"; then
       cat

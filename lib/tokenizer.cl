@@ -103,6 +103,12 @@ class Tokenizer {
    next : String;
    line : Int <- 1;
 
+   bsChar : String; -- "\b"
+   tabChar : String; -- "\t"
+   vtChar : String; -- "\v"
+   ffChar : String; -- "\f"
+   crChar : String; -- "\r"
+
    init(is_ : InputStream) : SELF_TYPE {{
       is <- is_;
       self;
@@ -169,12 +175,14 @@ class Tokenizer {
    isWhitespace(c : String) : Bool {
       if c = " " then true else
       if c = "\n" then true else
-      if c = "\f" then true else
-      -- FIXME: There's no way to represent "\r"
+      if c = ffChar then true else
+      if c = crChar then true else
       if c = "\t" then true else
-      -- FIXME: There's no way to represent "\v"
+      if c = tabChar then true else
+      if c = vtChar then true else
          false
-      fi fi fi fi
+      fi fi fi fi fi
+      fi fi
    };
 
    isUpper(c : String) : Bool {
@@ -296,7 +304,68 @@ class Tokenizer {
          }
    };
 
+   readEscapeDirective() : Object {
+      while matchChar(":") loop
+         if matchChar(stringUtil.backslash()) then
+            let c : String <- readChar() in
+               if matchChar("=") then
+                  let value : String <- readChar() in
+                     if c = "b" then
+                        bsChar <- value
+                     else
+                        if c = "t" then
+                           tabChar <- value
+                        else
+                           if c = "v" then
+                              vtChar <- value
+                           else
+                              if c = "f" then
+                                 ffChar <- value
+                              else
+                                 if c = "r" then
+                                    crChar <- value
+                                 else false fi
+                              fi
+                           fi
+                        fi
+                     fi
+               else false fi
+         else false fi
+      pool
+   };
+
+   readDirective() : Object {
+      if matchChar("e") then
+         if matchChar("s") then
+            if matchChar("c") then
+               if matchChar("a") then
+                  if matchChar("p") then
+                     if matchChar("e") then
+                        readEscapeDirective()
+                     else false fi
+                  else false fi
+               else false fi
+            else false fi
+         else false fi
+      else false fi
+   };
+
    readLineComment() : Token {{
+      if matchChar("c") then
+         if matchChar("o") then
+            if matchChar("o") then
+               if matchChar("l") then
+                  if matchChar(":") then
+                     {
+                        line <- line - 1;
+                        readDirective();
+                     }
+                  else false fi
+               else false fi
+            else false fi
+         else false fi
+      else false fi;
+
       skipLine();
       let void : Token in void;
    }};
@@ -426,13 +495,21 @@ class Tokenizer {
                               if c = stringUtil.backslash() then
                                  {
                                     c <- readChar();
-                                    if c = "b" then c <- "\b"
-                                    else if c = "t" then c <- "\t"
-                                    else if c = "n" then c <- "\n"
-                                    else if c = "f" then c <- "\f"
+                                    if c = "b" then
+                                       c <- if bsChar = "" then "\b" else bsChar fi
                                     else
-                                       false
-                                    fi fi fi fi;
+                                       if c = "t" then
+                                          c <- if tabChar = "" then "\t" else tabChar fi
+                                       else
+                                          if c = "n" then
+                                             c <- "\n"
+                                          else
+                                             if c = "f" then
+                                                c <- if ffChar = "" then "\f" else ffChar fi
+                                             else false fi
+                                          fi
+                                       fi
+                                    fi;
                                  }
                               else
                                  -- XXX: No way to represent NUL.

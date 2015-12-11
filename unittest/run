@@ -19,7 +19,7 @@ run_test() {
         "$dir"/"$file" "$@" \
       | {
         success=false
-        while read -r line; do
+        while IFS= read -r line; do
           case $line in
 	  "TEST PASSED"*) success=true;;
 	  "ERROR: "*": Exception: case without matching branch: TestAssertionFailed(...)") continue

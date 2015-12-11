@@ -52,7 +52,7 @@ run() {
 }
 
 if $formaterrors; then
-  run | while read -r line; do
+  run | while IFS= read -r line; do
     if [[ "$line" =~ ^"ERROR: "[0-9]+": "(Parser|Type-Check|Exception)": " ]]; then
       line=${line#ERROR: }
       error=${line#*: }

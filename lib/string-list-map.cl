@@ -92,6 +92,18 @@ class StringListMap inherits StringMap {
          fi
    };
 
+   putNewWithString(key : String, value : Object) : Object {
+      let node : StringListMapNode <- findNode(key) in
+         if isvoid node then
+            {
+               head <- new StringListMapNode.init(key, value, head);
+               node;
+            }
+         else
+            node.value()
+         fi
+   };
+
    getWithString(key : String) : Object {
       let node : StringListMapNode <- findNode(key) in
          if isvoid node then

@@ -1,7 +1,8 @@
 class Main inherits Test {
    test() : Object {{
       testIterator();
-      testBasic();
+      testPut();
+      testPutNew();
    }};
 
    testIterator() : Object {
@@ -38,8 +39,8 @@ class Main inherits Test {
       else false fi
    };
 
-   testBasic() : Object {
-      if begin("basic") then
+   testPut() : Object {
+      if begin("put") then
          {
             assertVoid("0 void", new StringListMap.getWithString(""));
 
@@ -64,6 +65,35 @@ class Main inherits Test {
                   map.putWithString("a", "A");
                   assertStringEquals("reput", "A", case map.putWithString("a", "B") of x : String => x; esac);
                   assertStringEquals("reput get", "B", case map.getWithString("a") of x : String => x; esac);
+               };
+         }
+      else false fi
+   };
+
+   testPutNew() : Object {
+      if begin("putNew") then
+         {
+            let map : StringMap <- new StringListMap in
+               {
+                  assertVoid("1 put", map.putNewWithString("a", "A"));
+                  assertVoid("1 get void", map.getWithString(""));
+                  assertStringEquals("1 get", "A", case map.getWithString("a") of x : String => x; esac);
+               };
+
+            let map : StringMap <- new StringListMap in
+               {
+                  assertVoid("2 put", map.putNewWithString("a", "A"));
+                  assertVoid("2 put", map.putNewWithString("b", "B"));
+                  assertVoid("2 get void", map.getWithString(""));
+                  assertStringEquals("2 get", "A", case map.getWithString("a") of x : String => x; esac);
+                  assertStringEquals("2 get", "B", case map.getWithString("b") of x : String => x; esac);
+               };
+
+            let map : StringMap <- new StringListMap in
+               {
+                  map.putNewWithString("a", "A");
+                  assertStringEquals("reput", "A", case map.putNewWithString("a", "B") of x : String => x; esac);
+                  assertStringEquals("reput get", "A", case map.getWithString("a") of x : String => x; esac);
                };
          }
       else false fi

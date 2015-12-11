@@ -18,8 +18,43 @@ class StringListMapNode {
    }};
 };
 
+class StringListMapIterator inherits StringMapIterator {
+   head : StringListMapNode;
+   current : StringListMapNode;
+
+   init(head_ : StringListMapNode) : SELF_TYPE {{
+      head <- head_;
+      self;
+   }};
+
+   next() : Bool {{
+      if isvoid current then
+         {
+            current <- head;
+            head <- let void : StringListMapNode in void;
+         }
+      else
+         current <- current.next()
+      fi;
+
+      not isvoid current;
+   }};
+
+   key() : String {
+      current.key()
+   };
+
+   value() : Object {
+      current.value()
+   };
+};
+
 class StringListMap inherits StringMap {
    head : StringListMapNode;
+
+   iterator() : StringMapIterator {
+      new StringListMapIterator.init(head)
+   };
 
    findNode(key : String) : StringListMapNode {
       let node : StringListMapNode <- head,

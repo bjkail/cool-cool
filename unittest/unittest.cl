@@ -68,6 +68,13 @@ class Test {
       else false fi
    };
 
+   assertBoolEquals(context : String, expected : Bool, actual : Bool) : Object {
+      if not actual = expected then
+         failContext(context, "expected=".concat(stringUtil.fromBool(expected))
+               .concat(", actual=").concat(stringUtil.fromBool(actual)))
+      else false fi
+   };
+
    assertStringEquals(context : String, expected : String, actual : String) : Object {
       if not actual = expected then
          failContext(context, "expected=".concat(expected)

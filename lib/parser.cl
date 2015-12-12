@@ -727,7 +727,7 @@ class Parser {
             while not if tryParsePunct("}") then
                   true
                else
-                  peekToken().isEof()
+                  not isvoid peekToken().asEof()
             fi loop
                {
                   exprs.add(parseExpr(" for block"));
@@ -1009,8 +1009,7 @@ class Parser {
          fi
    };
 
-   parseClass() : ParsedClass {{
-      parseKeyword("class", " in program");
+   parseClass() : ParsedClass {
       let type : String <- parseType(" for class definition"),
             line : Int <- line(),
             inherits_ : String,
@@ -1039,23 +1038,44 @@ class Parser {
             else false fi;
 
             new ParsedClass.init(line, type, inherits_, features);
-         };
-   }};
+         }
+   };
 
    parse() : ParsedProgram {
-      let classes : Collection <- new LinkedList,
-            class_ : ParsedClass <- parseClass() in
+      let classes : Collection <- new LinkedList in
          {
-            classes.add(class_);
-            parsePunct(";", " after class definition");
-
-            while not peekToken().isEof() loop
-               let class_ : ParsedClass <- parseClass() in
+            let moreFiles : Bool <- true in
+               while moreFiles loop
                   {
-                     classes.add(class_);
-                     parsePunct(";", " after class definition");
+                     if parseKeyword("class", " in program") then
+                        {
+                           classes.add(parseClass());
+                           parsePunct(";", " after class definition");
+                        }
+                     else false fi;
+
+                     let continue : Bool <- true in
+                        while continue loop
+                           if tryParseKeyword("class") then
+                              {
+                                 classes.add(parseClass());
+                                 parsePunct(";", " after class definition");
+                              }
+                           else
+                              let tokenEof : TokenEof <- peekToken().asEof() in
+                                 if isvoid tokenEof then
+                                    errorToken(token, "expected 'class' in program")
+                                 else
+                                    {
+                                       skipToken();
+                                       moreFiles <- tokenEof.moreFiles();
+                                       continue <- false;
+                                    }
+                                 fi
+                           fi
+                        pool;
                   }
-            pool;
+               pool;
 
             new ParsedProgram.init(classes);
          }

@@ -15,10 +15,17 @@ class IOInputStream inherits InputStream {
    eof : Bool;
    -- The most recently read line.
    line : String;
-   -- Position within the line.
+   -- Position within the line (and virtual "\n").
    pos : Int <- 1;
    -- The number of buffered newlines.
    linefeeds : Int;
+
+   reset() : Object {{
+      eof <- false;
+      line <- "";
+      pos <- 1;
+      linefeeds <- 0;
+   }};
 
    readLinefeed() : String {{
       linefeeds <- linefeeds - 1;

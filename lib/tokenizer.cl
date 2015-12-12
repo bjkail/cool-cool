@@ -1,6 +1,6 @@
 class Token {
    toString() : String { "<invalid token>" };
-   isEof() : Bool { false };
+   asEof() : TokenEof { let void : TokenEof in void };
    asError() : TokenError { let void : TokenError in void };
    asPunct() : TokenPunct { let void : TokenPunct in void };
    asBinaryOp() : TokenBinaryOp { let void : TokenBinaryOp in void };
@@ -12,8 +12,16 @@ class Token {
 };
 
 class TokenEof inherits Token {
-   isEof() : Bool { true };
-   toString() : String { "EOF" };
+   moreFiles : Bool;
+   moreFiles() : Bool { moreFiles };
+
+   init(moreFiles_ : Bool) : SELF_TYPE {{
+      moreFiles <- moreFiles_;
+      self;
+   }};
+
+   toString() : String { "EOF".concat(if moreFiles then "[moreFiles]" else "" fi) };
+   asEof() : TokenEof { self };
 };
 
 class TokenStringValued inherits Token {
@@ -97,8 +105,9 @@ class TokenString inherits Token {
    asString() : TokenString { self };
 };
 
-class TokenizerDirectiveListener {
+class TokenizerListener {
    setEmptyLineEofCount(n : Int) : Object { false };
+   eof() : Object { false };
 };
 
 class TokenizerLineMapFile {
@@ -165,6 +174,9 @@ class Tokenizer {
    lineMap : TokenizerLineMap <- new TokenizerLineMap.init(stringUtil);
    lineMap() : TokenizerLineMap { lineMap };
 
+   numFiles : Int;
+   maxFiles : Int <- 1;
+
    bsChar : String; -- "\b"
    tabChar : String; -- "\t"
    vtChar : String; -- "\v"
@@ -173,10 +185,10 @@ class Tokenizer {
 
    lowerIdentName : String;
 
-   directiveListener : TokenizerDirectiveListener;
+   listener : TokenizerListener;
 
-   setDirectiveListener(listener : TokenizerDirectiveListener) : SELF_TYPE {{
-      directiveListener <- listener;
+   setListener(listener_ : TokenizerListener) : SELF_TYPE {{
+      listener <- listener_;
       self;
    }};
 
@@ -188,28 +200,32 @@ class Tokenizer {
    line() : Int { line };
 
    readChar() : String {
-      if next = "" then
-         let c : String <- is.read() in
-            {
-               if c = "\n" then
-                  line <- line + 1
-               else false fi;
+      let c : String in
+         {
+            if next = "" then
+               c <- is.read()
+            else
+               {
+                  c <- next;
+                  next <- "";
+               }
+            fi;
 
-               --new IO.out_string("readChar: [").out_string(c).out_string("]\n");
-               c;
-            }
-      else
-         let c : String <- next in
-            {
-               next <- "";
-               c;
-            }
-      fi
+            if c = "\n" then
+               line <- line + 1
+            else false fi;
+
+            c;
+         }
    };
 
-   unreadChar(c : String) : Object {
-      next <- c
-   };
+   unreadChar(c : String) : Object {{
+      if c = "\n" then
+         line <- line - 1
+      else false fi;
+
+      next <- c;
+   }};
 
    matchChar(match : String) : Bool {
       let c : String <- readChar() in
@@ -235,7 +251,7 @@ class Tokenizer {
          loop false pool
    };
 
-   readLine() : String {
+   readUntilEOL() : String {
       let s : String,
             continue : Bool <- true in
          {
@@ -245,7 +261,10 @@ class Tokenizer {
                      false
                   else
                      if c = "\n" then
-                        false
+                        {
+                           unreadChar("\n");
+                           false;
+                        }
                      else
                         {
                            s <- s.concat(c);
@@ -386,8 +405,8 @@ class Tokenizer {
    readEofDirective() : Object {
       let tokenInteger : TokenInteger <- readInteger("0").asInteger() in
          if not isvoid tokenInteger then
-            if not isvoid directiveListener then
-               directiveListener.setEmptyLineEofCount(tokenInteger.value())
+            if not isvoid listener then
+               listener.setEmptyLineEofCount(tokenInteger.value())
             else false fi
          else false fi
    };
@@ -423,11 +442,15 @@ class Tokenizer {
    };
 
    readFileDirective() : Object {
-      let file : String <- readLine() in
-         {
-            unreadChar("\n");
-            lineMap.beginFile(file, line);
-         }
+      let file : String <- readUntilEOL() in
+         lineMap.beginFile(file, line + 1)
+   };
+
+   readFilesDirective() : Object {
+      let tokenInteger : TokenInteger <- readInteger("0").asInteger() in
+         if not isvoid tokenInteger then
+            maxFiles <- tokenInteger.value()
+         else false fi
    };
 
    readDirective() : Object {
@@ -458,7 +481,13 @@ class Tokenizer {
                   if matchChar("e") then
                      if matchChar("=") then
                         readFileDirective()
-                     else false fi
+                     else
+                        if matchChar("s") then
+                           if matchChar("=") then
+                              readFilesDirective()
+                           else false fi
+                        else false fi
+                     fi
                   else false fi
                else false fi
             else false fi
@@ -739,7 +768,14 @@ class Tokenizer {
 
    readToken(c : String) : Token {
       if c = "" then
-         new TokenEof
+         {
+            if not isvoid listener then
+               listener.eof()
+            else false fi;
+
+            numFiles <- numFiles + 1;
+            new TokenEof.init(numFiles < maxFiles);
+         }
       else
          if isWhitespace(c) then
             let void : Token in void

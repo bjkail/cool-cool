@@ -8,6 +8,7 @@ class Main inherits Test {
       testEofDirective();
       testEscapeDirective();
       testFileDirective();
+      testFilesDirective();
 
       testPunct();
       testBinaryOp();
@@ -24,14 +25,21 @@ class Main inherits Test {
 
    newIOTokenizer(lines : Collection) : Tokenizer {
       let is : IOInputStream <- new TestIOInputStream.init(new TestIO.init(lines)) in
-         new Tokenizer.init(is).setDirectiveListener(new TestDirectiveListener.init(is))
+         new Tokenizer.init(is).setListener(new TestTokenizerListener.init(is))
+   };
+
+   assertTokenEofMoreFiles(context : String, moreFiles : Bool, t : Tokenizer) : Object {
+      let token : Token <- t.next(),
+            tokenEof : TokenEof <- token.asEof() in
+         if isvoid tokenEof then
+            failContext(context, "expected=EOF, actual=".concat(token.toString()))
+         else
+            assertBoolEquals(context.concat(" moreFiles"), moreFiles, tokenEof.moreFiles())
+         fi
    };
 
    assertTokenEof(context : String, t : Tokenizer) : Object {
-      let token : Token <- t.next() in
-         if not token.isEof() then
-            failContext(context, "expected=EOF, actual=".concat(token.toString()))
-         else false fi
+      assertTokenEofMoreFiles(context, false, t)
    };
 
    assertTokenError(context : String, value : String, t: Tokenizer) : Object {
@@ -281,6 +289,27 @@ class Main inherits Test {
                   assertStringEquals("multi b2", "a: line 2", flm.lineToString(2));
                   assertStringEquals("multi b2", "b: line 1", flm.lineToString(3));
                   assertStringEquals("multi b2", "b: line 2", flm.lineToString(4));
+               };
+         }
+      else false fi
+   };
+
+   testFilesDirective() : Object {
+      if begin("filesDirective") then
+         {
+            let t : Tokenizer <- newIOTokenizer(new LinkedList
+                     .add("--cool:files=2")
+                     .add("--cool:eof=1")
+                     .add("1")
+                     .add("")
+                     .add("2")
+                     .add("")
+                     .add("3")) in
+               {
+                  assertTokenInteger("", 1, t);
+                  assertTokenEofMoreFiles("", true, t);
+                  assertTokenInteger("", 2, t);
+                  assertTokenEof("", t);
                };
          }
       else false fi
@@ -546,7 +575,7 @@ class Main inherits Test {
    };
 };
 
-class TestDirectiveListener inherits TokenizerDirectiveListener {
+class TestTokenizerListener inherits TokenizerListener {
    is : IOInputStream;
 
    init(is_ : IOInputStream) : SELF_TYPE {{
@@ -556,5 +585,9 @@ class TestDirectiveListener inherits TokenizerDirectiveListener {
 
    setEmptyLineEofCount(n : Int) : Object {
       is.setEmptyLineEofCount(n)
+   };
+
+   eof() : Object {
+      is.reset()
    };
 };

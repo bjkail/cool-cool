@@ -1,12 +1,14 @@
 #!/bin/bash
 
-bootstrap=
+dir=$(dirname "$0")
+coolfiles=("$dir"/../cool.cl "$dir"/../lib/*.cl)
+
 formaterrors=
 files=()
 for arg in "$@"; do
   case $1 in
   --) shift; files+=("$@"); break;;
-  --bootstrap) bootstrap=--bootstrap;;
+  --bootstrap) files=("${coolfiles[@]}");;
   --format-errors) formaterrors=--format-errors;;
   -*) echo "$0: $1: unrecognized option" >&2; exit 1;;
   *) files+=("$1")
@@ -14,27 +16,40 @@ for arg in "$@"; do
   shift
 done
 
+write_escape_directive() {
+  printf -- '--cool:escape:\\b=\b:\\t=\t:\\v=\v:\\f=\f:\\r=\r:\n'
+}
+
+run_interpreter_wrapper() {
+  "$dir"/interpreter-wrapper $formaterrors "${coolfiles[@]}"
+}
+
 if ((${#files[@]} == 0)); then
-  tmpfile=
+  { write_escape_directive; cat; } | run_interpreter_wrapper
 else
+  # Use a temporary file rather than a pipeline so that errors reading the input
+  # files are not written in parallel with errors from the interpreter.
   tmpfile=$(mktemp --tmpdir XXXXXXXXXX.cl)
   trap 'rm "$tmpfile"' EXIT
-  for file in "${files[@]}"; do
-    cat < "$file" >> "$tmpfile" || exit 1
-  done
-  bootstrap=
-fi
 
-dir=$(dirname "$0")
-{
-  printf -- '--cool:escape:\\b=\b:\\t=\t:\\v=\v:\\f=\f:\\r=\r:\n'
-  if test -z "$bootstrap"; then
-    if test -z "$tmpfile"; then
-      cat
-    else
-      for file in "${files[@]}"; do
-        cat < "$file"
-      done
-    fi
-  fi
-} | "$dir"/interpreter-wrapper $formaterrors $bootstrap "$dir"/../cool.cl "$dir"/../lib/*.cl
+  {
+    write_escape_directive
+
+    eoflen=1024
+    echo "--cool:eof=$eoflen"
+
+    eof=$(printf '%*s' $eoflen)
+    eof=${eof// /$'\n'}
+    echo "--cool:files=${#files[@]}"
+
+    for file in "${files[@]}"; do
+      echo "--cool:file=$file"
+      cat < "$file" || exit 1
+      # This will print N+1 newlines, which is what we want since the last line
+      # of the file might not have ended in a newline
+      echo "$eof"
+    done
+  } > "$tmpfile"
+
+  run_interpreter_wrapper < "$tmpfile"
+fi

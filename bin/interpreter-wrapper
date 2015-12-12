@@ -9,7 +9,6 @@ fi
 
 set -o pipefail
 
-bootstrap=false
 formaterrors=false
 
 cmd=("$COOL_INTERPRETER")
@@ -17,7 +16,6 @@ files=()
 while test $# -ne 0; do
   case $1 in
   --) shift; files+=("$@"); break;;
-  --bootstrap) bootstrap=true;;
   --format-errors) formaterrors=true;;
   -*) cmd+=("$1");;
   *) files+=("$1")
@@ -25,9 +23,7 @@ while test $# -ne 0; do
   shift
 done
 
-if ((${#files[@]} == 0)); then
-  bootstrap=false
-else
+if ((${#files[@]} != 0)); then
   tmpfile=$(mktemp --tmpdir XXXXXXXXXX.cl)
   trap 'rm "$tmpfile"' EXIT
 
@@ -43,16 +39,8 @@ else
   fi
 fi
 
-run() {
-  if $bootstrap; then
-    "${cmd[@]}" < "$tmpfile"
-  else
-    "${cmd[@]}"
-  fi
-}
-
 if $formaterrors; then
-  run | while IFS= read -r line; do
+  "${cmd[@]}" | while IFS= read -r line; do
     if [[ "$line" =~ ^"ERROR: "[0-9]+": "(Parser|Type-Check|Exception)": " ]]; then
       line=${line#ERROR: }
       error=${line#*: }
@@ -74,5 +62,5 @@ if $formaterrors; then
     fi
   done
 else
-  run
+  "${cmd[@]}"
 fi

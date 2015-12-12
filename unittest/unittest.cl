@@ -50,7 +50,7 @@ class Test {
       else false fi
    };
 
-   assertNotVoid(context : String, actual : Bool) : Object {
+   assertNotVoid(context : String, actual : Object) : Object {
       if isvoid actual then
          failContext(context, "expected=not void, actual=void")
       else false fi

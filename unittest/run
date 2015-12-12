@@ -36,4 +36,5 @@ run_test linked-list-unittest.cl
 run_test string-list-map-unittest.cl
 run_test io-unittest.cl
 run_test tokenizer-unittest.cl
+run_test parser-unittest.cl
 run_test analyzer-unittest.cl

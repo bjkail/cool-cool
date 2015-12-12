@@ -3,9 +3,8 @@ class Main {
       let is : IOInputStream <- new IOInputStream,
             listener : MainTokenizerListener <- new MainTokenizerListener.init(is),
             tokenizer : Tokenizer <- new Tokenizer.init(is).setListener(listener),
-            parser : Parser <- new Parser.init(tokenizer),
-            program : ParsedProgram <- parser.parse() in
-         new IO.out_string(program.type_name()).out_string("\n")
+            parser : Parser <- new Parser.init(tokenizer) in
+         parser.parse()
    };
 };
 

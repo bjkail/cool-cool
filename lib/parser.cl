@@ -1077,7 +1077,11 @@ class Parser {
                   }
                pool;
 
-            new ParsedProgram.init(classes);
+            if error then
+               let void : ParsedProgram in void
+            else
+               new ParsedProgram.init(classes)
+            fi;
          }
    };
 };

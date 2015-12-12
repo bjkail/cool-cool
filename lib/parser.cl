@@ -1047,7 +1047,7 @@ class Parser {
             let moreFiles : Bool <- true in
                while moreFiles loop
                   {
-                     if parseKeyword("class", " in program") then
+                     if parseKeyword("class", " for program") then
                         {
                            classes.add(parseClass());
                            parsePunct(";", " after class definition");
@@ -1064,7 +1064,7 @@ class Parser {
                            else
                               let tokenEof : TokenEof <- peekToken().asEof() in
                                  if isvoid tokenEof then
-                                    errorToken(token, "expected 'class' in program")
+                                    errorToken(token, "expected 'class' for program")
                                  else
                                     {
                                        skipToken();

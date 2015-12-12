@@ -45,6 +45,7 @@ class ParsedAttribute inherits ParsedFeature {
    type() : String { type };
 
    expr : ParsedExpr;
+   expr() : ParsedExpr { expr };
 
    init(line_ : Int, id_ : String, type_ : String, expr_ : ParsedExpr) : SELF_TYPE {{
       line <- line_;

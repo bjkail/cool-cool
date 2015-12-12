@@ -24,8 +24,22 @@ while test $# -ne 0; do
 done
 
 if ((${#files[@]} != 0)); then
-  tmpfile=$(mktemp --tmpdir XXXXXXXXXX.cl)
-  trap 'rm "$tmpfile"' EXIT
+  # The interpreter requires a file ending in ".cl", but Mac OS X mktemp treats
+  # the template as a prefix.  Attempt to use the GNU-specific --tmpdir option,
+  # which can fail either because the temporary file could not be created for
+  # some reason or because mktemp is not GNU mktemp and the option is invalid.
+  if tmpfile=$(mktemp --tmpdir XXXXXXXXXX.cl 2> /dev/null); then
+    trap 'rm "$tmpfile"' EXIT
+  else
+    # Fallback to create a temporary file within a temporary directory.  Use a
+    # template string in case mktemp is GNU mktemp.
+    tmpdir=`mktemp -d -t coolXXXXXXXXXX` || exit 1
+    # Temporarily set an EXIT trap to delete the file.
+    trap 'rmdir "$tmpdir"' EXIT
+    tmpfile=`mktemp "$tmpdir"/x.cl` || exit 1
+    # Override the EXIT trap to delete the file and directory.
+    trap 'rm "$tmpfile" && rmdir "$tmpdir"' EXIT
+  fi
 
   filenumlines=()
   for file in "${files[@]}"; do

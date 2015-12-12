@@ -29,7 +29,7 @@ if ((${#files[@]} == 0)); then
 else
   # Use a temporary file rather than a pipeline so that errors reading the input
   # files are not written in parallel with errors from the interpreter.
-  tmpfile=$(mktemp --tmpdir XXXXXXXXXX.cl)
+  tmpfile=$(mktemp -t coolXXXXXXXXXX) || exit 1
   trap 'rm "$tmpfile"' EXIT
 
   {

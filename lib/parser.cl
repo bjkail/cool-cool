@@ -176,7 +176,7 @@ class ParsedVar inherits ParsedNode {
    id() : String { id };
 
    type : String;
-   type() : String { id };
+   type() : String { type };
 
    expr : ParsedExpr;
    expr() : ParsedExpr { expr };

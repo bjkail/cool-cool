@@ -1,11 +1,20 @@
 class AnalyzedProgram {
-   types : Collection;
-   types() : Collection { types };
+   types : StringMap;
+   types() : StringMap { types };
+
+   getType(name : String) : AnalyzedType {
+      let type : Object <- types.getWithString(name) in
+         if isvoid type then
+            let void : AnalyzedType in void
+         else
+            case type of x : AnalyzedType => x; esac
+         fi
+   };
 
    mainMethod : AnalyzedMethod;
    mainMethod() : AnalyzedMethod { mainMethod };
 
-   init(types_ : Collection, mainMethod_ : AnalyzedMethod) : SELF_TYPE {{
+   init(types_ : StringMap, mainMethod_ : AnalyzedMethod) : SELF_TYPE {{
       types <- types_;
       mainMethod <- mainMethod_;
       self;
@@ -142,6 +151,11 @@ class AnalyzedType {
          fi
    };
 
+   addMethodOverride(method : AnalyzedMethod) : Object {{
+      methods.putWithString(method.id(), method);
+      addFeature(method);
+   }};
+
    processInherits() : Object {{
       inheritsDepth <- inheritsType.inheritsDepth() + 1;
       attributes <- inheritsType.attributes().copy();
@@ -195,6 +209,10 @@ class AnalyzedFeature {
 
    unsetParsedFeature() : Object { new Object.abort() };
 
+   expr : AnalyzedExpr;
+   expr() : AnalyzedExpr { expr };
+   setExpr(expr_ : AnalyzedExpr) : Object { expr <- expr_ };
+
    asAttribute() : AnalyzedAttribute { let void : AnalyzedAttribute in void };
    asMethod() : AnalyzedMethod { let void : AnalyzedMethod in void };
 };
@@ -227,10 +245,6 @@ class AnalyzedMethod inherits AnalyzedFeature {
 
    formalTypes : Collection;
    formalTypes() : Collection { formalTypes };
-
-   expr : AnalyzedExpr;
-   expr() : AnalyzedExpr { expr };
-   setExpr(expr_ : AnalyzedExpr) : Object { expr <- expr_ };
 
    initBuiltin(id_ : String, formalTypes_ : Collection, returnType_ : AnalyzedType) : SELF_TYPE {{
       id <- id_;
@@ -635,7 +649,7 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
 
                         let id : String <- var.id() in
                            if id = "self" then
-                              analyzer.errorAt(var, "invalid redefinition of 'self' variable in 'let' expression")
+                              analyzer.errorAt(var, "redefinition of 'self' variable in 'let' expression")
                            else
                               env.putVar(id, type)
                            fi;
@@ -667,7 +681,7 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
                            {
                               let id : String <- branch.id() in
                                  if id = "self" then
-                                    analyzer.errorAt(branch, "invalid redefinition of 'self' variable in 'case' expression")
+                                    analyzer.errorAt(branch, "redefinition of 'self' variable in 'case' expression")
                                  else
                                     env.putVar(id, checkType)
                                  fi;
@@ -1053,6 +1067,79 @@ class Analyzer {
          }
    };
 
+   analyzeMethodOverride(type : AnalyzedType, method : AnalyzedMethod, oldMethod : AnalyzedMethod) : Bool {
+      let oldType : AnalyzedType <- oldMethod.definingType(),
+            result : Bool <- true in
+         {
+            if type = oldMethod.definingType() then
+               {
+                  errorAt(method.parsedMethod(), "redefinition of method '".concat(method.id())
+                        .concat("' in class '").concat(type.name()).concat("'"));
+                  result <- false;
+               }
+            else
+               {
+                  let formalTypes : Collection <- method.formalTypes(),
+                        numFormalTypes : Int <- formalTypes.size(),
+                        oldFormalTypes : Collection <- oldMethod.formalTypes(),
+                        numOldFormalTypes : Int <- oldFormalTypes.size() in
+                     if not numFormalTypes = numOldFormalTypes then
+                        {
+                           errorAt(method.parsedMethod(), "redefinition of method '".concat(method.id())
+                                 .concat("' in class '").concat(type.name())
+                                 .concat("' with ").concat(stringUtil.fromInt(numFormalTypes))
+                                 .concat(" formal parameters is not the same as ")
+                                 .concat(stringUtil.fromInt(numOldFormalTypes))
+                                 .concat(" in class '")
+                                 .concat(oldType.name())
+                                 .concat("'"));
+                           result <- false;
+                        }
+                     else
+                        let formalTypeIter : Iterator <- formalTypes.iterator(),
+                              oldFormalTypeIter : Iterator <- oldFormalTypes.iterator(),
+                              index : Int <- 1 in
+                           while formalTypeIter.next() loop
+                              {
+                                 oldFormalTypeIter.next();
+                                 let formalType : AnalyzedType <- case formalTypeIter.get() of x : AnalyzedType => x; esac,
+                                       oldFormalType : AnalyzedType <- case oldFormalTypeIter.get() of x : AnalyzedType => x; esac in
+                                    if not formalType = oldFormalType then
+                                       {
+                                          errorAt(method.parsedMethod(), "redefinition of method '".concat(method.id())
+                                                .concat("' in class '").concat(type.name())
+                                                .concat("' with type '").concat(formalType.name())
+                                                .concat("' for formal parameter #").concat(stringUtil.fromInt(index))
+                                                .concat(" is not the same as type '").concat(oldFormalType.name())
+                                                .concat("' in class '").concat(oldType.name()).concat("'"));
+                                          result <- false;
+                                       }
+                                    else false fi;
+
+                                 index <- index + 1;
+                              }
+                           pool
+                     fi;
+
+                  let returnType : AnalyzedType <- method.returnType(),
+                        oldReturnType : AnalyzedType <- oldMethod.returnType() in
+                     if not returnType = oldReturnType then
+                        {
+                           errorAt(method.parsedMethod(), "redefinition of method '".concat(method.id())
+                                 .concat("' in class '").concat(type.name())
+                                 .concat("' with return type '").concat(returnType.name())
+                                 .concat("' is not the same as type '").concat(oldReturnType.name())
+                                 .concat("' in class '").concat(oldType.name()).concat("'"));
+                           result <- false;
+                        }
+                     else false fi;
+               }
+            fi;
+
+            result;
+         }
+   };
+
    defineFeatures(type : AnalyzedType) : Object {
       if isvoid type.attributes() then
          {
@@ -1066,14 +1153,16 @@ class Analyzer {
                         let feature : ParsedFeature <- case featureIter.get() of x : ParsedFeature => x; esac,
                               attr : ParsedAttribute <- feature.asAttribute() in
                            if isvoid attr then
-                              -- TODO: allow override
-                              if not isvoid type.addMethod(createAnalyzedMethod(feature.asMethod())) then
-                                 errorAt(feature, "unexpected redefinition of method '".concat(feature.id())
-                                       .concat("' in class '").concat(type.name()).concat("'"))
-                              else false fi
+                              let method : AnalyzedMethod <- createAnalyzedMethod(feature.asMethod()),
+                                    oldMethod : AnalyzedMethod <- type.addMethod(method) in
+                                 if not isvoid oldMethod then
+                                    if analyzeMethodOverride(type, method, oldMethod) then
+                                       type.addMethodOverride(method)
+                                    else false fi
+                                 else false fi
                            else
                               if not isvoid type.addAttribute(createAnalyzedAttribute(attr)) then
-                                 errorAt(feature, "unexpected redefinition of attribute '".concat(feature.id())
+                                 errorAt(feature, "redefinition of attribute '".concat(feature.id())
                                        .concat("' in class '").concat(type.name()).concat("'"))
                               else false fi
                            fi
@@ -1105,7 +1194,27 @@ class Analyzer {
    };
 
    analyzeAttribute(env : AnalyzedTypeEnv, attr : AnalyzedAttribute) : Object {
-      false
+      if attr.id() = "self" then
+         errorAt(attr.parsedAttribute(), "invalid attribute name 'self'")
+      else
+         let expr : AnalyzedExpr in
+            {
+               let parsedExpr : ParsedExpr <- attr.parsedAttribute().expr() in
+                  if not isvoid parsedExpr then
+                     {
+                        expr <- env.analyze(parsedExpr);
+
+                        if not expr.type().conformsTo(attr.type()) then
+                           errorAt(parsedExpr, "expression type '".concat(expr.type().name())
+                                 .concat("' does not conform to type '").concat(attr.type().name())
+                                 .concat("' of attribute '").concat(attr.id()).concat("'"))
+                        else false fi;
+                     }
+                  else false fi;
+
+               attr.setExpr(expr);
+            }
+      fi
    };
 
    analyzeMethod(classEnv : AnalyzedTypeEnv, method : AnalyzedMethod) : Object {
@@ -1122,7 +1231,7 @@ class Analyzer {
                            id : String <- formal.id() in
                         {
                            if id = "self" then
-                              errorAt(formal, "unexpected formal parameter 'self'")
+                              errorAt(formal, "invalid formal parameter name 'self'")
                            else
                               env.put(id, new AnalyzedFormalObject.init(formalType, index))
                            fi;
@@ -1161,7 +1270,7 @@ class Analyzer {
                      if isvoid types.putNewWithString(typeName, type) then
                         typeList.add(type)
                      else
-                        errorAt(class_, "unexpected redefinition of class '".concat(typeName).concat("'"))
+                        errorAt(class_, "redefinition of class '".concat(typeName).concat("'"))
                      fi
                pool;
 
@@ -1276,7 +1385,7 @@ class Analyzer {
                      if error then
                         let void : AnalyzedProgram in void
                      else
-                        new AnalyzedProgram.init(typeList, mainMethod)
+                        new AnalyzedProgram.init(types, mainMethod)
                      fi;
                };
          }

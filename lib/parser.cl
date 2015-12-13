@@ -1065,7 +1065,10 @@ class Parser {
                            else
                               let tokenEof : TokenEof <- peekToken().asEof() in
                                  if isvoid tokenEof then
-                                    errorToken(token, "expected 'class' for program")
+                                    {
+                                       errorToken(token, "expected 'class' for program");
+                                       skipToken();
+                                    }
                                  else
                                     {
                                        skipToken();

@@ -872,31 +872,32 @@ class Parser {
          }
    };
 
-   parseExprImpl(where : String, minExpr : Int) : ParsedExpr {
+   parseExprImpl(where : String, minPrec : Int) : ParsedExpr {
       -- Precedence:
-      -- 1. "<-"
-      -- 2. "not"
-      -- 3. "<=", "<", "="
-      -- 4. "+", "-"
-      -- 5. "*", "/"
-      -- 6. "isvoid"
-      -- 7. "~"
-      -- 8. "@"
       -- 9. "."
+      -- 8. "@"
+      -- 7. "~"
+      -- 6. "isvoid"
+      -- 5. "*", "/"
+      -- 4. "+", "-"
+      -- 3. "<=", "<", "="
+      -- 2. "not"
+      -- 1. "<-"
 
       -- [right, op, opLine, left, ...]
       let stack : LinkedList <- new LinkedList.addFirst(new TokenBinaryOp).addFirst(parsePostfixExpr(where)) in
          {
-            --new IO.out_string("> parseExprImpl\n")
             let tokenBinaryOp : TokenBinaryOp <- peekToken().asBinaryOp() in
-               while not isvoid tokenBinaryOp loop
+               while if not isvoid tokenBinaryOp then
+                     minPrec <= tokenBinaryOp.prec()
+                  else false
+               fi loop
                   {
-                     --new IO.out_string(": parseExprImpl: op=").out_string(tokenBinaryOp.toString()).out_string("\n");
                      skipToken();
                      let line : Int <- line(),
                            expr : ParsedExpr <- parsePostfixExpr("") in
                         {
-                           while tokenBinaryOp.prec() < case stack.get(1) of x : TokenBinaryOp => x.prec(); esac loop
+                           while tokenBinaryOp.prec() <= case stack.get(1) of x : TokenBinaryOp => x.prec(); esac loop
                               let right : ParsedExpr <- case stack.removeFirst() of x : ParsedExpr => x; esac,
                                     tokenBinaryOp0 : TokenBinaryOp <- case stack.removeFirst() of x : TokenBinaryOp => x; esac,
                                     tokenBinaryOp0Line : Int <- case stack.removeFirst() of x : Int => x; esac,
@@ -913,7 +914,6 @@ class Parser {
                   }
                pool;
 
-            --new IO.out_string(": parseExprImpl: final reduce\n");
             while not 0 = case stack.get(1) of x : TokenBinaryOp => x.prec(); esac loop
                let right : ParsedExpr <- case stack.removeFirst() of x : ParsedExpr => x; esac,
                      tokenBinaryOp0 : TokenBinaryOp <- case stack.removeFirst() of x : TokenBinaryOp => x; esac,
@@ -922,7 +922,6 @@ class Parser {
                   stack.addFirst(new ParsedBinaryExpr.init(tokenBinaryOp0Line, tokenBinaryOp0.value(), left, right))
             pool;
 
-            --new IO.out_string("< parseExprImpl, peek=").out_string(peekToken().toString()).out_string("\n");
             case stack.removeFirst() of x : ParsedExpr => x; esac;
          }
    };

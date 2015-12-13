@@ -9,8 +9,12 @@ class Main inherits Test {
    assertAnalyzerErrorImpl(context : String, error : String, program : String) : Object {
       let tokenizer : Tokenizer <- new Tokenizer.init(new TestStringInputStream.init(program)),
             parser : Parser <- new Parser.init(tokenizer),
-            analyzer : TestAnalyzer <- new TestAnalyzer.init(tokenizer.lineMap()).analyze(parser.parse()) in
-         assertStringEquals(context, error, analyzer.errorString())
+            analyzer : TestAnalyzer <- new TestAnalyzer.init(tokenizer.lineMap()),
+            program : AnalyzedProgram <- analyzer.analyze(parser.parse()) in
+         {
+            assertStringEquals(context, error, analyzer.errorString());
+            assertVoid(context, program);
+         }
    };
 
    assertAnalyzerError(context : String, error : String, program : String) : Object {

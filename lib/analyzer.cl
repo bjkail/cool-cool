@@ -1,3 +1,17 @@
+class AnalyzedProgram {
+   types : Collection;
+   types() : Collection { types };
+
+   mainMethod : AnalyzedMethod;
+   mainMethod() : AnalyzedMethod { mainMethod };
+
+   init(types_ : Collection, mainMethod_ : AnalyzedMethod) : SELF_TYPE {{
+      types <- types_;
+      mainMethod <- mainMethod_;
+      self;
+   }};
+};
+
 class AnalyzedType {
    name : String;
    name() : String { name };
@@ -1126,7 +1140,7 @@ class Analyzer {
          }
    };
 
-   analyze(prog : ParsedProgram) : SELF_TYPE {
+   analyze(prog : ParsedProgram) : AnalyzedProgram {
       let typeList : Collection <- new LinkedList in
          {
             -- Register all classes.
@@ -1213,39 +1227,49 @@ class Analyzer {
                pool;
 
             -- Find main
-            let mainTypeObject : Object <- types.getWithString("Main") in
-               if isvoid mainTypeObject then
-                  error("expected class 'Main'")
-               else
-                  let mainType : AnalyzedType <- case mainTypeObject of x : AnalyzedType => x; esac,
-                        mainMethod : AnalyzedMethod <- mainType.getMethod("main") in
-                     if isvoid mainMethod then
-                        errorAt(mainType.parsedClass(), "expected method 'main' in class 'Main'")
+            let mainMethod : AnalyzedMethod in
+               {
+                  let mainTypeObject : Object <- types.getWithString("Main") in
+                     if isvoid mainTypeObject then
+                        error("expected class 'Main'")
                      else
-                        let numFormals : Int <- mainMethod.formalTypes().size() in
-                           if not numFormals = 0 then
-                              errorAt(mainMethod.parsedMethod(),
-                                    "expected 0 formal parameters for method 'main' in class 'Main'")
-                           else false fi
-                     fi
-               fi;
+                        let mainType : AnalyzedType <- case mainTypeObject of x : AnalyzedType => x; esac in
+                           {
+                              mainMethod <- mainType.getMethod("main");
 
-            -- Allow parse nodes to be GC'ed.
-            let classIter : Iterator <- typeList.iterator() in
-               while classIter.next() loop
-                  let type : AnalyzedType <- case classIter.get() of x : AnalyzedType => x; esac in
-                     {
-                        let featureIter : Iterator <- type.features().iterator() in
-                           while featureIter.next() loop
-                              let feature : AnalyzedFeature <- case featureIter.get() of x : AnalyzedFeature => x; esac in
-                                 feature.unsetParsedFeature()
-                           pool;
+                              if isvoid mainMethod then
+                                 errorAt(mainType.parsedClass(), "expected method 'main' in class 'Main'")
+                              else
+                                 let numFormals : Int <- mainMethod.formalTypes().size() in
+                                    if not numFormals = 0 then
+                                       errorAt(mainMethod.parsedMethod(),
+                                             "expected 0 formal parameters for method 'main' in class 'Main'")
+                                    else false fi
+                              fi;
+                           }
+                     fi;
 
-                        type.unsetParsedClass();
-                     }
-               pool;
+                     -- Allow parse nodes to be GC'ed.
+                     let classIter : Iterator <- typeList.iterator() in
+                        while classIter.next() loop
+                           let type : AnalyzedType <- case classIter.get() of x : AnalyzedType => x; esac in
+                              {
+                                 let featureIter : Iterator <- type.features().iterator() in
+                                    while featureIter.next() loop
+                                       let feature : AnalyzedFeature <- case featureIter.get() of x : AnalyzedFeature => x; esac in
+                                          feature.unsetParsedFeature()
+                                    pool;
 
-            self;
+                                 type.unsetParsedClass();
+                              }
+                        pool;
+
+                     if error then
+                        let void : AnalyzedProgram in void
+                     else
+                        new AnalyzedProgram.init(typeList, mainMethod)
+                     fi;
+               };
          }
    };
 };

@@ -647,11 +647,11 @@ class Parser {
    };
 
    parseCaseBranch() : ParsedVar {
-      let id : String <- parseId(" for 'case' branch"),
+      let id : String <- parseId(" for 'case' variable"),
             line : Int <- line() in
          {
-            parsePunct(":", " for 'case' branch");
-            let type : String <- parseType(" for 'case' branch") in
+            parsePunct(":", " for 'case' variable type");
+            let type : String <- parseType(" for 'case' variable") in
                {
                   parsePunct("=>", " for 'case' branch");
                   let expr : ParsedExpr <- parseExpr(" for 'case' branch") in
@@ -662,7 +662,7 @@ class Parser {
 
    parseCaseExpr() : ParsedExpr {
       let line : Int <- line(),
-            expr : ParsedExpr <- parseExpr(" for 'case' expression") in
+            expr : ParsedExpr <- parseExpr(" for 'case'") in
          {
             parseKeyword("of", " for 'case' expression");
             let branches : Collection <- new LinkedList.add(parseCaseBranch()) in
@@ -694,7 +694,7 @@ class Parser {
                   parseCaseExpr()
                else
                   if value = "new" then
-                     new ParsedNewExpr.init(line(), parseType(" for 'new'"))
+                     new ParsedNewExpr.init(line(), parseType(" for 'new' expression"))
                   else
                      if value = "isvoid" then
                         new ParsedUnaryExpr.init(line(), "isvoid", parseExprImpl(" for 'isvoid'", 6))
@@ -751,7 +751,7 @@ class Parser {
 
    parsePunctExpr(value : String) : ParsedExpr {
       if value = "~" then
-         new ParsedUnaryExpr.init(line(), "~", parseExprImpl(" for complement", 7))
+         new ParsedUnaryExpr.init(line(), "~", parseExprImpl(" for '~'", 7))
       else
          if value = "{" then
             parseBlock()
@@ -853,7 +853,7 @@ class Parser {
                         if tokenPunct.value() = "@" then
                            {
                               skipToken();
-                              let type : String <- parseType(" for static dispatch type") in
+                              let type : String <- parseType(" for static dispatch") in
                                  {
                                     parsePunct(".", " for dispatch method");
                                     expr <- parseDispatch(tokenizer.line(), expr, type);
@@ -895,7 +895,7 @@ class Parser {
                   {
                      skipToken();
                      let line : Int <- line(),
-                           expr : ParsedExpr <- parsePostfixExpr("") in
+                           expr : ParsedExpr <- parsePostfixExpr(" for '".concat(tokenBinaryOp.value()).concat("'")) in
                         {
                            while tokenBinaryOp.prec() <= case stack.get(1) of x : TokenBinaryOp => x.prec(); esac loop
                               let right : ParsedExpr <- case stack.removeFirst() of x : ParsedExpr => x; esac,

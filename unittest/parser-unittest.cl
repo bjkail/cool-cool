@@ -9,7 +9,7 @@ class Main inherits Test {
    }};
 
    newParser(program : String) : TestParser {
-      new TestParser.init(new Tokenizer.init(new TestStringInputStream.init(program)))
+      new TestParser.init(new Tokenizer.init(new TestStringInputStream.init(program.concat("\n"))))
    };
 
    assertParserError(context : String, error : String, program : String) : Object {
@@ -889,7 +889,7 @@ class TestParser inherits Parser {
          false
       else
          {
-            errorString <- tokenizer.lineMap().lineToString(tokenizer.line()).concat(": ").concat(s);
+            errorString <- tokenizer.lineMap().lineToString(line()).concat(": ").concat(s);
             error <- true;
             token <- new TokenEof;
             false;

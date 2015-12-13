@@ -373,6 +373,7 @@ class Parser {
    stringUtil : StringUtil <- new StringUtil;
    tokenizer : Tokenizer;
    token : Token;
+   line : Int <- 1;
    error : Bool;
 
    init(tokenizer_ : Tokenizer) : SELF_TYPE {{
@@ -391,6 +392,12 @@ class Parser {
                   tokenError <- token.asError();
                }
             pool;
+
+            -- Report EOF errors on the last line with content.
+            if isvoid token.asEof() then
+               line <- tokenizer.line()
+            else false fi;
+
             token;
          }
    };
@@ -425,14 +432,14 @@ class Parser {
    };
 
    line() : Int {
-      tokenizer.line()
+      line
    };
 
    error(s : String) : Bool {{
       if not error then
          {
             new IO.out_string("PARSE ERROR: ")
-                  .out_string(tokenizer.lineMap().lineToString(tokenizer.line()))
+                  .out_string(tokenizer.lineMap().lineToString(line()))
                   .out_string(": ")
                   .out_string(s)
                   .out_string("\n");
@@ -774,7 +781,7 @@ class Parser {
 
    parseSimpleExpr(where : String) : ParsedExpr {
       let token : Token <- readToken(),
-            line : Int <- tokenizer.line(),
+            line : Int <- line(),
             tokenId : TokenId <- token.asId() in
          if not isvoid tokenId then
             let id : String <- tokenId.value(),
@@ -854,7 +861,7 @@ class Parser {
                      if tokenPunct.value() = "." then
                         {
                            skipToken();
-                           expr <- parseDispatch(tokenizer.line(), expr, "");
+                           expr <- parseDispatch(line(), expr, "");
                         }
                      else
                         if tokenPunct.value() = "@" then
@@ -863,7 +870,7 @@ class Parser {
                               let type : String <- parseType(" for static dispatch") in
                                  {
                                     parsePunct(".", " for dispatch method");
-                                    expr <- parseDispatch(tokenizer.line(), expr, type);
+                                    expr <- parseDispatch(line(), expr, type);
                                  };
                            }
                         else

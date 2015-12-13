@@ -89,6 +89,11 @@ class AnalyzedType {
    features : Collection <- new LinkedList;
    features() : Collection { features };
 
+   addFeature(feature : AnalyzedFeature) : Object {{
+      feature.initDefiningType(self);
+      features.add(feature);
+   }};
+
    attributes : StringMap;
    attributes() : StringMap { attributes };
 
@@ -105,7 +110,7 @@ class AnalyzedType {
       let old : Object <- attributes.putNewWithString(attr.id(), attr) in
          if isvoid old then
             {
-               features.add(attr);
+               addFeature(attr);
                let void : AnalyzedAttribute in void;
             }
          else
@@ -129,7 +134,7 @@ class AnalyzedType {
       let old : Object <- methods.putNewWithString(method.id(), method) in
          if isvoid old then
             {
-               features.add(method);
+               addFeature(method);
                let void : AnalyzedMethod in void;
             }
          else
@@ -181,6 +186,10 @@ class AnalyzedSelfType inherits AnalyzedType {
 };
 
 class AnalyzedFeature {
+   definingType : AnalyzedType;
+   definingType() : AnalyzedType { definingType };
+   initDefiningType(definingType_ : AnalyzedType) : Object { definingType <- definingType_ };
+
    id : String;
    id() : String { id };
 

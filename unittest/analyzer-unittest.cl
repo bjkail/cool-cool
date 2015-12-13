@@ -6,11 +6,19 @@ class Main inherits Test {
       testExpr();
    }};
 
-   assertAnalyzerErrorImpl(context : String, error : String, program : String) : Object {
+   newAnalyzer(context : String, program : String) : TestAnalyzer {
       let tokenizer : Tokenizer <- new Tokenizer.init(new TestStringInputStream.init(program)),
             parser : Parser <- new Parser.init(tokenizer),
-            analyzer : TestAnalyzer <- new TestAnalyzer.init(tokenizer.lineMap()),
-            program : AnalyzedProgram <- analyzer.analyze(parser.parse()) in
+            program : ParsedProgram <- parser.parse() in
+         {
+            assertNotVoid(context.concat(" program"), program);
+            new TestAnalyzer.initTest(tokenizer.lineMap(), program);
+         }
+   };
+
+   assertAnalyzerErrorImpl(context : String, error : String, program : String) : Object {
+      let analyzer : TestAnalyzer <- newAnalyzer(context, program),
+            program : AnalyzedProgram <- analyzer.analyzeTest() in
          {
             assertStringEquals(context, error, analyzer.errorString());
             assertVoid(context, program);
@@ -20,6 +28,24 @@ class Main inherits Test {
    assertAnalyzerError(context : String, error : String, program : String) : Object {
       assertAnalyzerErrorImpl(context, error, "class Main { main() : Object { 0 }; }; ".concat(program))
    };
+
+   assertStringMapIteratorNext(context : String, key : String, iter : StringMapIterator) : Object {{
+      assertTrue(context.concat(" next"), iter.next());
+      assertStringEquals(context.concat(" key"), key, iter.key());
+      iter.value();
+   }};
+
+   assertSameType(context : String, expected : AnalyzedType, actual : AnalyzedType) : Object {
+      if not actual = expected then
+         failContext(context, "expected=".concat(expected.name())
+               .concat(", actual=").concat(actual.name()))
+      else false fi
+   };
+
+   getIteratorNext(iter : Iterator) : Object {{
+      assertTrue("getNext", iter.next());
+      iter.get();
+   }};
 
    testRegister() : Object {
       if begin("register") then
@@ -51,6 +77,27 @@ class Main inherits Test {
                   "class Main { a : Bool; };");
             assertAnalyzerErrorImpl("", "line 1: expected 0 formal parameters for method 'main' in class 'Main'",
                   "class Main { main(a : Bool) : Object { 0 }; };");
+
+            let analyzer : TestAnalyzer <- newAnalyzer("type", "class Main { main() : Object { false }; };"),
+                  program : AnalyzedProgram <- analyzer.analyzeTest(),
+                  mainMethod : AnalyzedMethod <- program.mainMethod(),
+                  typeIter : Iterator <- program.types().iterator() in
+               {
+                  assertStringEquals("type main method", "main", mainMethod.id());
+
+                  let type : AnalyzedType <- case getIteratorNext(typeIter) of x : AnalyzedType => x; esac,
+                        methodIter : StringMapIterator <- type.methods().iterator() in
+                     {
+                        assertSameType("type main method", type, mainMethod.definingType());
+                        assertTrue("method main", mainMethod = assertStringMapIteratorNext("method", "main", methodIter));
+                        assertNotVoid("method copy", assertStringMapIteratorNext("method", "copy", methodIter));
+                        assertNotVoid("method type_name", assertStringMapIteratorNext("method", "type_name", methodIter));
+                        assertNotVoid("method abort", assertStringMapIteratorNext("method", "abort", methodIter));
+                        assertFalse("method end", methodIter.next());
+                     };
+
+                  assertFalse("type", typeIter.next());
+               };
          }
       else false fi
    };
@@ -78,8 +125,19 @@ class TestAnalyzer inherits Analyzer {
    errorString : String;
    errorString() : String { errorString };
 
+   program : ParsedProgram;
+
+   initTest(lineMap : TokenizerLineMap, program_ : ParsedProgram) : SELF_TYPE {{
+      program <- program_;
+      init(lineMap);
+   }};
+
    error(s : String) : Object {{
       errorString <- s;
       error <- true;
    }};
+
+   analyzeTest() : AnalyzedProgram {
+      analyze(program)
+   };
 };

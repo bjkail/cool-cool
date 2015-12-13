@@ -4,6 +4,7 @@ class AnalyzedType {
 
    parsedClass : ParsedClass;
    parsedClass() : ParsedClass { parsedClass };
+   unsetParsedClass() : Object { parsedClass <- let void : ParsedClass in void };
 
    inheritsType : AnalyzedType;
    inheritsType() : AnalyzedType { inheritsType };
@@ -169,6 +170,8 @@ class AnalyzedFeature {
    id : String;
    id() : String { id };
 
+   unsetParsedFeature() : Object { new Object.abort() };
+
    asAttribute() : AnalyzedAttribute { let void : AnalyzedAttribute in void };
    asMethod() : AnalyzedMethod { let void : AnalyzedMethod in void };
 };
@@ -176,6 +179,7 @@ class AnalyzedFeature {
 class AnalyzedAttribute inherits AnalyzedFeature {
    parsedAttribute : ParsedAttribute;
    parsedAttribute() : ParsedAttribute { parsedAttribute };
+   unsetParsedFeature() : Object { parsedAttribute <- let void : ParsedAttribute in void };
 
    type : AnalyzedType;
    type() : AnalyzedType { type };
@@ -193,6 +197,7 @@ class AnalyzedAttribute inherits AnalyzedFeature {
 class AnalyzedMethod inherits AnalyzedFeature {
    parsedMethod : ParsedMethod;
    parsedMethod() : ParsedMethod { parsedMethod };
+   unsetParsedFeature() : Object { parsedMethod <- let void : ParsedMethod in void };
 
    returnType : AnalyzedType;
    returnType() : AnalyzedType { returnType };
@@ -1224,6 +1229,21 @@ class Analyzer {
                            else false fi
                      fi
                fi;
+
+            -- Allow parse nodes to be GC'ed.
+            let classIter : Iterator <- typeList.iterator() in
+               while classIter.next() loop
+                  let type : AnalyzedType <- case classIter.get() of x : AnalyzedType => x; esac in
+                     {
+                        let featureIter : Iterator <- type.features().iterator() in
+                           while featureIter.next() loop
+                              let feature : AnalyzedFeature <- case featureIter.get() of x : AnalyzedFeature => x; esac in
+                                 feature.unsetParsedFeature()
+                           pool;
+
+                        type.unsetParsedClass();
+                     }
+               pool;
 
             self;
          }

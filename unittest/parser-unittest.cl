@@ -53,6 +53,32 @@ class Main inherits Test {
                   "class A { a : A");
             assertParserError("method", "line 1: expected ';' after feature",
                   "class A { a() : A { a }");
+
+            let program : ParsedProgram <- newParser("class A { a : A; b() : B { c }; };").parse(),
+                  classIter : Iterator <- program.classes().iterator() in
+               {
+                  let class_ : ParsedClass <- case getIteratorNext(classIter) of x : ParsedClass => x; esac in
+                     {
+                        assertStringEquals("class", "A", class_.type());
+
+                        let featureIter : Iterator <- class_.features().iterator() in
+                           {
+                              case getIteratorNext(featureIter) of x : ParsedAttribute => x; esac;
+                              case getIteratorNext(featureIter) of x : ParsedMethod => x; esac;
+                              assertFalse("single", featureIter.next());
+                           };
+                     };
+
+                  assertFalse("single", classIter.next());
+               };
+
+            let program : ParsedProgram <- newParser("class A { a : A; }; class B { b : B; };").parse(),
+                  classIter : Iterator <- program.classes().iterator() in
+               {
+                  assertStringEquals("multiple", "A", case getIteratorNext(classIter) of x : ParsedClass => x.type(); esac);
+                  assertStringEquals("multiple", "B", case getIteratorNext(classIter) of x : ParsedClass => x.type(); esac);
+                  assertFalse("multiple", classIter.next());
+               };
          }
       else false fi
    };
@@ -64,6 +90,38 @@ class Main inherits Test {
                   "class A { a :;");
             assertParserError("init", "line 1: expected expression for attribute initialization",
                   "class A { a : String <-;");
+
+            let program : ParsedProgram <- newParser("class A { b : B; };").parse(),
+                  class_ : ParsedClass <- case getCollectionFirst(program.classes()) of x : ParsedClass => x; esac,
+                  featureIter : Iterator <- class_.features().iterator() in
+               {
+                  let attr : ParsedAttribute <- case getIteratorNext(featureIter) of x : ParsedAttribute => x; esac in
+                     {
+                        assertStringEquals("single", "b", attr.id());
+                        assertStringEquals("single", "B", attr.type());
+                     };
+
+                  assertFalse("single", featureIter.next());
+               };
+
+            let program : ParsedProgram <- newParser("class A { b : B; c : C; };").parse(),
+                  class_ : ParsedClass <- case getCollectionFirst(program.classes()) of x : ParsedClass => x; esac,
+                  featureIter : Iterator <- class_.features().iterator() in
+               {
+                  let attr : ParsedAttribute <- case getIteratorNext(featureIter) of x : ParsedAttribute => x; esac in
+                     {
+                        assertStringEquals("multiple", "b", attr.id());
+                        assertStringEquals("multiple", "B", attr.type());
+                     };
+
+                  let attr : ParsedAttribute <- case getIteratorNext(featureIter) of x : ParsedAttribute => x; esac in
+                     {
+                        assertStringEquals("multiple", "c", attr.id());
+                        assertStringEquals("multiple", "C", attr.type());
+                     };
+
+                  assertFalse("multiple", featureIter.next());
+               };
          }
       else false fi
    };
@@ -95,6 +153,72 @@ class Main inherits Test {
                   "class A { a() : A {");
             assertParserError("close", "line 1: expected '}' for method definition",
                   "class A { a() : A { a");
+
+            let program : ParsedProgram <- newParser("class A { b() : B { c }; };").parse(),
+                  class_ : ParsedClass <- case getCollectionFirst(program.classes()) of x : ParsedClass => x; esac,
+                  featureIter : Iterator <- class_.features().iterator() in
+               {
+                  let method : ParsedMethod <- case getIteratorNext(featureIter) of x : ParsedMethod => x; esac in
+                     {
+                        assertStringEquals("single", "b", method.id());
+                        assertStringEquals("single", "B", method.returnType());
+                        assertIntEquals("single formals", 0, method.formals().size());
+                        assertIdExpr("single expr", "c", method.expr());
+                     };
+
+                  assertFalse("single", featureIter.next());
+               };
+
+            let program : ParsedProgram <- newParser("class A { b(c : C) : B { e }; f(g : G, h : H) : F { i }; };").parse(),
+                  class_ : ParsedClass <- case getCollectionFirst(program.classes()) of x : ParsedClass => x; esac,
+                  featureIter : Iterator <- class_.features().iterator() in
+               {
+                  let method : ParsedMethod <- case getIteratorNext(featureIter) of x : ParsedMethod => x; esac in
+                     {
+                        assertStringEquals("multiple 1", "b", method.id());
+                        assertStringEquals("multiple 1", "B", method.returnType());
+
+                        let formalIter : Iterator <- method.formals().iterator() in
+                           {
+                              let formal : ParsedFormal <- case getIteratorNext(formalIter) of x : ParsedFormal => x; esac in
+                                 {
+                                    assertStringEquals("multiple 1 formal", "c", formal.id());
+                                    assertStringEquals("multiple 1 formal", "C", formal.type());
+                                 };
+
+                              assertFalse("multiple 1 formals", formalIter.next());
+                           };
+
+                        assertIdExpr("multiple 1 expr", "e", method.expr());
+                     };
+
+                  let method : ParsedMethod <- case getIteratorNext(featureIter) of x : ParsedMethod => x; esac in
+                     {
+                        assertStringEquals("multiple 2", "f", method.id());
+                        assertStringEquals("multiple 2", "F", method.returnType());
+
+                        let formalIter : Iterator <- method.formals().iterator() in
+                           {
+                              let formal : ParsedFormal <- case getIteratorNext(formalIter) of x : ParsedFormal => x; esac in
+                                 {
+                                    assertStringEquals("multiple 2 formal", "g", formal.id());
+                                    assertStringEquals("multiple 2 formal", "G", formal.type());
+                                 };
+
+                              let formal : ParsedFormal <- case getIteratorNext(formalIter) of x : ParsedFormal => x; esac in
+                                 {
+                                    assertStringEquals("multiple 2 formal", "h", formal.id());
+                                    assertStringEquals("multiple 2 formal", "H", formal.type());
+                                 };
+
+                              assertFalse("multiple 1 formals", formalIter.next());
+                           };
+
+                        assertIdExpr("multiple 1 expr", "i", method.expr());
+                     };
+
+                  assertFalse("multiple", featureIter.next());
+               };
          }
       else false fi
    };
@@ -107,6 +231,10 @@ class Main inherits Test {
    getCollectionFirst(coll : Collection) : Object {{
       getIteratorNext(coll.iterator());
    }};
+
+   assertExprError(context : String, error : String, exprString : String) : Object {
+      assertParserError(context, error, "class A { a : A <- ".concat(exprString))
+   };
 
    assertExpr(context : String, exprString : String) : ParsedExpr {
       let parser : TestParser <- newParser("class A { a : A <- ".concat(exprString).concat("; };")),
@@ -130,11 +258,19 @@ class Main inherits Test {
    testExpr() : Object {
       if begin("expr") then
          {
+            assertExprError("assignment", "line 1: expected expression for assignment", "a <-");
+
             let expr : ParsedAssignmentExpr <- case assertExpr("assignment", "a <- b") of x : ParsedAssignmentExpr => x; esac in
                {
                   assertStringEquals("assignment", "a", expr.id());
                   assertIdExpr("assignment", "b", expr.expr());
                };
+
+            assertExprError("assignment", "line 1: expected id for dispatch method", "a.");
+            assertExprError("assignment", "line 1: expected '(' for dispatch expression", "a.b");
+            assertExprError("assignment", "line 1: expected expression for dispatch argument", "a.b(");
+            assertExprError("assignment", "line 1: expected expression for dispatch argument", "a.b(c,");
+            assertExprError("assignment", "line 1: expected ')' for dispatch expression", "a.b(c");
 
             let expr : ParsedDispatchExpr <- case assertExpr("dispatch", "a.b()") of x : ParsedDispatchExpr => x; esac in
                {
@@ -143,6 +279,13 @@ class Main inherits Test {
                   assertStringEquals("dispatch", "b", expr.id());
                   assertIntEquals("dispatch", 0, expr.arguments().size());
                };
+
+            assertExprError("dispatch typed", "line 1: expected type for static dispatch", "a@");
+            assertExprError("dispatch typed", "line 1: expected id for dispatch method", "a@B.");
+            assertExprError("dispatch typed", "line 1: expected '(' for dispatch expression", "a@B.c");
+            assertExprError("dispatch typed", "line 1: expected expression for dispatch argument", "a@B.c(");
+            assertExprError("dispatch typed", "line 1: expected expression for dispatch argument", "a@B.c(d,");
+            assertExprError("dispatch typed", "line 1: expected ')' for dispatch expression", "a@B.c(d");
 
             let expr : ParsedDispatchExpr <- case assertExpr("dispatch typed", "a@B.c()") of x : ParsedDispatchExpr => x; esac in
                {
@@ -177,6 +320,10 @@ class Main inherits Test {
                      };
                };
 
+            assertExprError("dispatch", "line 1: expected expression for dispatch argument", "b(");
+            assertExprError("dispatch", "line 1: expected expression for dispatch argument", "b(c,");
+            assertExprError("dispatch", "line 1: expected ')' for dispatch expression", "b(c");
+
             let expr : ParsedDispatchExpr <- case assertExpr("dispatch self", "a()") of x : ParsedDispatchExpr => x; esac in
                {
                   assertVoid("dispatch self target", expr.target());
@@ -185,6 +332,13 @@ class Main inherits Test {
                   assertIntEquals("dispatch self", 0, expr.arguments().size());
                };
 
+            assertExprError("if", "line 1: expected expression for 'if'", "if");
+            assertExprError("if", "line 1: expected 'then' for 'if' expression", "if a");
+            assertExprError("if", "line 1: expected expression for 'then'", "if a then");
+            assertExprError("if", "line 1: expected 'else' for 'if' expression", "if a then b");
+            assertExprError("if", "line 1: expected expression for 'else'", "if a then b else");
+            assertExprError("if", "line 1: expected 'fi' for 'if' expression", "if a then b else c");
+
             let expr : ParsedIfExpr <- case assertExpr("if", "if a then b else c fi") of x : ParsedIfExpr => x; esac in
                {
                   assertIdExpr("if expr", "a", expr.expr());
@@ -192,11 +346,19 @@ class Main inherits Test {
                   assertIdExpr("else expr", "c", expr.else_());
                };
 
+            assertExprError("while", "line 1: expected expression for 'while'", "while");
+            assertExprError("while", "line 1: expected 'loop' for 'while' expression", "while a");
+
             let expr : ParsedWhileExpr <- case assertExpr("while", "while a loop b pool") of x : ParsedWhileExpr => x; esac in
                {
                   assertIdExpr("while expr", "a", expr.expr());
                   assertIdExpr("loop expr", "b", expr.loop_());
                };
+
+            assertExprError("block", "line 1: expected expression for block", "{");
+            assertExprError("block", "line 1: expected ';' after expression in block", "{ a");
+            assertExprError("block", "line 1: expected '}' for block expression", "{ a;");
+            assertExprError("block", "line 1: expected ';' after expression in block", "{ a; a");
 
             let expr : ParsedBlockExpr <- case assertExpr("block 2", "{ a; }") of x : ParsedBlockExpr => x; esac,
                   exprIter : Iterator <- expr.exprs().iterator() in
@@ -212,6 +374,15 @@ class Main inherits Test {
                   assertIdExpr("block 2", "b", case getIteratorNext(exprIter) of x : ParsedExpr => x; esac);
                   assertFalse("block 2 end", exprIter.next());
                };
+
+            assertExprError("let", "line 1: expected id for 'let' variable", "let");
+            assertExprError("let", "line 1: expected ':' for 'let' variable type", "let a");
+            assertExprError("let", "line 1: expected type for 'let' variable", "let a :");
+            assertExprError("let", "line 1: expected 'in' for 'let' expression", "let a : A");
+            assertExprError("let", "line 1: expected expression for 'let' variable initialization", "let a : A <-");
+            assertExprError("let", "line 1: expected id for 'let' variable", "let a : A,");
+            assertExprError("let", "line 1: expected ':' for 'let' variable type", "let a : A, a");
+            assertExprError("let", "line 1: expected type for 'let' variable", "let a : A, a :");
 
             let expr : ParsedLetExpr <- case assertExpr("let", "let a : A in b") of x : ParsedLetExpr => x; esac in
                {
@@ -271,6 +442,21 @@ class Main inherits Test {
                   assertIdExpr("let", "c", expr.expr());
                };
 
+            assertExprError("case", "line 1: expected expression for 'case'", "case");
+            assertExprError("case", "line 1: expected 'of' for 'case' expression", "case a");
+            assertExprError("case", "line 1: expected id for 'case' variable", "case a of");
+            assertExprError("case", "line 1: expected ':' for 'case' variable type", "case a of a");
+            assertExprError("case", "line 1: expected type for 'case' variable", "case a of a :");
+            assertExprError("case", "line 1: expected '=>' for 'case' branch", "case a of a : A");
+            assertExprError("case", "line 1: expected expression for 'case' branch", "case a of a : A =>");
+            assertExprError("case", "line 1: expected ';' after 'case' branch", "case a of a : A => a");
+            assertExprError("case", "line 1: expected 'esac' for 'case' expression", "case a of a : A => a;");
+            assertExprError("case", "line 1: expected ':' for 'case' variable type", "case a of a : A => a; a");
+            assertExprError("case", "line 1: expected type for 'case' variable", "case a of a : A => a; a :");
+            assertExprError("case", "line 1: expected '=>' for 'case' branch", "case a of a : A => a; a : A");
+            assertExprError("case", "line 1: expected expression for 'case' branch", "case a of a : A => a; a : A =>");
+            assertExprError("case", "line 1: expected ';' after 'case' branch", "case a of a : A => a; a : A => a");
+
             let expr : ParsedCaseExpr <- case assertExpr("case", "case a of b : B => c; esac") of x : ParsedCaseExpr => x; esac in
                {
                   assertIdExpr("case", "a", expr.expr());
@@ -312,14 +498,20 @@ class Main inherits Test {
                      };
                };
 
+            assertExprError("new", "line 1: expected type for 'new' expression", "new");
+
             let expr : ParsedNewExpr <- case assertExpr("new", "new A") of x : ParsedNewExpr => x; esac in
                assertStringEquals("new", "A", expr.type());
+
+            assertExprError("isvoid", "line 1: expected expression for 'isvoid'", "isvoid");
 
             let expr : ParsedUnaryExpr <- case assertExpr("isvoid", "isvoid a") of x : ParsedUnaryExpr => x; esac in
                {
                   assertStringEquals("isvoid", "isvoid", expr.op());
                   assertIdExpr("isvoid", "a", expr.expr());
                };
+
+            assertExprError("add", "line 1: expected expression for '+'", "a +");
 
             let expr : ParsedBinaryExpr <- case assertExpr("add", "a + b") of x : ParsedBinaryExpr => x; esac in
                {
@@ -328,12 +520,16 @@ class Main inherits Test {
                   assertIdExpr("add right", "b", expr.right());
                };
 
+            assertExprError("subtract", "line 1: expected expression for '-'", "a -");
+
             let expr : ParsedBinaryExpr <- case assertExpr("subtract", "a - b") of x : ParsedBinaryExpr => x; esac in
                {
                   assertStringEquals("subtract", "-", expr.op());
                   assertIdExpr("subtract left", "a", expr.left());
                   assertIdExpr("subtract right", "b", expr.right());
                };
+
+            assertExprError("multiply", "line 1: expected expression for '*'", "a *");
 
             let expr : ParsedBinaryExpr <- case assertExpr("multiply", "a * b") of x : ParsedBinaryExpr => x; esac in
                {
@@ -342,6 +538,8 @@ class Main inherits Test {
                   assertIdExpr("multiply right", "b", expr.right());
                };
 
+            assertExprError("divide", "line 1: expected expression for '/'", "a /");
+
             let expr : ParsedBinaryExpr <- case assertExpr("divide", "a / b") of x : ParsedBinaryExpr => x; esac in
                {
                   assertStringEquals("divide", "/", expr.op());
@@ -349,11 +547,15 @@ class Main inherits Test {
                   assertIdExpr("divide right", "b", expr.right());
                };
 
+            assertExprError("complement", "line 1: expected expression for '~'", "~");
+
             let expr : ParsedUnaryExpr <- case assertExpr("complement", "~a") of x : ParsedUnaryExpr => x; esac in
                {
                   assertStringEquals("complement", "~", expr.op());
                   assertIdExpr("complemenet", "a", expr.expr());
                };
+
+            assertExprError("less", "line 1: expected expression for '<'", "a <");
 
             let expr : ParsedBinaryExpr <- case assertExpr("less", "a < b") of x : ParsedBinaryExpr => x; esac in
                {
@@ -362,12 +564,16 @@ class Main inherits Test {
                   assertIdExpr("less right", "b", expr.right());
                };
 
+            assertExprError("lessEquals", "line 1: expected expression for '<='", "a <=");
+
             let expr : ParsedBinaryExpr <- case assertExpr("lessEquals", "a <= b") of x : ParsedBinaryExpr => x; esac in
                {
                   assertStringEquals("lessEquals", "<=", expr.op());
                   assertIdExpr("lessEquals left", "a", expr.left());
                   assertIdExpr("lessEquals right", "b", expr.right());
                };
+
+            assertExprError("equals", "line 1: expected expression for '='", "a =");
 
             let expr : ParsedBinaryExpr <- case assertExpr("equals", "a = b") of x : ParsedBinaryExpr => x; esac in
                {
@@ -376,12 +582,15 @@ class Main inherits Test {
                   assertIdExpr("equals right", "b", expr.right());
                };
 
+            assertExprError("not", "line 1: expected expression for 'not'", "not");
+
             let expr : ParsedUnaryExpr <- case assertExpr("not", "not a") of x : ParsedUnaryExpr => x; esac in
                {
                   assertStringEquals("not", "not", expr.op());
                   assertIdExpr("not", "a", expr.expr());
                };
 
+            assertExprError("paren", "line 1: expected expression for parenthetical expression", "(");
             assertIdExpr("paren", "a", assertExpr("paren", "(a)"));
 
             let expr : ParsedIdExpr <- case assertExpr("id", "a") of x : ParsedIdExpr => x; esac in

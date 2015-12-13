@@ -593,8 +593,8 @@ class Parser {
    };
 
    parseIfExpr() : ParsedExpr {
-      let expr : ParsedExpr <- parseExpr(" for 'if'"),
-            line : Int <- line() in
+      let line : Int <- line(),
+            expr : ParsedExpr <- parseExpr(" for 'if'") in
          {
             parseKeyword("then", " for 'if' expression");
             let then_ : ParsedExpr <- parseExpr(" for 'then'") in
@@ -610,8 +610,8 @@ class Parser {
    };
 
    parseWhileExpr() : ParsedExpr {
-      let expr : ParsedExpr <- parseExpr(" for 'while'"),
-            line : Int <- line() in
+      let line : Int <- line(),
+            expr : ParsedExpr <- parseExpr(" for 'while'") in
          {
             parseKeyword("loop", " for 'while' expression");
             let loop_ : ParsedExpr <- parseExpr(" for 'loop'") in
@@ -781,10 +781,10 @@ class Parser {
 
    parseSimpleExpr(where : String) : ParsedExpr {
       let token : Token <- readToken(),
-            line : Int <- line(),
             tokenId : TokenId <- token.asId() in
          if not isvoid tokenId then
             let id : String <- tokenId.value(),
+                  line : Int <- line(),
                   tokenPunct : TokenPunct <- peekToken().asPunct() in
                if not isvoid tokenPunct then
                   if tokenPunct.value() = "(" then
@@ -796,14 +796,15 @@ class Parser {
                      if tokenPunct.value() = "<-" then
                         {
                            skipToken();
-                           new ParsedAssignmentExpr.init(line(), id, parseExprImpl(" for assignment", 1));
+                           let line : Int <- line() in
+                              new ParsedAssignmentExpr.init(line, id, parseExprImpl(" for assignment", 1));
                         }
                      else
-                        new ParsedIdExpr.init(line(), id)
+                        new ParsedIdExpr.init(line, id)
                      fi
                   fi
                else
-                  new ParsedIdExpr.init(line(), id)
+                  new ParsedIdExpr.init(line, id)
                fi
 
          else

@@ -726,10 +726,15 @@ class Parser {
             exprs : Collection <- new LinkedList.add(parseExpr(" for block")) in
          {
             parsePunct(";", " after expression in block");
-            while not if tryParsePunct("}") then
-                  true
-               else
-                  not isvoid peekToken().asEof()
+            while let token : Token <- peekToken() in
+               if isvoid token.asEof() then
+                  let tokenPunct : TokenPunct <- peekToken().asPunct() in
+                     if isvoid tokenPunct then
+                        true
+                     else
+                        not tokenPunct.value() = "}"
+                     fi
+               else false
             fi loop
                {
                   exprs.add(parseExpr(" for block"));
@@ -737,6 +742,7 @@ class Parser {
                }
             pool;
 
+            parsePunct("}", " for block expression");
             new ParsedBlockExpr.init(line, exprs);
          }
    };

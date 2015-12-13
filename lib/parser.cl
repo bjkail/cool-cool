@@ -668,13 +668,14 @@ class Parser {
             let branches : Collection <- new LinkedList.add(parseCaseBranch()) in
                {
                   parsePunct(";", " after 'case' branch");
-                  while not tryParseKeyword("esac") loop
+                  while not isvoid peekToken().asId() loop
                      {
                         branches.add(parseCaseBranch());
                         parsePunct(";", " after 'case' branch");
                      }
                   pool;
 
+                  parseKeyword("esac", " for 'case' expression");
                   new ParsedCaseExpr.init(line, expr, branches);
                };
          }

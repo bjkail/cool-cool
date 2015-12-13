@@ -6,17 +6,17 @@ test=$1
 
 dir=$(dirname "$0")
 run_test() {
-  file=$1
+  name=$1
   shift
 
-  if test -z "$test" -o "$test" = "$file"; then
-    echo -n "$file: "
+  if test -z "$test" -o "$test" = "$name"; then
+    echo -n "$name: "
     echo \
       | "$dir"/../bin/interpreter-wrapper \
         --format-errors \
         "$dir"/unittest.cl \
         "$dir"/../lib/* \
-        "$dir"/"$file" "$@" \
+        "$dir"/"$name"-unittest.cl "$@" \
       | {
         success=false
         while IFS= read -r line; do
@@ -31,10 +31,10 @@ run_test() {
   fi
 }
 
-run_test util-unittest.cl
-run_test linked-list-unittest.cl
-run_test string-list-map-unittest.cl
-run_test io-unittest.cl
-run_test tokenizer-unittest.cl
-run_test parser-unittest.cl
-run_test analyzer-unittest.cl
+run_test util
+run_test linked-list
+run_test string-list-map
+run_test io
+run_test tokenizer
+run_test parser
+run_test analyzer

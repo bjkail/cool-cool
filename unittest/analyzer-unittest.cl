@@ -5,6 +5,7 @@ class Main inherits Test {
       testAttribute();
       testMethod();
       testExpr();
+      testSelfType();
    }};
 
    newAnalyzer(context : String, program : String) : TestAnalyzer {
@@ -41,6 +42,10 @@ class Main inherits Test {
 
    assertAnalyzerError(context : String, error : String, program : String) : Object {
       assertAnalyzerErrorImpl(context, error, "class Main { main() : Object { 0 }; }; ".concat(program))
+   };
+
+   assertAnalyzerExprError(context : String, error : String, program : String) : Object {
+      assertAnalyzerErrorImpl(context, error, "class Main { main() : Object { 0 }; a : Object <- ".concat(program).concat("; };"))
    };
 
    assertStringMapIteratorNext(context : String, key : String, iter : StringMapIterator) : Object {{
@@ -112,7 +117,7 @@ class Main inherits Test {
                   mainMethod : AnalyzedMethod <- program.mainMethod() in
                {
                   assertStringEquals("method id", "main", mainMethod.id());
-                  assertStringEquals("main defining", "Main", mainMethod.definingType().name());
+                  assertStringEquals("main defining", "Main", mainMethod.containingType().name());
                };
          }
       else false fi
@@ -133,7 +138,7 @@ class Main inherits Test {
                {
                   let attr : AnalyzedAttribute <- type.getAttribute("a") in
                      {
-                        assertSameType("a defining", type, attr.definingType());
+                        assertSameType("a defining", type, attr.containingType());
                         assertStringEquals("a id", "a", attr.id());
                         assertSameType("a type", analyzer.objectType(), attr.type());
                         assertVoid("a expr", attr.expr());
@@ -141,7 +146,7 @@ class Main inherits Test {
 
                   let attr : AnalyzedAttribute <- type.getAttribute("b") in
                      {
-                        assertSameType("b defining", type, attr.definingType());
+                        assertSameType("b defining", type, attr.containingType());
                         assertStringEquals("b id", "b", attr.id());
                         assertSameType("b type", analyzer.intType(), attr.type());
                         assertNotVoid("b expr", attr.expr());
@@ -166,7 +171,7 @@ class Main inherits Test {
                {
                   let method : AnalyzedMethod <- type.getMethod("a") in
                      {
-                        assertSameType("a defining", type, method.definingType());
+                        assertSameType("a defining", type, method.containingType());
                         assertStringEquals("a id", "a", method.id());
                         assertSameType("a return", analyzer.objectType(), method.returnType());
                         assertIntEquals("a formals", 0, method.formalTypes().size());
@@ -174,7 +179,7 @@ class Main inherits Test {
 
                   let method : AnalyzedMethod <- type.getMethod("b") in
                      {
-                        assertSameType("b defining", type, method.definingType());
+                        assertSameType("b defining", type, method.containingType());
                         assertStringEquals("b id", "b", method.id());
                         assertSameType("b return", analyzer.boolType(), method.returnType());
 
@@ -195,6 +200,53 @@ class Main inherits Test {
          {
             assertAnalyzerError("", "line 1: expression type 'Int' is not type 'Bool' for predicate in 'if' expression",
                   "class A { a() : Object { if 0 then 0 else 0 fi }; };");
+         }
+      else false fi
+   };
+
+   testSelfType() : Object {
+      if begin("selfType") then
+         {
+            assertAnalyzerError("", "line 1: definition of type 'SELF_TYPE'",
+                  "class SELF_TYPE { a : Bool; };");
+            assertAnalyzerError("", "line 1: invalid type 'SELF_TYPE' for 'inherits'",
+                  "class A inherits SELF_TYPE { a : Bool; };");
+            assertAnalyzerError("", "line 1: invalid type 'SELF_TYPE' for formal parameter #1",
+                  "class A { a(b : SELF_TYPE) : Object { 0 }; };");
+            assertAnalyzerError("", "line 1: invalid type 'SELF_TYPE' for dispatch expression",
+                  "class A { a(a : A) : Object { a@SELF_TYPE.copy() }; };");
+            assertAnalyzerExprError("", "line 1: invalid type 'SELF_TYPE' for 'case' branch",
+                  "case 0 of x : SELF_TYPE => x; esac");
+
+            let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("new", "class A { a : Object <- new SELF_TYPE; };"),
+                  program : AnalyzedProgram <- assertAnalyze("new", analyzer),
+                  type : AnalyzedType <- program.getType("A"),
+                  attr : AnalyzedAttribute <- type.getAttribute("a") in
+               assertSameType("new", type.selfTypeType(), attr.expr().type());
+
+            let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("return", "class A { a() : SELF_TYPE { self }; };"),
+                  program : AnalyzedProgram <- assertAnalyze("return", analyzer),
+                  type : AnalyzedType <- program.getType("A"),
+                  method : AnalyzedMethod <- type.getMethod("a") in
+               assertSameType("return", type.selfTypeType(), method.returnType());
+
+            let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("let", "class A { a() : Object { let a : SELF_TYPE in a }; };"),
+                  program : AnalyzedProgram <- assertAnalyze("let", analyzer),
+                  type : AnalyzedType <- program.getType("A"),
+                  method : AnalyzedMethod <- type.getMethod("a") in
+               assertSameType("let", type.selfTypeType(), method.expr().type());
+
+            let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("attribute", "class A { a : SELF_TYPE; };"),
+                  program : AnalyzedProgram <- assertAnalyze("attribute", analyzer),
+                  type : AnalyzedType <- program.getType("A"),
+                  attr : AnalyzedAttribute <- type.getAttribute("a") in
+               assertSameType("attribute", type.selfTypeType(), attr.type());
+
+            assertAnalyzerError("", "line 1: expression type 'A' does not conform to return type 'SELF_TYPE' of method 'a'",
+                  "class A { a() : SELF_TYPE { a() }; };");
+
+            assertAnalyze("method", newAnalyzerDefaultMain("method", "class A { a : SELF_TYPE <- let b : SELF_TYPE in b; };"));
+            assertAnalyze("method", newAnalyzerDefaultMain("method", "class A { a() : Object { let a : SELF_TYPE in a.a() }; };"));
          }
       else false fi
    };

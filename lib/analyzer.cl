@@ -24,6 +24,7 @@ class AnalyzedProgram {
 class AnalyzedType {
    name : String;
    name() : String { name };
+   isSelfType() : Bool { name = "SELF_TYPE" };
 
    parsedClass : ParsedClass;
    parsedClass() : ParsedClass { parsedClass };
@@ -38,6 +39,9 @@ class AnalyzedType {
          inheritsType.inheritsType()
       fi
    };
+
+   selfTypeType : AnalyzedType;
+   selfTypeType() : AnalyzedType { selfTypeType };
 
    inheritsDepth : Int;
    inheritsDepth() : Int { inheritsDepth };
@@ -98,10 +102,9 @@ class AnalyzedType {
    features : Collection <- new LinkedList;
    features() : Collection { features };
 
-   addFeature(feature : AnalyzedFeature) : Object {{
-      feature.initDefiningType(self);
-      features.add(feature);
-   }};
+   addFeature(feature : AnalyzedFeature) : Object {
+      features.add(feature)
+   };
 
    attributes : StringMap;
    attributes() : StringMap { attributes };
@@ -160,18 +163,27 @@ class AnalyzedType {
       inheritsDepth <- inheritsType.inheritsDepth() + 1;
       attributes <- inheritsType.attributes().copy();
       methods <- inheritsType.methods().copy();
+      selfTypeType <- new AnalyzedType.initSelfType(self);
    }};
 
    initBuiltinObject() : SELF_TYPE {{
       name <- "Object";
       attributes <- new StringListMap;
       methods <- new StringListMap;
+      selfTypeType <- new AnalyzedType.initSelfType(self);
       self;
    }};
 
    initBuiltin(name_ : String, inheritsType_ : AnalyzedType) : SELF_TYPE {{
       name <- name_;
       inheritsType <- inheritsType_;
+      self;
+   }};
+
+   initSelfType(type : AnalyzedType) : SELF_TYPE {{
+      name <- "SELF_TYPE";
+      inheritsType <- type;
+      methods <- inheritsType.methods();
       self;
    }};
 
@@ -200,9 +212,8 @@ class AnalyzedSelfType inherits AnalyzedType {
 };
 
 class AnalyzedFeature {
-   definingType : AnalyzedType;
-   definingType() : AnalyzedType { definingType };
-   initDefiningType(definingType_ : AnalyzedType) : Object { definingType <- definingType_ };
+   containingType : AnalyzedType;
+   containingType() : AnalyzedType { containingType };
 
    id : String;
    id() : String { id };
@@ -225,7 +236,8 @@ class AnalyzedAttribute inherits AnalyzedFeature {
    type : AnalyzedType;
    type() : AnalyzedType { type };
 
-   init(parsedAttribute_ : ParsedAttribute, type_ : AnalyzedType) : SELF_TYPE {{
+   init(containingType_ : AnalyzedType, parsedAttribute_ : ParsedAttribute, type_ : AnalyzedType) : SELF_TYPE {{
+      containingType <- containingType_;
       parsedAttribute <- parsedAttribute_;
       id <- parsedAttribute_.id();
       type <- type_;
@@ -246,16 +258,17 @@ class AnalyzedMethod inherits AnalyzedFeature {
    formalTypes : Collection;
    formalTypes() : Collection { formalTypes };
 
-   initBuiltin(id_ : String, formalTypes_ : Collection, returnType_ : AnalyzedType) : SELF_TYPE {{
+   initBuiltin(containingType_ : AnalyzedType, id_ : String, formalTypes_ : Collection, returnType_ : AnalyzedType) : SELF_TYPE {{
+      containingType <- containingType_;
       id <- id_;
       formalTypes <- formalTypes_;
       returnType <- returnType_;
       self;
    }};
 
-   init(parsedMethod_ : ParsedMethod, formalTypes : Collection, returnType : AnalyzedType) : SELF_TYPE {{
+   init(containingType : AnalyzedType, parsedMethod_ : ParsedMethod, formalTypes : Collection, returnType : AnalyzedType) : SELF_TYPE {{
       parsedMethod <- parsedMethod_;
-      initBuiltin(parsedMethod_.id(), formalTypes, returnType);
+      initBuiltin(containingType, parsedMethod_.id(), formalTypes, returnType);
    }};
 
    asMethod() : AnalyzedMethod { self };
@@ -352,6 +365,35 @@ class AnalyzedWhileExpr inherits AnalyzedExpr {
       type <- type_;
       expr <- expr_;
       loop_ <- loop_;
+      self;
+   }};
+};
+
+class AnalyzedLetVar {
+   object : AnalyzedObject;
+   object() : AnalyzedObject { object };
+
+   expr : AnalyzedExpr;
+   expr() : AnalyzedExpr { expr };
+
+   init(object_ : AnalyzedObject, expr_ : AnalyzedExpr) : SELF_TYPE {{
+      object <- object_;
+      expr <- expr_;
+      self;
+   }};
+};
+
+class AnalyzedLetExpr inherits AnalyzedExpr {
+   expr : AnalyzedExpr;
+   expr() : AnalyzedExpr { expr };
+
+   vars : Collection;
+   vars() : Collection { vars };
+
+   init(type_ : AnalyzedType, expr_ : AnalyzedExpr, vars_ : Collection) : SELF_TYPE {{
+      type <- type_;
+      expr <- expr_;
+      vars <- vars_;
       self;
    }};
 };
@@ -540,22 +582,26 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
    analyzer : Analyzer;
    analyzer() : Analyzer { analyzer };
 
-   selfType : AnalyzedType;
+   containingType : AnalyzedType;
+   containingType() : AnalyzedType { containingType };
+
    parent : AnalyzedTypeEnv;
    bindings : StringMap <- new StringListMap;
 
    varIndex : Int;
    varIndex() : Int { varIndex };
 
-   initSelfType(analyzed_ : Analyzer, selfType_ : AnalyzedType) : SELF_TYPE {{
+   initContainingType(analyzed_ : Analyzer, containingType_ : AnalyzedType) : SELF_TYPE {{
       analyzer <- analyzed_;
-      selfType <- selfType_;
+      containingType <- containingType_;
+      put("self", new AnalyzedSelfObject.init(containingType.selfTypeType()));
       self;
    }};
 
    init(parent_ : AnalyzedTypeEnv) : SELF_TYPE {{
       analyzer <- parent_.analyzer();
       varIndex <- parent_.varIndex();
+      containingType <- parent_.containingType();
       parent <- parent_;
       self;
    }};
@@ -564,10 +610,14 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
       bindings.putWithString(id, object)
    };
 
-   putVar(id : String, type : AnalyzedType) : Object {{
-      put(id, new AnalyzedVarObject.init(type, varIndex));
-      varIndex <- varIndex + 1;
-   }};
+   putVar(id : String, type : AnalyzedType) : AnalyzedVarObject {
+      let object : AnalyzedVarObject <- new AnalyzedVarObject.init(type, varIndex) in
+         {
+            put(id, object);
+            varIndex <- varIndex + 1;
+            object;
+         }
+   };
 
    get(id : String) : AnalyzedObject {
       let object : Object <- bindings.getWithString(id) in
@@ -632,31 +682,40 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
    };
 
    visitLet(parsedExpr : ParsedLetExpr) : Object {
-      let env : AnalyzedTypeEnv <- new AnalyzedTypeEnv.init(self) in
+      let env : AnalyzedTypeEnv <- new AnalyzedTypeEnv.init(self),
+            vars : Collection <- new LinkedList in
          {
             let varIter : Iterator <- parsedExpr.vars().iterator() in
                while varIter.next() loop
                   let var : ParsedVar <- case varIter.get() of x : ParsedVar => x; esac,
-                        type : AnalyzedType <- analyzer.getTypeAllowSelf(var, " for 'let' variable", var.type()),
-                        expr : AnalyzedExpr <- env.analyze(var.expr()) in
+                        type : AnalyzedType <- analyzer.getTypeAllowSelf(var, " for 'let' variable", var.type(), containingType),
+                        expr : AnalyzedExpr in
                      {
-                        if not expr.type().conformsTo(type) then
-                           analyzer.errorAt(var, "expression type '".concat(expr.type().name())
-                                 .concat("' does not conform to type '").concat(type.name())
-                                 .concat("' of variable '").concat(var.id())
-                                 .concat("' in 'let' expression"))
-                        else false fi;
+                        let parsedExpr : ParsedExpr <- var.expr() in
+                           if not isvoid parsedExpr then
+                              {
+                                 expr <- env.analyze(var.expr());
+
+                                 if not expr.type().conformsTo(type) then
+                                    analyzer.errorAt(var, "expression type '".concat(expr.type().name())
+                                          .concat("' does not conform to type '").concat(type.name())
+                                          .concat("' of variable '").concat(var.id())
+                                          .concat("' in 'let' expression"))
+                                 else false fi;
+                              }
+                           else false fi;
 
                         let id : String <- var.id() in
                            if id = "self" then
                               analyzer.errorAt(var, "redefinition of 'self' variable in 'let' expression")
                            else
-                              env.putVar(id, type)
+                              vars.add(new AnalyzedLetVar.init(env.putVar(id, type), expr))
                            fi;
                      }
                pool;
 
-            env.analyze(parsedExpr.expr());
+            let expr : AnalyzedExpr <- env.analyze(parsedExpr.expr()) in
+               new AnalyzedLetExpr.init(expr.type(), expr, vars);
          }
    };
 
@@ -721,13 +780,12 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
                      if id = "self" then
                         analyzer.errorAt(parsedExpr, "invalid assignment to 'self' variable")
                      else
-                        let type : AnalyzedType <- analyzer.replaceSelfType(object.type(), selfType) in
-                           if not expr.type().conformsTo(type) then
-                              analyzer.errorAt(parsedExpr, "expression type '".concat(expr.type().name())
-                                    .concat("' does not conform to type '").concat(type.name())
-                                    .concat("' of variable '").concat(id)
-                                    .concat("' in '<-' expression"))
-                           else false fi
+                        if not expr.type().conformsTo(object.type()) then
+                           analyzer.errorAt(parsedExpr, "expression type '".concat(expr.type().name())
+                                 .concat("' does not conform to type '").concat(object.type().name())
+                                 .concat("' of variable '").concat(id)
+                                 .concat("' in '<-' expression"))
+                        else false fi
                      fi
                   else false fi;
 
@@ -747,7 +805,7 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
                   type <- analyzer.objectType();
                }
             else
-               type <- analyzer.replaceSelfType(object.type(), selfType)
+               type <- object.type()
             fi;
 
             new AnalyzedObjectExpr.init(type, object);
@@ -755,8 +813,8 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
    };
 
    visitNew(parsedExpr : ParsedNewExpr) : Object {
-      let type : AnalyzedType <- analyzer.getTypeAllowSelf(parsedExpr, " for 'new' expression", parsedExpr.type()) in
-         new AnalyzedNewExpr.init(analyzer.replaceSelfType(type, selfType))
+      let type : AnalyzedType <- analyzer.getTypeAllowSelf(parsedExpr, " for 'new' expression", parsedExpr.type(), containingType) in
+         new AnalyzedNewExpr.init(type)
    };
 
    visitDispatch(parsedExpr : ParsedDispatchExpr) : Object {
@@ -764,7 +822,8 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
             targetExpr : AnalyzedExpr in
          {
             if isvoid targetParsedExpr then
-               targetExpr <- new AnalyzedObjectExpr.init(selfType, new AnalyzedSelfObject.init(selfType))
+               let selfTypeType : AnalyzedType <- containingType.selfTypeType() in
+                  targetExpr <- new AnalyzedObjectExpr.init(selfTypeType, new AnalyzedSelfObject.init(selfTypeType))
             else
                targetExpr <- analyze(targetParsedExpr)
             fi;
@@ -791,7 +850,10 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
                   else
                      {
                         formalTypeIter <- method.formalTypes().iterator();
-                        returnType <- analyzer.replaceSelfType(method.returnType(), targetType);
+                        returnType <- method.returnType();
+                        if returnType.isSelfType() then
+                           returnType <- method.containingType()
+                        else false fi;
                      }
                   fi;
 
@@ -961,7 +1023,6 @@ class Analyzer {
    boolType : AnalyzedType <- new AnalyzedType.initBuiltin("Bool", objectType);
    boolType() : AnalyzedType { boolType };
 
-   selfTypeType : AnalyzedType <- new AnalyzedSelfType.initError("SELF_TYPE");
    types : StringMap <- initBuiltinTypes();
 
    initBuiltinTypes() : StringMap {
@@ -978,22 +1039,22 @@ class Analyzer {
                   collInt : Collection <- new LinkedList.add(intType),
                   collIntInt : Collection <- new LinkedList.add(intType).add(intType) in
                {
-                  objectType.addMethod(new AnalyzedMethod.initBuiltin("abort", collEmpty, objectType));
-                  objectType.addMethod(new AnalyzedMethod.initBuiltin("type_name", collEmpty, stringType));
-                  objectType.addMethod(new AnalyzedMethod.initBuiltin("copy", collEmpty, selfTypeType));
+                  objectType.addMethod(new AnalyzedMethod.initBuiltin(objectType, "abort", collEmpty, objectType));
+                  objectType.addMethod(new AnalyzedMethod.initBuiltin(objectType, "type_name", collEmpty, stringType));
+                  objectType.addMethod(new AnalyzedMethod.initBuiltin(objectType, "copy", collEmpty, objectType.selfTypeType()));
 
                   ioType.processInherits();
-                  ioType.addMethod(new AnalyzedMethod.initBuiltin("out_string", collString, selfTypeType));
-                  ioType.addMethod(new AnalyzedMethod.initBuiltin("out_int", collInt, selfTypeType));
-                  ioType.addMethod(new AnalyzedMethod.initBuiltin("in_string", collEmpty, stringType));
-                  ioType.addMethod(new AnalyzedMethod.initBuiltin("in_int", collEmpty, intType));
+                  ioType.addMethod(new AnalyzedMethod.initBuiltin(ioType, "out_string", collString, ioType.selfTypeType()));
+                  ioType.addMethod(new AnalyzedMethod.initBuiltin(ioType, "out_int", collInt, ioType.selfTypeType()));
+                  ioType.addMethod(new AnalyzedMethod.initBuiltin(ioType, "in_string", collEmpty, ioType.selfTypeType()));
+                  ioType.addMethod(new AnalyzedMethod.initBuiltin(ioType, "in_int", collEmpty, intType));
 
                   intType.processInherits();
 
                   stringType.processInherits();
-                  stringType.addMethod(new AnalyzedMethod.initBuiltin("length", collEmpty, intType));
-                  stringType.addMethod(new AnalyzedMethod.initBuiltin("concat", collString, stringType));
-                  stringType.addMethod(new AnalyzedMethod.initBuiltin("substr", collIntInt, stringType));
+                  stringType.addMethod(new AnalyzedMethod.initBuiltin(stringType, "length", collEmpty, intType));
+                  stringType.addMethod(new AnalyzedMethod.initBuiltin(stringType, "concat", collString, stringType));
+                  stringType.addMethod(new AnalyzedMethod.initBuiltin(stringType, "substr", collIntInt, stringType));
 
                   boolType.processInherits();
                };
@@ -1022,7 +1083,7 @@ class Analyzer {
       error(lineMap.lineToString(node.line()).concat(": ").concat(s))
    };
 
-   getType(node : ParsedNode, where : String, name : String) : AnalyzedType {
+   getTypeImpl(node : ParsedNode, where : String, name : String) : AnalyzedType {
       let type : Object <- types.getWithString(name) in
          if isvoid type then
             {
@@ -1034,20 +1095,31 @@ class Analyzer {
          fi
    };
 
-   getTypeAllowSelf(node : ParsedNode, where : String, name : String) : AnalyzedType {
+   getType(node : ParsedNode, where : String, name : String) : AnalyzedType {
       if name = "SELF_TYPE" then
-         selfTypeType
+         {
+            errorAt(node, "invalid type '".concat(name).concat("'").concat(where));
+            objectType;
+         }
       else
-         getType(node, where, name)
+         getTypeImpl(node, where, name)
       fi
    };
 
-   createAnalyzedAttribute(attr : ParsedAttribute) : AnalyzedAttribute {
-      new AnalyzedAttribute.init(attr, getTypeAllowSelf(attr, " for attribute", attr.type()))
+   getTypeAllowSelf(node : ParsedNode, where : String, name : String, type : AnalyzedType) : AnalyzedType {
+      if name = "SELF_TYPE" then
+         type.selfTypeType()
+      else
+         getTypeImpl(node, where, name)
+      fi
    };
 
-   createAnalyzedMethod(method : ParsedMethod) : AnalyzedMethod {
-      let returnType : AnalyzedType <- getTypeAllowSelf(method, " for return", method.returnType()),
+   createAnalyzedAttribute(type : AnalyzedType, attr : ParsedAttribute) : AnalyzedAttribute {
+      new AnalyzedAttribute.init(type, attr, getTypeAllowSelf(attr, " for attribute", attr.type(), type))
+   };
+
+   createAnalyzedMethod(type : AnalyzedType, method : ParsedMethod) : AnalyzedMethod {
+      let returnType : AnalyzedType <- getTypeAllowSelf(method, " for return", method.returnType(), type),
             formalTypes : Collection <- new LinkedList in
          {
             let formalIter : Iterator <- method.formals().iterator(),
@@ -1063,15 +1135,16 @@ class Analyzer {
                      }
                pool;
 
-            new AnalyzedMethod.init(method, formalTypes, returnType);
+            new AnalyzedMethod.init(type, method, formalTypes, returnType);
          }
    };
 
-   analyzeMethodOverride(type : AnalyzedType, method : AnalyzedMethod, oldMethod : AnalyzedMethod) : Bool {
-      let oldType : AnalyzedType <- oldMethod.definingType(),
+   analyzeMethodOverride(method : AnalyzedMethod, oldMethod : AnalyzedMethod) : Bool {
+      let type : AnalyzedType <- method.containingType(),
+            oldType : AnalyzedType <- oldMethod.containingType(),
             result : Bool <- true in
          {
-            if type = oldMethod.definingType() then
+            if type = oldMethod.containingType() then
                {
                   errorAt(method.parsedMethod(), "redefinition of method '".concat(method.id())
                         .concat("' in class '").concat(type.name()).concat("'"));
@@ -1153,15 +1226,15 @@ class Analyzer {
                         let feature : ParsedFeature <- case featureIter.get() of x : ParsedFeature => x; esac,
                               attr : ParsedAttribute <- feature.asAttribute() in
                            if isvoid attr then
-                              let method : AnalyzedMethod <- createAnalyzedMethod(feature.asMethod()),
+                              let method : AnalyzedMethod <- createAnalyzedMethod(type, feature.asMethod()),
                                     oldMethod : AnalyzedMethod <- type.addMethod(method) in
                                  if not isvoid oldMethod then
-                                    if analyzeMethodOverride(type, method, oldMethod) then
+                                    if analyzeMethodOverride(method, oldMethod) then
                                        type.addMethodOverride(method)
                                     else false fi
                                  else false fi
                            else
-                              if not isvoid type.addAttribute(createAnalyzedAttribute(attr)) then
+                              if not isvoid type.addAttribute(createAnalyzedAttribute(type, attr)) then
                                  errorAt(feature, "redefinition of attribute '".concat(feature.id())
                                        .concat("' in class '").concat(type.name()).concat("'"))
                               else false fi
@@ -1172,21 +1245,13 @@ class Analyzer {
       else false fi
    };
 
-   replaceSelfType(type : AnalyzedType, selfType : AnalyzedType) : AnalyzedType {
-      if type = selfTypeType then
-         selfType
-      else
-         type
-      fi
-   };
-
    createTypeEnv(type : AnalyzedType) : AnalyzedTypeEnv {
-      let env : AnalyzedTypeEnv <- new AnalyzedTypeEnv.initSelfType(self, type) in
+      let env : AnalyzedTypeEnv <- new AnalyzedTypeEnv.initContainingType(self, type) in
          {
             let attrIter : StringMapIterator <- type.attributes().iterator() in
                while attrIter.next() loop
                   let attr : AnalyzedAttribute <- case attrIter.value() of x : AnalyzedAttribute => x; esac in
-                     env.put(attr.id(), new AnalyzedAttributeObject.init(replaceSelfType(attr.type(), type), attr))
+                     env.put(attr.id(), new AnalyzedAttributeObject.init(attr.type(), attr))
                pool;
 
             env;
@@ -1265,12 +1330,16 @@ class Analyzer {
             let classIter : Iterator <- prog.classes().iterator() in
                while classIter.next() loop
                   let class_ : ParsedClass <- case classIter.get() of x : ParsedClass => x; esac,
-                        typeName : String <- class_.type(),
-                        type : AnalyzedType <- new AnalyzedType.init(class_) in
-                     if isvoid types.putNewWithString(typeName, type) then
-                        typeList.add(type)
+                        typeName : String <- class_.type() in
+                     if typeName = "SELF_TYPE" then
+                        errorAt(class_, "definition of type '".concat(typeName).concat("'"))
                      else
-                        errorAt(class_, "redefinition of class '".concat(typeName).concat("'"))
+                        let type : AnalyzedType <- new AnalyzedType.init(class_) in
+                           if isvoid types.putNewWithString(typeName, type) then
+                              typeList.add(type)
+                           else
+                              errorAt(class_, "redefinition of class '".concat(typeName).concat("'"))
+                           fi
                      fi
                pool;
 

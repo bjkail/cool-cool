@@ -193,7 +193,7 @@ class Main inherits Test {
    testExpr() : Object {
       if begin("expr") then
          {
-            assertAnalyzerError("", "line 1: expression type 'Int' is not required type 'Bool' for predicate in 'if' expression",
+            assertAnalyzerError("", "line 1: expression type 'Int' is not type 'Bool' for predicate in 'if' expression",
                   "class A { a() : Object { if 0 then 0 else 0 fi }; };");
          }
       else false fi

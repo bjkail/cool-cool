@@ -609,7 +609,7 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
          {
             if not expr.type() = analyzer.boolType() then
                analyzer.errorAt(parsedExpr.expr(), "expression type '".concat(expr.type().name())
-                     .concat("' is not required type 'Bool' for predicate in 'if' expression"))
+                     .concat("' is not type 'Bool' for predicate in 'if' expression"))
             else false fi;
 
             let then_ : AnalyzedExpr <- analyze(parsedExpr.then_()),
@@ -623,7 +623,7 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
          {
             if not expr.type() = analyzer.boolType() then
                analyzer.errorAt(parsedExpr.expr(), "expression type '".concat(expr.type().name())
-                     .concat("' is not required type 'Bool' for predicate in 'while' expression"))
+                     .concat("' is not type 'Bool' for predicate in 'while' expression"))
             else false fi;
 
             let loop_ : AnalyzedExpr <- analyze(parsedExpr.loop_()) in
@@ -851,13 +851,13 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
                if op = "not" then
                   if not expr.type() = analyzer.boolType() then
                      analyzer.errorAt(parsedExpr.expr(), "expression type '".concat(expr.type().name())
-                           .concat("' is not required type 'Bool' for 'not' expression"))
+                           .concat("' is not type 'Bool' for 'not' expression"))
                   else false fi
                else
                   if op = "~" then
                      if not expr.type() = analyzer.intType() then
                         analyzer.errorAt(parsedExpr.expr(), "expression type '".concat(expr.type().name())
-                              .concat("' is not required type 'Bool' for '~' expression"))
+                              .concat("' is not type 'Bool' for '~' expression"))
                      else false fi
                   else new Object.abort() fi
                fi
@@ -897,13 +897,13 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
                {
                   if not left.type() = analyzer.intType() then
                      analyzer.errorAt(parsedExpr, "left expression type '".concat(left.type().name())
-                           .concat("' is not required type 'Int' for '").concat(op)
+                           .concat("' is not type 'Int' for '").concat(op)
                            .concat("' expression"))
                   else false fi;
 
                   if not right.type() = analyzer.intType() then
                      analyzer.errorAt(parsedExpr, "right expression type '".concat(right.type().name())
-                           .concat("' is not required type 'Int' for '").concat(op)
+                           .concat("' is not type 'Int' for '").concat(op)
                            .concat("' expression"))
                   else false fi;
 

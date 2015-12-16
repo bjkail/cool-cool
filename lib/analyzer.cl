@@ -197,6 +197,7 @@ class AnalyzedType {
 
    initError(name_ : String) : SELF_TYPE {{
       name <- name_;
+      methods <- new StringListMap;
       self;
    }};
 };

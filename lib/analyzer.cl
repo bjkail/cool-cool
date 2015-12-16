@@ -79,12 +79,14 @@ class AnalyzedType {
                      pool;
                   }
                else
-                  {
-                     type1 <- type1.inheritsType();
-                     while type2.inheritsDepth() < type1.inheritsDepth() loop
-                        type1 <- type1.inheritsType()
-                     pool;
-                  }
+                  if type2.inheritsDepth() < type1.inheritsDepth() then
+                     {
+                        type1 <- type1.inheritsType();
+                        while type2.inheritsDepth() < type1.inheritsDepth() loop
+                           type1 <- type1.inheritsType()
+                        pool;
+                     }
+                  else false fi
                fi;
 
                while not type1 = type2 loop

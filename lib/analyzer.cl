@@ -877,7 +877,7 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
                         formalTypeIter <- method.formalTypes().iterator();
                         returnType <- method.returnType();
                         if returnType.isSelfType() then
-                           returnType <- method.containingType()
+                           returnType <- dispatchType
                         else false fi;
                      }
                   fi;

@@ -46,6 +46,10 @@ class AnalyzedType {
    inheritsDepth : Int;
    inheritsDepth() : Int { inheritsDepth };
 
+   selfTypeTarget() : AnalyzedType {
+      inheritsType
+   };
+
    setInheritsType(inheritsType_ : AnalyzedType) : SELF_TYPE {{
       inheritsType <- inheritsType_;
       self;
@@ -831,20 +835,37 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
                targetExpr <- analyze(targetParsedExpr)
             fi;
 
-            let targetTypeName : String <- parsedExpr.type(),
-                  targetType : AnalyzedType <- if targetTypeName = "" then
-                           targetExpr.type()
+            let dispatchType : AnalyzedType <-
+                     let staticTypeName : String <- parsedExpr.type(),
+                           targetType : AnalyzedType <-
+                              let targetExprType : AnalyzedType <- targetExpr.type() in
+                                 if targetExprType.isSelfType() then
+                                    targetExprType.selfTypeTarget()
+                                 else
+                                    targetExprType
+                                 fi in
+                        if staticTypeName = "" then
+                           targetType
                         else
-                           analyzer.getType(parsedExpr, " for dispatch expression", targetTypeName)
-                     fi,
-                  method : AnalyzedMethod <- targetType.getMethod(parsedExpr.id()),
+                           let staticType : AnalyzedType <- analyzer.getType(parsedExpr, " for static dispatch expression", staticTypeName) in
+                              {
+                                 if not targetType.conformsTo(staticType) then
+                                    analyzer.errorAt(parsedExpr, "expression type '".concat(targetType.name())
+                                          .concat("' does not conform to static type '").concat(staticTypeName)
+                                          .concat("' in dispatch expression"))
+                                 else false fi;
+
+                                 staticType;
+                              }
+                        fi,
+                  method : AnalyzedMethod <- dispatchType.getMethod(parsedExpr.id()),
                   formalTypeIter : Iterator,
                   returnType : AnalyzedType in
                {
                   if isvoid method then
                      {
                         analyzer.errorAt(parsedExpr, "undefined method '".concat(parsedExpr.id())
-                              .concat("' in class '").concat(targetType.name())
+                              .concat("' in class '").concat(dispatchType.name())
                               .concat("' in dispatch expression"));
 
                         formalTypeIter <- new Iterator;
@@ -870,8 +891,8 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
                                        .concat(" argument")
                                        .concat(if numFormals = 1 then "" else "s" fi)
                                        .concat(" to method '").concat(parsedExpr.id())
-                                       .concat("' in class '").concat(targetType.name())
-                                       .concat(" in dispatch expression"))
+                                       .concat("' in class '").concat(dispatchType.name())
+                                       .concat("' in dispatch expression"))
                               else false fi
                         else false fi;
 
@@ -892,8 +913,8 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
                                                       .concat(formalType.name())
                                                       .concat("' of formal parameter in method '")
                                                       .concat(parsedExpr.id())
-                                                      .concat("' in class '").concat(targetType.name())
-                                                      .concat(" in dispatch expression"))
+                                                      .concat("' in class '").concat(dispatchType.name())
+                                                      .concat("' in dispatch expression"))
                                              else false fi
                                        else false fi;
 

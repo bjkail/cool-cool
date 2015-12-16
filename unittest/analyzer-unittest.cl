@@ -213,7 +213,7 @@ class Main inherits Test {
                   "class A inherits SELF_TYPE { a : Bool; };");
             assertAnalyzerError("", "line 1: invalid type 'SELF_TYPE' for formal parameter #1",
                   "class A { a(b : SELF_TYPE) : Object { 0 }; };");
-            assertAnalyzerError("", "line 1: invalid type 'SELF_TYPE' for dispatch expression",
+            assertAnalyzerError("", "line 1: invalid type 'SELF_TYPE' for static dispatch expression",
                   "class A { a(a : A) : Object { a@SELF_TYPE.copy() }; };");
             assertAnalyzerExprError("", "line 1: invalid type 'SELF_TYPE' for 'case' branch",
                   "case 0 of x : SELF_TYPE => x; esac");

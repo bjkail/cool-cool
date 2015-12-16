@@ -371,7 +371,7 @@ class AnalyzedWhileExpr inherits AnalyzedExpr {
    init(type_ : AnalyzedType, expr_ : AnalyzedExpr, loop__ : AnalyzedExpr) : SELF_TYPE {{
       type <- type_;
       expr <- expr_;
-      loop_ <- loop_;
+      loop_ <- loop__;
       self;
    }};
 };

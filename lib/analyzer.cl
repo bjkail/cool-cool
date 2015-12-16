@@ -430,7 +430,7 @@ class AnalyzedCaseBranchComparator inherits Comparator {
             if inheritsDepth1 < inheritsDepth2 then
                1
             else
-               0-1
+               ~1
             fi
          fi
    };

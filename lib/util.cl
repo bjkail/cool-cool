@@ -1,5 +1,5 @@
 class IntUtil {
-   minValue : Int <- 0-2147483647-1;
+   minValue : Int <- ~2147483647 - 1;
 
    minValue() : Int {
       minValue
@@ -47,7 +47,7 @@ class StringUtil {
       if s = "7" then 7 else
       if s = "8" then 8 else
       if s = "9" then 9 else
-         0-1
+         ~1
       fi fi fi fi fi
       fi fi fi fi fi
    };

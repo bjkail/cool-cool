@@ -148,7 +148,7 @@ class TestIntComparator inherits Comparator {
             0
          else
             if n1 < n2 then
-               0-1
+               ~1
             else
                1
             fi

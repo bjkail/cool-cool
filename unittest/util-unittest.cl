@@ -14,7 +14,7 @@ class Main inherits Test {
    test_IntUtil_minValue() : Object {
       if begin("IntUtil.minValue") then
          let u : IntUtil <- new IntUtil in
-            assertLessThan("", u.minValue(), 0-2147483647)
+            assertLessThan("", u.minValue(), ~2147483647)
       else false fi
    };
 
@@ -23,7 +23,7 @@ class Main inherits Test {
          let u : IntUtil <- new IntUtil in
             {
                assertIntEquals("mod(0, 1)", 0, u.mod(0, 1));
-               assertIntEquals("mod(0, -1)", 0, u.mod(0, 0-1));
+               assertIntEquals("mod(0, -1)", 0, u.mod(0, ~1));
 
                assertIntEquals("mod(8, 1)", 0, u.mod(8, 1));
                assertIntEquals("mod(8, 2)", 0, u.mod(8, 2));
@@ -34,32 +34,32 @@ class Main inherits Test {
                assertIntEquals("mod(8, 7)", 1, u.mod(8, 7));
                assertIntEquals("mod(8, 8)", 0, u.mod(8, 8));
 
-               assertIntEquals("mod(8, -1)", 0, u.mod(8, 0-1));
-               assertIntEquals("mod(8, -2)", 0, u.mod(8, 0-2));
-               assertIntEquals("mod(8, -3)", 2, u.mod(8, 0-3));
-               assertIntEquals("mod(8, -4)", 0, u.mod(8, 0-4));
-               assertIntEquals("mod(8, -5)", 3, u.mod(8, 0-5));
-               assertIntEquals("mod(8, -6)", 2, u.mod(8, 0-6));
-               assertIntEquals("mod(8, -7)", 1, u.mod(8, 0-7));
-               assertIntEquals("mod(8, -8)", 0, u.mod(8, 0-8));
+               assertIntEquals("mod(8, -1)", 0, u.mod(8, ~1));
+               assertIntEquals("mod(8, -2)", 0, u.mod(8, ~2));
+               assertIntEquals("mod(8, -3)", 2, u.mod(8, ~3));
+               assertIntEquals("mod(8, -4)", 0, u.mod(8, ~4));
+               assertIntEquals("mod(8, -5)", 3, u.mod(8, ~5));
+               assertIntEquals("mod(8, -6)", 2, u.mod(8, ~6));
+               assertIntEquals("mod(8, -7)", 1, u.mod(8, ~7));
+               assertIntEquals("mod(8, -8)", 0, u.mod(8, ~8));
 
-               assertIntEquals("mod(-8, 1)", 0, u.mod(0-8, 1));
-               assertIntEquals("mod(-8, 2)", 0, u.mod(0-8, 2));
-               assertIntEquals("mod(-8, 3)", 0-2, u.mod(0-8, 3));
-               assertIntEquals("mod(-8, 4)", 0, u.mod(0-8, 4));
-               assertIntEquals("mod(-8, 5)", 0-3, u.mod(0-8, 5));
-               assertIntEquals("mod(-8, 6)", 0-2, u.mod(0-8, 6));
-               assertIntEquals("mod(-8, 7)", 0-1, u.mod(0-8, 7));
-               assertIntEquals("mod(-8, 8)", 0, u.mod(0-8, 8));
+               assertIntEquals("mod(-8, 1)", 0, u.mod(~8, 1));
+               assertIntEquals("mod(-8, 2)", 0, u.mod(~8, 2));
+               assertIntEquals("mod(-8, 3)", ~2, u.mod(~8, 3));
+               assertIntEquals("mod(-8, 4)", 0, u.mod(~8, 4));
+               assertIntEquals("mod(-8, 5)", ~3, u.mod(~8, 5));
+               assertIntEquals("mod(-8, 6)", ~2, u.mod(~8, 6));
+               assertIntEquals("mod(-8, 7)", ~1, u.mod(~8, 7));
+               assertIntEquals("mod(-8, 8)", 0, u.mod(~8, 8));
 
-               assertIntEquals("mod(-8, -1)", 0, u.mod(0-8, 0-1));
-               assertIntEquals("mod(-8, -2)", 0, u.mod(0-8, 0-2));
-               assertIntEquals("mod(-8, -3)", 0-2, u.mod(0-8, 0-3));
-               assertIntEquals("mod(-8, -4)", 0, u.mod(0-8, 0-4));
-               assertIntEquals("mod(-8, -5)", 0-3, u.mod(0-8, 0-5));
-               assertIntEquals("mod(-8, -6)", 0-2, u.mod(0-8, 0-6));
-               assertIntEquals("mod(-8, -7)", 0-1, u.mod(0-8, 0-7));
-               assertIntEquals("mod(-8, -8)", 0, u.mod(0-8, 0-8));
+               assertIntEquals("mod(-8, -1)", 0, u.mod(~8, ~1));
+               assertIntEquals("mod(-8, -2)", 0, u.mod(~8, ~2));
+               assertIntEquals("mod(-8, -3)", ~2, u.mod(~8, ~3));
+               assertIntEquals("mod(-8, -4)", 0, u.mod(~8, ~4));
+               assertIntEquals("mod(-8, -5)", ~3, u.mod(~8, ~5));
+               assertIntEquals("mod(-8, -6)", ~2, u.mod(~8, ~6));
+               assertIntEquals("mod(-8, -7)", ~1, u.mod(~8, ~7));
+               assertIntEquals("mod(-8, -8)", 0, u.mod(~8, ~8));
             }
       else false fi
    };
@@ -92,10 +92,10 @@ class Main inherits Test {
       if begin("StringUtil.toDigit") then
          let u : StringUtil <- new StringUtil in
             {
-               assertIntEquals("toDigit()", 0-1, u.toDigit(""));
-               assertIntEquals("toDigit(-)", 0-1, u.toDigit("-"));
-               assertIntEquals("toDigit(-2)", 0-1, u.toDigit("-2"));
-               assertIntEquals("toDigit(-1)", 0-1, u.toDigit("-1"));
+               assertIntEquals("toDigit()", ~1, u.toDigit(""));
+               assertIntEquals("toDigit(-)", ~1, u.toDigit("-"));
+               assertIntEquals("toDigit(-2)", ~1, u.toDigit("-2"));
+               assertIntEquals("toDigit(-1)", ~1, u.toDigit("-1"));
                assertIntEquals("toDigit(0)", 0, u.toDigit("0"));
                assertIntEquals("toDigit(1)", 1, u.toDigit("1"));
                assertIntEquals("toDigit(2)", 2, u.toDigit("2"));
@@ -106,7 +106,7 @@ class Main inherits Test {
                assertIntEquals("toDigit(7)", 7, u.toDigit("7"));
                assertIntEquals("toDigit(8)", 8, u.toDigit("8"));
                assertIntEquals("toDigit(9)", 9, u.toDigit("9"));
-               assertIntEquals("toDigit(10)", 0-1, u.toDigit("10"));
+               assertIntEquals("toDigit(10)", ~1, u.toDigit("10"));
             }
       else false fi
    };
@@ -115,8 +115,8 @@ class Main inherits Test {
       if begin("StringUtil.fromDigit") then
          let u : StringUtil <- new StringUtil in
             {
-               assertStringEquals("fromDigit(-2)", "", u.fromDigit(0-2));
-               assertStringEquals("fromDigit(-1)", "", u.fromDigit(0-1));
+               assertStringEquals("fromDigit(-2)", "", u.fromDigit(~2));
+               assertStringEquals("fromDigit(-1)", "", u.fromDigit(~1));
                assertStringEquals("fromDigit(0)", "0", u.fromDigit(0));
                assertStringEquals("fromDigit(1)", "1", u.fromDigit(1));
                assertStringEquals("fromDigit(2)", "2", u.fromDigit(2));
@@ -144,7 +144,7 @@ class Main inherits Test {
                      }
                   pool;
 
-               assertStringEquals("fromInt(-1)", "-1", u.fromInt(0-1));
+               assertStringEquals("fromInt(-1)", "-1", u.fromInt(~1));
                assertStringEquals("fromInt(-2147483648)", "-2147483648", u.fromInt(new IntUtil.minValue()));
                assertStringEquals("fromInt(2147483647)", "2147483647", u.fromInt(2147483647));
             }

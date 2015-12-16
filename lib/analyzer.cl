@@ -648,7 +648,7 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
                   let parsedExpr : ParsedExpr <- case iter.get() of x : ParsedExpr => x; esac,
                         expr : AnalyzedExpr <- analyze(parsedExpr) in
                      {
-                        exprs.add(type);
+                        exprs.add(expr);
                         type <- expr.type();
                      }
                pool;

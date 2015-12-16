@@ -745,6 +745,10 @@ class Main inherits Test {
                   attr : AnalyzedAttribute <- type.getAttribute("a") in
                assertSameType("attribute", type.selfTypeType(), attr.type());
 
+            let analyzer : TestAnalyzer <- newAnalyzerExpr("join", "if false then self else new Object fi"),
+                  expr : AnalyzedExpr <- assertAnalyzeExpr("join", analyzer) in
+               assertSameType("attribute", analyzer.objectType(), expr.type());
+
             assertAnalyze("method", newAnalyzerDefaultMain("method", "class A { a() : SELF_TYPE { a() }; };"));
             assertAnalyze("method", newAnalyzerDefaultMain("method", "class A { a : SELF_TYPE <- let b : SELF_TYPE in b; };"));
             assertAnalyze("method", newAnalyzerDefaultMain("method", "class A { a() : Object { let a : SELF_TYPE in a.a() }; };"));

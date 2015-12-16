@@ -189,6 +189,7 @@ class AnalyzedType {
    initSelfType(type : AnalyzedType) : SELF_TYPE {{
       name <- "SELF_TYPE";
       inheritsType <- type;
+      inheritsDepth <- type.inheritsDepth() + 1;
       methods <- inheritsType.methods();
       self;
    }};

@@ -5,6 +5,7 @@ class Main inherits Test {
       testAttribute();
       testMethod();
       testExpr();
+      testSelf();
       testSelfType();
    }};
 
@@ -170,8 +171,6 @@ class Main inherits Test {
    testMethod() : Object {
       if begin("method") then
          {
-            assertAnalyzerError("", "line 1: invalid formal parameter name 'self'",
-                  "class A { a(self : Bool) : Object { 0 }; };");
             assertAnalyzerError("", "line 1: expression type 'Int' does not conform to return type 'Bool' of method 'a'",
                   "class A { a() : Bool { 0 }; };");
 
@@ -642,6 +641,30 @@ class Main inherits Test {
                   assertSameType("equal", analyzer.boolType(), expr.type());
                   case expr.left() of x : AnalyzedNewExpr => x; esac;
                   case expr.right() of x : AnalyzedNewExpr => x; esac;
+               };
+         }
+      else false fi
+   };
+
+   testSelf() : Object {
+      if begin("self") then
+         {
+            assertAnalyzerExprError("", "line 1: invalid assignment to 'self' variable",
+                  "self <- new SELF_TYPE");
+            assertAnalyzerExprError("", "line 1: redefinition of 'self' variable in 'let' expression",
+                  "let self : Object in 0");
+            assertAnalyzerExprError("", "line 1: redefinition of 'self' variable in 'case' expression",
+                  "case 0 of self : Object => 0; esac");
+            assertAnalyzerError("", "line 1: invalid formal parameter name 'self'",
+                  "class A { a(self : Object) : Object { 0 }; };");
+
+            let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("new", "class A { a : Object <- self; };"),
+                  program : AnalyzedProgram <- assertAnalyze("reference", analyzer),
+                  type : AnalyzedType <- program.getType("A"),
+                  expr : AnalyzedObjectExpr <- case type.getAttribute("a").expr() of x : AnalyzedObjectExpr => x; esac in
+               {
+                  case expr.object() of x : AnalyzedSelfObject => x; esac;
+                  assertSameType("reference", type.selfTypeType(), expr.type());
                };
          }
       else false fi

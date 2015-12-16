@@ -730,7 +730,7 @@ class Main inherits Test {
                   methodB : AnalyzedMethod <- type.getMethod("b") in
                {
                   assertSameType("return", type.selfTypeType(), methodA.returnType());
-                  assertSameType("return expr", type, methodB.expr().type());
+                  assertSameType("return expr", type.selfTypeType(), methodB.expr().type());
                };
 
             let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("let", "class A { a() : Object { let a : SELF_TYPE in a }; };"),
@@ -745,9 +745,7 @@ class Main inherits Test {
                   attr : AnalyzedAttribute <- type.getAttribute("a") in
                assertSameType("attribute", type.selfTypeType(), attr.type());
 
-            assertAnalyzerError("", "line 1: expression type 'A' does not conform to return type 'SELF_TYPE' of method 'a'",
-                  "class A { a() : SELF_TYPE { a() }; };");
-
+            assertAnalyze("method", newAnalyzerDefaultMain("method", "class A { a() : SELF_TYPE { a() }; };"));
             assertAnalyze("method", newAnalyzerDefaultMain("method", "class A { a : SELF_TYPE <- let b : SELF_TYPE in b; };"));
             assertAnalyze("method", newAnalyzerDefaultMain("method", "class A { a() : Object { let a : SELF_TYPE in a.a() }; };"));
             assertAnalyze("method", newAnalyzerDefaultMain("method", "class A { a() : Object { new SELF_TYPE = new SELF_TYPE }; };"));

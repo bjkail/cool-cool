@@ -836,17 +836,15 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
                targetExpr <- analyze(targetParsedExpr)
             fi;
 
-            let dispatchType : AnalyzedType <-
-                     let staticTypeName : String <- parsedExpr.type(),
-                           targetType : AnalyzedType <-
-                              let targetExprType : AnalyzedType <- targetExpr.type() in
-                                 if targetExprType.isSelfType() then
-                                    targetExprType.selfTypeTarget()
-                                 else
-                                    targetExprType
-                                 fi in
+            let targetType : AnalyzedType <- targetExpr.type(),
+                  dispatchType : AnalyzedType <-
+                     let staticTypeName : String <- parsedExpr.type() in
                         if staticTypeName = "" then
-                           targetType
+                           if targetType.isSelfType() then
+                              targetType.selfTypeTarget()
+                           else
+                              targetType
+                           fi
                         else
                            let staticType : AnalyzedType <- analyzer.getType(parsedExpr, " for static dispatch expression", staticTypeName) in
                               {
@@ -877,7 +875,7 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
                         formalTypeIter <- method.formalTypes().iterator();
                         returnType <- method.returnType();
                         if returnType.isSelfType() then
-                           returnType <- dispatchType
+                           returnType <- targetType
                         else false fi;
                      }
                   fi;

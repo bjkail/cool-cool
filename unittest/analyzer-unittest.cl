@@ -111,6 +111,10 @@ class Main inherits Test {
                      "class A inherits B { b() : Object { false }; }; class B { b() : Object { false }; };"),
                   program : AnalyzedProgram <- assertAnalyze("inherits", analyzer) in
                assertSameType("inherits", program.getType("B"), program.getType("A").inheritsType());
+
+            let analyzer : TestAnalyzer <- newAnalyzer("same",
+                     "class Main { main() : Object { 0 }; main : Bool; };") in
+               assertAnalyze("same", analyzer);
          }
       else false fi
    };
@@ -404,6 +408,34 @@ class Main inherits Test {
                         assertFalse("let 2 vars", varIter.next());
                      };
                };
+
+            let analyzer : TestAnalyzer <- newAnalyzerExpr("let same", "let b : Int, b : Bool <- b < 0 in b"),
+                  expr : AnalyzedLetExpr <- case assertAnalyzeExpr("let same", analyzer) of x : AnalyzedLetExpr => x; esac in
+               {
+                  case expr.expr() of x : AnalyzedObjectExpr => x; esac;
+                  assertSameType("let same", analyzer.boolType(), expr.type());
+
+                  let varIter : Iterator <- expr.vars().iterator() in
+                     {
+                        let var : AnalyzedLetVar <- case getIteratorNext(varIter) of x : AnalyzedLetVar => x; esac in
+                           {
+                              case var.object() of x : AnalyzedVarObject => x; esac;
+                              assertVoid("let same var 1 expr", var.expr());
+                           };
+
+                        let var : AnalyzedLetVar <- case getIteratorNext(varIter) of x : AnalyzedLetVar => x; esac in
+                           {
+                              case var.object() of x : AnalyzedVarObject => x; esac;
+                              case var.expr() of x : AnalyzedBinaryExpr => x; esac;
+                           };
+
+                        assertFalse("let same vars", varIter.next());
+                     };
+               };
+
+            let analyzer : TestAnalyzer <- newAnalyzerExpr("let greedy", "let b : Int in b < 0") in
+               -- (let (b < 0)) not ((let b) < 0)
+               case assertAnalyzeExpr("let", analyzer) of x : AnalyzedLetExpr => x; esac;
 
             assertAnalyzerExprError("case", "line 1: duplicate type 'Int' in 'case' expression",
                   "case 0 of a : Int => a; a : Int => a; esac");

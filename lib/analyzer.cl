@@ -1146,6 +1146,31 @@ class Analyzer {
       fi
    };
 
+   getInheritsType(node : ParsedNode, name : String) : AnalyzedType {
+      if name = "" then
+         objectType
+      else
+         let type : AnalyzedType <- getType(node, " for 'inherits'", name) in
+            if if type = intType then
+                  true
+               else
+                  if type = stringType then
+                     true
+                  else
+                     type = boolType
+                  fi
+               fi
+            then
+               {
+                  errorAt(node, "invalid type '".concat(name).concat("' for 'inherits'"));
+                  objectType;
+               }
+            else
+               type
+            fi
+      fi
+   };
+
    createAnalyzedAttribute(type : AnalyzedType, attr : ParsedAttribute) : AnalyzedAttribute {
       new AnalyzedAttribute.init(type, attr, getTypeAllowSelf(attr, " for attribute", attr.type(), type))
    };
@@ -1379,13 +1404,8 @@ class Analyzer {
             let classIter : Iterator <- typeList.iterator() in
                while classIter.next() loop
                   let type : AnalyzedType <- case classIter.get() of x : AnalyzedType => x; esac,
-                        class_ : ParsedClass <- type.parsedClass(),
-                        inherits_ : String <- class_.inherits_() in
-                     type.setInheritsType(if inherits_ = "" then
-                              objectType
-                           else
-                              getType(class_, " for 'inherits'", inherits_)
-                           fi)
+                        class_ : ParsedClass <- type.parsedClass() in
+                     type.setInheritsType(getInheritsType(class_, class_.inherits_()))
                pool;
 
             -- Diagnose recursive inherits.

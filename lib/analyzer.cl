@@ -1078,7 +1078,7 @@ class Analyzer {
                   ioType.processInherits();
                   ioType.addMethod(new AnalyzedMethod.initBuiltin(ioType, "out_string", collString, ioType.selfTypeType()));
                   ioType.addMethod(new AnalyzedMethod.initBuiltin(ioType, "out_int", collInt, ioType.selfTypeType()));
-                  ioType.addMethod(new AnalyzedMethod.initBuiltin(ioType, "in_string", collEmpty, ioType.selfTypeType()));
+                  ioType.addMethod(new AnalyzedMethod.initBuiltin(ioType, "in_string", collEmpty, stringType));
                   ioType.addMethod(new AnalyzedMethod.initBuiltin(ioType, "in_int", collEmpty, intType));
 
                   intType.processInherits();

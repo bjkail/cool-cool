@@ -516,6 +516,7 @@ class AnalyzedUnaryExpr inherits AnalyzedExpr {
 
    init(type_ : AnalyzedType, op_ : String, expr_ : AnalyzedExpr) : SELF_TYPE {{
       type <- type_;
+      op <- op_;
       expr <- expr_;
       self;
    }};

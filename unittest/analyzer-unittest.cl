@@ -761,6 +761,8 @@ class Main inherits Test {
             assertAnalyze("method", newAnalyzerDefaultMain("method", "class A { a : SELF_TYPE <- let b : SELF_TYPE in b; };"));
             assertAnalyze("method", newAnalyzerDefaultMain("method", "class A { a() : Object { let a : SELF_TYPE in a.a() }; };"));
             assertAnalyze("method", newAnalyzerDefaultMain("method", "class A { a() : Object { new SELF_TYPE = new SELF_TYPE }; };"));
+            assertAnalyze("method", newAnalyzerDefaultMain("method",
+                  "class A inherits B { a() : SELF_TYPE { self }; }; class B { a() : SELF_TYPE { self }; };"));
          }
       else false fi
    };

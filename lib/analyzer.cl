@@ -1252,7 +1252,8 @@ class Analyzer {
 
                   let returnType : AnalyzedType <- method.returnType(),
                         oldReturnType : AnalyzedType <- oldMethod.returnType() in
-                     if not returnType = oldReturnType then
+                     -- Compare names to allow SELF_TYPE.
+                     if not returnType.name() = oldReturnType.name() then
                         {
                            errorAt(method.parsedMethod(), "redefinition of method '".concat(method.id())
                                  .concat("' in class '").concat(type.name())

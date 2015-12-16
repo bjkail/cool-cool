@@ -9,6 +9,7 @@ class Main inherits Test {
       testEscapeDirective();
       testFileDirective();
       testFilesDirective();
+      testOptionDirective();
 
       testPunct();
       testBinaryOp();
@@ -316,6 +317,26 @@ class Main inherits Test {
       else false fi
    };
 
+   testOptionDirective() : Object {
+      if begin("optionDirective") then
+         {
+            let listener : TestOptionTokenizerListener <- new TestOptionTokenizerListener,
+                  t : Tokenizer <- newTokenizer("--cool:option=a\n--cool:option=bcd").setListener(listener) in
+               {
+                  assertTokenEof("option", t);
+                  let iter : Iterator <- listener.options().iterator() in
+                     {
+                        assertTrue("option a", iter.next());
+                        assertStringEquals("option a", "a", case iter.get() of x : String => x; esac);
+                        assertTrue("option bcd", iter.next());
+                        assertStringEquals("option bcd", "bcd", case iter.get() of x : String => x; esac);
+                        assertFalse("options", iter.next());
+                     };
+               };
+         }
+      else false fi
+   };
+
    testPunct() : Object {
       if begin("punct") then
          let t : Tokenizer <- newTokenizer("{}(( *):,@.;~<-=>") in
@@ -590,5 +611,14 @@ class TestTokenizerListener inherits TokenizerListener {
 
    eof() : Object {
       is.reset()
+   };
+};
+
+class TestOptionTokenizerListener inherits TokenizerListener {
+   options : Collection <- new LinkedList;
+   options() : Collection { options };
+
+   handleOption(s : String) : Object {
+      options.add(s)
    };
 };

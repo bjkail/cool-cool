@@ -108,6 +108,7 @@ class TokenString inherits Token {
 class TokenizerListener {
    setEmptyLineEofCount(n : Int) : Object { false };
    eof() : Object { false };
+   handleOption(option : String) : Object { false };
 };
 
 class TokenizerLineMapFile {
@@ -453,6 +454,13 @@ class Tokenizer {
          else false fi
    };
 
+   readOptionDirective() : Object {
+      let option : String <- readUntilEOL() in
+         if not isvoid listener then
+            listener.handleOption(option)
+         else false fi
+   };
+
    readDirective() : Object {
       if matchChar("e") then
          if matchChar("o") then
@@ -491,7 +499,23 @@ class Tokenizer {
                   else false fi
                else false fi
             else false fi
-         else false fi
+         else
+            if matchChar("o") then
+               if matchChar("p") then
+                  if matchChar("t") then
+                     if matchChar("i") then
+                        if matchChar("o") then
+                           if matchChar("n") then
+                              if matchChar("=") then
+                                 readOptionDirective()
+                              else false fi
+                           else false fi
+                        else false fi
+                     else false fi
+                  else false fi
+               else false fi
+            else false fi
+         fi
       fi
    };
 

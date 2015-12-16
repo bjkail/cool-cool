@@ -932,25 +932,32 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
 
    visitUnary(parsedExpr : ParsedUnaryExpr) : Object {
       let expr : AnalyzedExpr <- analyze(parsedExpr.expr()),
-            op : String <- parsedExpr.op() in
+            op : String <- parsedExpr.op(),
+            type : AnalyzedType in
          {
-            if not op = "void" then
-               if op = "not" then
-                  if not expr.type() = analyzer.boolType() then
-                     analyzer.errorAt(parsedExpr.expr(), "expression type '".concat(expr.type().name())
-                           .concat("' is not type 'Bool' for 'not' expression"))
-                  else false fi
-               else
-                  if op = "~" then
-                     if not expr.type() = analyzer.intType() then
-                        analyzer.errorAt(parsedExpr.expr(), "expression type '".concat(expr.type().name())
-                              .concat("' is not type 'Bool' for '~' expression"))
-                     else false fi
-                  else new Object.abort() fi
-               fi
-            else false fi;
+            if op = "isvoid" then
+               type <- analyzer.boolType()
+            else
+               {
+                  type <- expr.type();
 
-            new AnalyzedUnaryExpr.init(expr.type(), op, expr);
+                  if op = "not" then
+                     if not type = analyzer.boolType() then
+                        analyzer.errorAt(parsedExpr.expr(), "expression type '".concat(expr.type().name())
+                              .concat("' is not type 'Bool' for 'not' expression"))
+                     else false fi
+                  else
+                     if op = "~" then
+                        if not type = analyzer.intType() then
+                           analyzer.errorAt(parsedExpr.expr(), "expression type '".concat(expr.type().name())
+                                 .concat("' is not type 'Bool' for '~' expression"))
+                        else false fi
+                     else new Object.abort() fi
+                  fi;
+               }
+            fi;
+
+            new AnalyzedUnaryExpr.init(type, op, expr);
          }
    };
 

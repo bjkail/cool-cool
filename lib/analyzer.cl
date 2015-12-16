@@ -950,7 +950,7 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
                      if op = "~" then
                         if not type = analyzer.intType() then
                            analyzer.errorAt(parsedExpr.expr(), "expression type '".concat(expr.type().name())
-                                 .concat("' is not type 'Bool' for '~' expression"))
+                                 .concat("' is not type 'Int' for '~' expression"))
                         else false fi
                      else new Object.abort() fi
                   fi;

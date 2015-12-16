@@ -149,7 +149,7 @@ class Main inherits Test {
                   "class A { a : Bool <- 0; };");
 
             let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("attribute",
-                     "class A { a : Object; b : Int <- 0; };"),
+                     "class A { a : Object; b : Int <- 0; c : String <- c; };"),
                   program : AnalyzedProgram <- analyzer.analyzeTest(),
                   type : AnalyzedType <- program.getType("A") in
                {
@@ -166,6 +166,14 @@ class Main inherits Test {
                         assertSameType("b defining", type, attr.containingType());
                         assertStringEquals("b id", "b", attr.id());
                         assertSameType("b type", analyzer.intType(), attr.type());
+                        assertNotVoid("b expr", attr.expr());
+                     };
+
+                  let attr : AnalyzedAttribute <- type.getAttribute("c") in
+                     {
+                        assertSameType("b defining", type, attr.containingType());
+                        assertStringEquals("b id", "c", attr.id());
+                        assertSameType("b type", analyzer.stringType(), attr.type());
                         assertNotVoid("b expr", attr.expr());
                      };
                };

@@ -3,29 +3,36 @@
 dir=$(dirname "$0")
 coolfiles=("$dir"/../cool.cl "$dir"/../lib/*.cl)
 
-formaterrors=
+interpreteroptions=()
+options=()
 files=()
 for arg in "$@"; do
   case $1 in
   --) shift; files+=("$@"); break;;
   --bootstrap) files=("${coolfiles[@]}");;
-  --format-errors) formaterrors=--format-errors;;
+  --format-errors) interpreteroptions+=(--format-errors);;
+  --lex) options+=(--lex);;
+  --parse) options+=(--parse);;
   -*) echo "$0: $1: unrecognized option" >&2; exit 1;;
   *) files+=("$1")
   esac
   shift
 done
 
-write_escape_directive() {
+write_init() {
   printf -- '--cool:escape:\\b=\b:\\t=\t:\\v=\v:\\f=\f:\\r=\r:\n'
+
+  for option in "${options[@]}"; do
+    echo "--cool:option=$option"
+  done
 }
 
 run_interpreter_wrapper() {
-  "$dir"/interpreter-wrapper $formaterrors "${coolfiles[@]}"
+  "$dir"/interpreter-wrapper "${interpreteroptions[@]}" "${coolfiles[@]}"
 }
 
 if ((${#files[@]} == 0)); then
-  { write_escape_directive; cat; } | run_interpreter_wrapper
+  { write_init; cat; } | run_interpreter_wrapper
 else
   # Use a temporary file rather than a pipeline so that errors reading the input
   # files are not written in parallel with errors from the interpreter.
@@ -33,7 +40,7 @@ else
   trap 'rm "$tmpfile"' EXIT
 
   {
-    write_escape_directive
+    write_init
 
     eoflen=1024
     echo "--cool:eof=$eoflen"

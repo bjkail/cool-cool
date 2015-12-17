@@ -1,6 +1,6 @@
 class Main inherits Test {
    test() : Object {{
-      testBasic();
+      testConstant();
    }};
 
    interpret(context : String, program : String) : InterpreterValue {
@@ -22,20 +22,65 @@ class Main inherits Test {
       interpret(context, "class Main { main() : Object { ".concat(program).concat(" }; };"))
    };
 
-   testBasic() : Object {
-      if begin("basic") then
+   getBool(context : String, value : InterpreterValue) : Bool {{
+      assertStringEquals(context.concat(" type"), "Bool", value.type().name());
+      case value of x : InterpreterBoolValue => x.value(); esac;
+   }};
+
+   interpretBool(context : String, program : String) : Bool {
+      getBool(context, interpret(context, program))
+   };
+
+   interpretBoolExpr(context : String, program : String) : Bool {
+      getBool(context, interpretExpr(context, program))
+   };
+
+   getInt(context : String, value : InterpreterValue) : Int {{
+      assertStringEquals(context.concat(" type"), "Int", value.type().name());
+      case value of x : InterpreterIntValue => x.value(); esac;
+   }};
+
+   interpretInt(context : String, program : String) : Int {
+      getInt(context, interpret(context, program))
+   };
+
+   interpretIntExpr(context : String, program : String) : Int {
+      getInt(context, interpretExpr(context, program))
+   };
+
+   getString(context : String, value : InterpreterValue) : String {{
+      assertStringEquals(context.concat(" type"), "String", value.type().name());
+      case value of x : InterpreterStringValue => x.value(); esac;
+   }};
+
+   interpretString(context : String, program : String) : String {
+      getString(context, interpret(context, program))
+   };
+
+   interpretStringExpr(context : String, program : String) : String {
+      getString(context, interpretExpr(context, program))
+   };
+
+   getObject(context : String, type : String, value : InterpreterValue) : InterpreterObjectValue {{
+      assertStringEquals(context.concat(" type"), type, value.type().name());
+      case value of x : InterpreterObjectValue => x; esac;
+   }};
+
+   interpretObject(context : String, type : String, program : String) : InterpreterObjectValue {
+      getObject(context, type, interpret(context, program))
+   };
+
+   interpretObjectExpr(context : String, type : String, program : String) : InterpreterObjectValue {
+      getObject(context, type, interpretExpr(context, program))
+   };
+
+   testConstant() : Object {
+      if begin("constant") then
          {
-            let value : InterpreterBoolValue <- case interpretExpr("int", "false") of x : InterpreterBoolValue => x; esac in
-               assertFalse("false", value.value());
-
-            let value : InterpreterBoolValue <- case interpretExpr("int", "true") of x : InterpreterBoolValue => x; esac in
-               assertTrue("true", value.value());
-
-            let value : InterpreterIntValue <- case interpretExpr("int", "1") of x : InterpreterIntValue => x; esac in
-               assertIntEquals("int", 1, value.value());
-
-            let value : InterpreterStringValue <- case interpretExpr("int", "\"a\"") of x : InterpreterStringValue => x; esac in
-               assertStringEquals("string", "a", value.value());
+            assertFalse("false", interpretBoolExpr("false", "false"));
+            assertTrue("true", interpretBoolExpr("true", "true"));
+            assertIntEquals("int", 1, interpretIntExpr("int", "1"));
+            assertStringEquals("string", "a", interpretStringExpr("string", "\"a\""));
          }
       else false fi
    };

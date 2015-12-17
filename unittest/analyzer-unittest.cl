@@ -312,6 +312,9 @@ class Main inherits Test {
 
             assertAnalyzerError("", "line 1: expression type 'Int' is not type 'Bool' for predicate in 'if' expression",
                   "class A { a() : Object { if 0 then 0 else 0 fi }; };");
+            -- Test join(error, Object)
+            assertAnalyzerError("", "line 1: undefined type 'B' for 'new' expression",
+                  "class A { a() : Object { if false then new B else new Object fi }; };");
 
             let analyzer : TestAnalyzer <- newAnalyzer("if",
                      "class Main { main() : Object { if true then 0 else 0 fi }; };"),

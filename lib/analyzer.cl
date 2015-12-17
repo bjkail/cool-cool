@@ -32,6 +32,7 @@ class AnalyzedType {
 
    inheritsType : AnalyzedType;
    inheritsType() : AnalyzedType { inheritsType };
+   setInheritsType(inheritsType_ : AnalyzedType) : Object { inheritsType <- inheritsType_ };
    inheritsType2() : AnalyzedType {
       if isvoid inheritsType then
          inheritsType
@@ -49,11 +50,6 @@ class AnalyzedType {
    selfTypeTarget() : AnalyzedType {
       inheritsType
    };
-
-   setInheritsType(inheritsType_ : AnalyzedType) : SELF_TYPE {{
-      inheritsType <- inheritsType_;
-      self;
-   }};
 
    conformsTo(type : AnalyzedType) : Bool {
       let inheritsType : AnalyzedType <- self in
@@ -1168,7 +1164,13 @@ class Analyzer {
          if isvoid type then
             {
                errorAt(node, "undefined type '".concat(name).concat("'").concat(where));
-               new AnalyzedType.initError(name).setInheritsType(objectType);
+
+               let type : AnalyzedType <- new AnalyzedType.initError(name) in
+                  {
+                     type.setInheritsType(objectType);
+                     type.processInherits();
+                     type;
+                  };
             }
          else
             case type of x : AnalyzedType => x; esac

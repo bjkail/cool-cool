@@ -1,3 +1,25 @@
+class ObjectUtil {
+   abortObject(so : Object, s : String) : Object {{
+      new IO.out_string("ERROR: ").out_string(so.type_name()).out_string(".").out_string(s).out_string("\n");
+      new Object.abort();
+   }};
+
+   abortInt(so : Object, s : String) : Int {{
+      abortObject(so, s);
+      0;
+   }};
+
+   abortString(so : Object, s : String) : String {{
+      abortObject(so, s);
+      "";
+   }};
+
+   abortBool(so : Object, s : String) : Bool {{
+      abortObject(so, s);
+      false;
+   }};
+};
+
 class IntUtil {
    minValue : Int <- ~2147483647 - 1;
 

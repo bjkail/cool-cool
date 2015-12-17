@@ -9,23 +9,23 @@ class Iterable {
 
 class Collection inherits Iterable {
    size() : Int { 0 };
-   add(o : Object) : SELF_TYPE {{ new Object.abort(); self; }};
+   add(o : Object) : SELF_TYPE {{ new ObjectUtil.abortObject(self, "add: unimplemented"); self; }};
 };
 
 class StringMapIterator {
    next() : Bool { false };
-   key() : String {{ new Object.abort(); ""; }};
-   value() : Object { new Object.abort() };
+   key() : String { new ObjectUtil.abortString(self, "key unimplemented") };
+   value() : Object { new ObjectUtil.abortObject(self, "value unimplemented") };
 };
 
 class StringMap {
    size() : Int { 0 };
    iterator() : StringMapIterator { new StringMapIterator };
    getWithString(key : String) : Object { let void : Object in void };
-   putWithString(key : String, value : Object) : Object { new Object.abort() };
-   putNewWithString(key : String, value : Object) : Object { new Object.abort() };
+   putWithString(key : String, value : Object) : Object { new ObjectUtil.abortObject(self, "putWithString: unimplemented") };
+   putNewWithString(key : String, value : Object) : Object { new ObjectUtil.abortObject(self, "putNewWithString: unimplemented") };
 };
 
 class Comparator {
-   compare(o1 : Object, o2 : Object) : Int {{ new Object.abort(); 0; }};
+   compare(o1 : Object, o2 : Object) : Int { new ObjectUtil.abortInt(self, "compare: unimplemented") };
 };

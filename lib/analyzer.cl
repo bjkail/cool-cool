@@ -209,12 +209,12 @@ class AnalyzedType {
 
 class AnalyzedSelfType inherits AnalyzedType {
    getAttribute(id : String) : AnalyzedAttribute {{
-      new Object.abort();
+      new ObjectUtil.abortObject(self, "getAttribute: unsupported");
       let void : AnalyzedAttribute in void;
    }};
 
    getMethod(id : String) : AnalyzedMethod {{
-      new Object.abort();
+      new ObjectUtil.abortObject(self, "getMethod unsupported");
       let void : AnalyzedMethod in void;
    }};
 };
@@ -226,7 +226,7 @@ class AnalyzedFeature {
    id : String;
    id() : String { id };
 
-   unsetParsedFeature() : Object { new Object.abort() };
+   unsetParsedFeature() : Object { new ObjectUtil.abortObject(self, "unsetParsedFeature: unimplemented") };
 
    expr : AnalyzedExpr;
    expr() : AnalyzedExpr { expr };
@@ -328,27 +328,27 @@ class AnalyzedAttributeObject inherits AnalyzedObject {
 };
 
 class AnalyzedExprVisitor {
-   visitBlock(expr : AnalyzedBlockExpr) : Object { new Object.abort() };
-   visitIf(expr : AnalyzedIfExpr) : Object { new Object.abort() };
-   visitWhile(expr : AnalyzedWhileExpr) : Object { new Object.abort() };
-   visitLet(expr : AnalyzedLetExpr) : Object { new Object.abort() };
-   visitCase(expr : AnalyzedCaseExpr) : Object { new Object.abort() };
-   visitAssignment(expr : AnalyzedAssignmentExpr) : Object { new Object.abort() };
-   visitObject(expr : AnalyzedObjectExpr) : Object { new Object.abort() };
-   visitNew(expr : AnalyzedNewExpr) : Object { new Object.abort() };
-   visitDispatch(expr : AnalyzedDispatchExpr) : Object { new Object.abort() };
-   visitUnary(expr : AnalyzedUnaryExpr) : Object { new Object.abort() };
-   visitBinary(expr : AnalyzedBinaryExpr) : Object { new Object.abort() };
-   visitConstantBool(expr : AnalyzedConstantBoolExpr) : Object { new Object.abort() };
-   visitConstantInt(expr : AnalyzedConstantIntExpr) : Object { new Object.abort() };
-   visitConstantString(expr : AnalyzedConstantStringExpr) : Object { new Object.abort() };
+   visitBlock(expr : AnalyzedBlockExpr) : Object { new ObjectUtil.abortObject(self, "visitBlock: unimplemented") };
+   visitIf(expr : AnalyzedIfExpr) : Object { new ObjectUtil.abortObject(self, "visitIf: unimplemented") };
+   visitWhile(expr : AnalyzedWhileExpr) : Object { new ObjectUtil.abortObject(self, "visitWhile: unimplemented") };
+   visitLet(expr : AnalyzedLetExpr) : Object { new ObjectUtil.abortObject(self, "visitLet: unimplemented") };
+   visitCase(expr : AnalyzedCaseExpr) : Object { new ObjectUtil.abortObject(self, "visitCase: unimplemented") };
+   visitAssignment(expr : AnalyzedAssignmentExpr) : Object { new ObjectUtil.abortObject(self, "visitAssignment: unimplemented") };
+   visitObject(expr : AnalyzedObjectExpr) : Object { new ObjectUtil.abortObject(self, "visitObject: unimplemented") };
+   visitNew(expr : AnalyzedNewExpr) : Object { new ObjectUtil.abortObject(self, "visitNew: unimplemented") };
+   visitDispatch(expr : AnalyzedDispatchExpr) : Object { new ObjectUtil.abortObject(self, "visitDispatch: unimplemented") };
+   visitUnary(expr : AnalyzedUnaryExpr) : Object { new ObjectUtil.abortObject(self, "visitUnary: unimplemented") };
+   visitBinary(expr : AnalyzedBinaryExpr) : Object { new ObjectUtil.abortObject(self, "visitBinary: unimplemented") };
+   visitConstantBool(expr : AnalyzedConstantBoolExpr) : Object { new ObjectUtil.abortObject(self, "visitConstantBool: unimplemented") };
+   visitConstantInt(expr : AnalyzedConstantIntExpr) : Object { new ObjectUtil.abortObject(self, "visitConstantInt: unimplemented") };
+   visitConstantString(expr : AnalyzedConstantStringExpr) : Object { new ObjectUtil.abortObject(self, "visitConstantString: unimplemented") };
 };
 
 class AnalyzedExpr {
    type : AnalyzedType;
    type() : AnalyzedType { type };
 
-   accept(visitor : AnalyzedExprVisitor) : Object { new Object.abort() };
+   accept(visitor : AnalyzedExprVisitor) : Object { new ObjectUtil.abortObject(self, "accept: unimplemented") };
 };
 
 class AnalyzedBlockExpr inherits AnalyzedExpr {
@@ -996,7 +996,9 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
                            analyzer.errorAt(parsedExpr.expr(), "expression type '".concat(expr.type().name())
                                  .concat("' is not type 'Int' for '~' expression"))
                         else false fi
-                     else new Object.abort() fi
+                     else
+                        new ObjectUtil.abortObject(self, "visitUnary: invalid op=".concat(op))
+                     fi
                   fi;
                }
             fi;
@@ -1059,7 +1061,9 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
                         fi fi
                      fi then
                         type <- analyzer.intType()
-                     else new Object.abort() fi
+                     else
+                        new ObjectUtil.abortObject(self, "visitBinary invalid op=".concat(op))
+                     fi
                   fi;
                }
             fi;

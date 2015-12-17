@@ -96,24 +96,24 @@ class ParsedMethod inherits ParsedFeature {
 };
 
 class ParsedExprVisitor {
-   visitBlock(expr : ParsedBlockExpr) : Object { new Object.abort() };
-   visitIf(expr : ParsedIfExpr) : Object { new Object.abort() };
-   visitWhile(expr : ParsedWhileExpr) : Object { new Object.abort() };
-   visitLet(expr : ParsedLetExpr) : Object { new Object.abort() };
-   visitCase(expr : ParsedCaseExpr) : Object { new Object.abort() };
-   visitAssignment(expr : ParsedAssignmentExpr) : Object { new Object.abort() };
-   visitId(expr : ParsedIdExpr) : Object { new Object.abort() };
-   visitNew(expr : ParsedNewExpr) : Object { new Object.abort() };
-   visitDispatch(expr : ParsedDispatchExpr) : Object { new Object.abort() };
-   visitUnary(expr : ParsedUnaryExpr) : Object { new Object.abort() };
-   visitBinary(expr : ParsedBinaryExpr) : Object { new Object.abort() };
-   visitConstantBool(expr : ParsedConstantBoolExpr) : Object { new Object.abort() };
-   visitConstantInt(expr : ParsedConstantIntExpr) : Object { new Object.abort() };
-   visitConstantString(expr : ParsedConstantStringExpr) : Object { new Object.abort() };
+   visitBlock(expr : ParsedBlockExpr) : Object { new ObjectUtil.abortObject(self, "visitBlock: unimplemented") };
+   visitIf(expr : ParsedIfExpr) : Object { new ObjectUtil.abortObject(self, "visitIf: unimplemented") };
+   visitWhile(expr : ParsedWhileExpr) : Object { new ObjectUtil.abortObject(self, "visitWhile: unimplemented") };
+   visitLet(expr : ParsedLetExpr) : Object { new ObjectUtil.abortObject(self, "visitLet: unimplemented") };
+   visitCase(expr : ParsedCaseExpr) : Object { new ObjectUtil.abortObject(self, "visitCase: unimplemented") };
+   visitAssignment(expr : ParsedAssignmentExpr) : Object { new ObjectUtil.abortObject(self, "visitAssignment: unimplemented") };
+   visitId(expr : ParsedIdExpr) : Object { new ObjectUtil.abortObject(self, "visitId: unimplemented") };
+   visitNew(expr : ParsedNewExpr) : Object { new ObjectUtil.abortObject(self, "visitNew: unimplemented") };
+   visitDispatch(expr : ParsedDispatchExpr) : Object { new ObjectUtil.abortObject(self, "visitDispatch: unimplemented") };
+   visitUnary(expr : ParsedUnaryExpr) : Object { new ObjectUtil.abortObject(self, "visitUnary: unimplemented") };
+   visitBinary(expr : ParsedBinaryExpr) : Object { new ObjectUtil.abortObject(self, "visitBinary: unimplemented") };
+   visitConstantBool(expr : ParsedConstantBoolExpr) : Object { new ObjectUtil.abortObject(self, "visitConstantBool: unimplemented") };
+   visitConstantInt(expr : ParsedConstantIntExpr) : Object { new ObjectUtil.abortObject(self, "visitConstantInt: unimplemented") };
+   visitConstantString(expr : ParsedConstantStringExpr) : Object { new ObjectUtil.abortObject(self, "visitConstantString: unimplemented") };
 };
 
 class ParsedExpr inherits ParsedNode {
-   accept(visitor : ParsedExprVisitor) : Object { new Object.abort() };
+   accept(visitor : ParsedExprVisitor) : Object { new ObjectUtil.abortObject(self, "accept: unimplemented") };
 };
 
 class ParsedErrorExpr inherits ParsedExpr {
@@ -416,7 +416,7 @@ class Parser {
 
    skipToken() : Bool {{
       if isvoid token then
-         abort()
+         new ObjectUtil.abortObject(self, "skipToken: void token")
       else
          token <- let void : Token in void
       fi;

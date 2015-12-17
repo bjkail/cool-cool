@@ -547,14 +547,18 @@ class AnalyzedDispatchExpr inherits AnalyzedExpr {
    method : AnalyzedMethod;
    method() : AnalyzedMethod { method };
 
+   static : Bool;
+   static() : Bool { static };
+
    arguments : Collection;
    arguments() : Collection { arguments };
 
-   init(line_ : Int, type_ : AnalyzedType, expr_ : AnalyzedExpr, method_ : AnalyzedMethod, arguments_ : Collection) : SELF_TYPE {{
+   init(line_ : Int, type_ : AnalyzedType, expr_ : AnalyzedExpr, method_ : AnalyzedMethod, static_ : Bool, arguments_ : Collection) : SELF_TYPE {{
       line <- line_;
       type <- type_;
       expr <- expr_;
       method <- method_;
+      static <- static_;
       arguments <- arguments_;
       self;
    }};
@@ -900,26 +904,27 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
             fi;
 
             let targetType : AnalyzedType <- targetExpr.type(),
+                  staticTypeName : String <- parsedExpr.type(),
+                  static : Bool <- not staticTypeName = "",
                   dispatchType : AnalyzedType <-
-                     let staticTypeName : String <- parsedExpr.type() in
-                        if staticTypeName = "" then
-                           if targetType.isSelfType() then
-                              targetType.selfTypeTarget()
-                           else
-                              targetType
-                           fi
-                        else
-                           let staticType : AnalyzedType <- analyzer.getType(parsedExpr, " for static dispatch expression", staticTypeName) in
-                              {
-                                 if not targetType.conformsTo(staticType) then
-                                    analyzer.errorAt(parsedExpr, "expression type '".concat(targetType.name())
-                                          .concat("' does not conform to static type '").concat(staticTypeName)
-                                          .concat("' in dispatch expression"))
-                                 else false fi;
+                     if static then
+                        let staticType : AnalyzedType <- analyzer.getType(parsedExpr, " for static dispatch expression", staticTypeName) in
+                           {
+                              if not targetType.conformsTo(staticType) then
+                                 analyzer.errorAt(parsedExpr, "expression type '".concat(targetType.name())
+                                       .concat("' does not conform to static type '").concat(staticTypeName)
+                                       .concat("' in dispatch expression"))
+                              else false fi;
 
-                                 staticType;
-                              }
-                        fi,
+                              staticType;
+                           }
+                     else
+                        if targetType.isSelfType() then
+                           targetType.selfTypeTarget()
+                        else
+                           targetType
+                        fi
+                     fi,
                   method : AnalyzedMethod <- dispatchType.getMethod(parsedExpr.id()),
                   formalTypeIter : Iterator,
                   returnType : AnalyzedType in
@@ -984,7 +989,7 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
                                     }
                               pool;
 
-                              new AnalyzedDispatchExpr.init(parsedExpr.line(), returnType, targetExpr, method, exprs);
+                              new AnalyzedDispatchExpr.init(parsedExpr.line(), returnType, targetExpr, method, static, exprs);
                            };
                      };
                };

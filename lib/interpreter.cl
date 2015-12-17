@@ -343,7 +343,7 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
                   -- Manually build and analyze a "new Main.main()" expression
                   -- to use as the program entry point.
                   newExpr : AnalyzedExpr <- new AnalyzedNewExpr.init(mainType),
-                  dispatchExpr : AnalyzedExpr <- new AnalyzedDispatchExpr.init(0, mainMethod.returnType(), newExpr, mainMethod, new Collection) in
+                  dispatchExpr : AnalyzedExpr <- new AnalyzedDispatchExpr.init(0, mainMethod.returnType(), newExpr, mainMethod, true, new Collection) in
                new InterpreterProgram.init(analyzeExpr(dispatchExpr));
          };
    }};

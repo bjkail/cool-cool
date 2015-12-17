@@ -19,6 +19,12 @@ class Collection inherits Iterable {
    };
 };
 
+class IntMap {
+   size() : Int { 0 };
+   getWithInt(key : Int) : Object { let void : Object in void };
+   putWithInt(key : Int, value : Object) : Object { new ObjectUtil.abortObject(self, "putWithInt: unimplemented") };
+};
+
 class StringMapIterator {
    next() : Bool { false };
    key() : String { new ObjectUtil.abortString(self, "key unimplemented") };

@@ -34,6 +34,7 @@ run_test() {
 run_test util
 run_test linked-list
 run_test string-list-map
+run_test int-tree-map
 run_test io
 run_test tokenizer
 run_test parser

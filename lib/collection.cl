@@ -10,6 +10,13 @@ class Iterable {
 class Collection inherits Iterable {
    size() : Int { 0 };
    add(o : Object) : SELF_TYPE {{ new ObjectUtil.abortObject(self, "add: unimplemented"); self; }};
+
+   addAll(coll : Collection) : Object {
+      let iter : Iterator <- coll.iterator() in
+         while iter.next() loop
+            add(iter.get())
+         pool
+   };
 };
 
 class StringMapIterator {

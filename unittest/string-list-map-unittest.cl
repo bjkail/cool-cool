@@ -99,6 +99,7 @@ class Main inherits Test {
                {
                   map.putNewWithString("a", "A");
                   assertStringEquals("reput", "A", case map.putNewWithString("a", "B") of x : String => x; esac);
+                  assertIntEquals("reput size", 1, map.size());
                   assertStringEquals("reput get", "A", case map.getWithString("a") of x : String => x; esac);
                };
          }

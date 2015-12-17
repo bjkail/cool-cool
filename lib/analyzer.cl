@@ -327,9 +327,28 @@ class AnalyzedAttributeObject inherits AnalyzedObject {
    }};
 };
 
+class AnalyzedExprVisitor {
+   visitBlock(expr : AnalyzedBlockExpr) : Object { new Object.abort() };
+   visitIf(expr : AnalyzedIfExpr) : Object { new Object.abort() };
+   visitWhile(expr : AnalyzedWhileExpr) : Object { new Object.abort() };
+   visitLet(expr : AnalyzedLetExpr) : Object { new Object.abort() };
+   visitCase(expr : AnalyzedCaseExpr) : Object { new Object.abort() };
+   visitAssignment(expr : AnalyzedAssignmentExpr) : Object { new Object.abort() };
+   visitObject(expr : AnalyzedObjectExpr) : Object { new Object.abort() };
+   visitNew(expr : AnalyzedNewExpr) : Object { new Object.abort() };
+   visitDispatch(expr : AnalyzedDispatchExpr) : Object { new Object.abort() };
+   visitUnary(expr : AnalyzedUnaryExpr) : Object { new Object.abort() };
+   visitBinary(expr : AnalyzedBinaryExpr) : Object { new Object.abort() };
+   visitConstantBool(expr : AnalyzedConstantBoolExpr) : Object { new Object.abort() };
+   visitConstantInt(expr : AnalyzedConstantIntExpr) : Object { new Object.abort() };
+   visitConstantString(expr : AnalyzedConstantStringExpr) : Object { new Object.abort() };
+};
+
 class AnalyzedExpr {
    type : AnalyzedType;
    type() : AnalyzedType { type };
+
+   accept(visitor : AnalyzedExprVisitor) : Object { new Object.abort() };
 };
 
 class AnalyzedBlockExpr inherits AnalyzedExpr {
@@ -341,6 +360,8 @@ class AnalyzedBlockExpr inherits AnalyzedExpr {
       exprs <- exprs_;
       self;
    }};
+
+   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitBlock(self) };
 };
 
 class AnalyzedIfExpr inherits AnalyzedExpr {
@@ -360,6 +381,8 @@ class AnalyzedIfExpr inherits AnalyzedExpr {
       else_ <- else__;
       self;
    }};
+
+   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitIf(self) };
 };
 
 class AnalyzedWhileExpr inherits AnalyzedExpr {
@@ -375,6 +398,8 @@ class AnalyzedWhileExpr inherits AnalyzedExpr {
       loop_ <- loop__;
       self;
    }};
+
+   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitWhile(self) };
 };
 
 class AnalyzedLetVar {
@@ -404,6 +429,8 @@ class AnalyzedLetExpr inherits AnalyzedExpr {
       vars <- vars_;
       self;
    }};
+
+   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitLet(self) };
 };
 
 class AnalyzedCaseBranch {
@@ -450,6 +477,8 @@ class AnalyzedCaseExpr inherits AnalyzedExpr {
       branches <- branches_;
       self;
    }};
+
+   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitCase(self) };
 };
 
 class AnalyzedAssignmentExpr inherits AnalyzedExpr {
@@ -465,6 +494,8 @@ class AnalyzedAssignmentExpr inherits AnalyzedExpr {
       expr <- expr_;
       self;
    }};
+
+   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitAssignment(self) };
 };
 
 class AnalyzedObjectExpr inherits AnalyzedExpr {
@@ -476,6 +507,8 @@ class AnalyzedObjectExpr inherits AnalyzedExpr {
       object <- object_;
       self;
    }};
+
+   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitObject(self) };
 };
 
 class AnalyzedNewExpr inherits AnalyzedExpr {
@@ -483,6 +516,8 @@ class AnalyzedNewExpr inherits AnalyzedExpr {
       type <- type_;
       self;
    }};
+
+   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitNew(self) };
 };
 
 class AnalyzedDispatchExpr inherits AnalyzedExpr {
@@ -506,6 +541,8 @@ class AnalyzedDispatchExpr inherits AnalyzedExpr {
       arguments <- arguments_;
       self;
    }};
+
+   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitDispatch(self) };
 };
 
 class AnalyzedUnaryExpr inherits AnalyzedExpr {
@@ -521,6 +558,8 @@ class AnalyzedUnaryExpr inherits AnalyzedExpr {
       expr <- expr_;
       self;
    }};
+
+   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitUnary(self) };
 };
 
 class AnalyzedBinaryExpr inherits AnalyzedExpr {
@@ -529,7 +568,6 @@ class AnalyzedBinaryExpr inherits AnalyzedExpr {
 
    op : String;
    op() : String { op };
-
 
    left : AnalyzedExpr;
    left() : AnalyzedExpr { left };
@@ -551,6 +589,8 @@ class AnalyzedBinaryExpr inherits AnalyzedExpr {
       right <- right_;
       self;
    }};
+
+   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitBinary(self) };
 };
 
 class AnalyzedConstantBoolExpr inherits AnalyzedExpr {
@@ -562,6 +602,8 @@ class AnalyzedConstantBoolExpr inherits AnalyzedExpr {
       value <- value_;
       self;
    }};
+
+   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitConstantBool(self) };
 };
 
 class AnalyzedConstantIntExpr inherits AnalyzedExpr {
@@ -573,6 +615,8 @@ class AnalyzedConstantIntExpr inherits AnalyzedExpr {
       value <- value_;
       self;
    }};
+
+   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitConstantInt(self) };
 };
 
 class AnalyzedConstantStringExpr inherits AnalyzedExpr {
@@ -584,8 +628,9 @@ class AnalyzedConstantStringExpr inherits AnalyzedExpr {
       value <- value_;
       self;
    }};
-};
 
+   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitConstantString(self) };
+};
 
 class AnalyzedTypeEnv inherits ParsedExprVisitor {
    analyzer : Analyzer;

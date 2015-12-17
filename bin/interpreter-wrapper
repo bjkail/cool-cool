@@ -55,7 +55,7 @@ fi
 
 if $formaterrors; then
   "${cmd[@]}" | while IFS= read -r line; do
-    if [[ "$line" =~ ^"ERROR: "[0-9]+": "(Parser|Type-Check|Exception)": " ]]; then
+    if [[ "$line" =~ ^"ERROR: "[0-9]+": "(Lexer|Parser|Type-Check|Exception)": " ]]; then
       line=${line#ERROR: }
       error=${line#*: }
       errorline=${line%%: *}

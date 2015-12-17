@@ -39,3 +39,4 @@ run_test io
 run_test tokenizer
 run_test parser
 run_test analyzer
+run_test interpreter

@@ -52,6 +52,9 @@ class StringListMapIterator inherits StringMapIterator {
 class StringListMap inherits StringMap {
    head : StringListMapNode;
 
+   size : Int;
+   size() : Int { size };
+
    iterator() : StringMapIterator {
       new StringListMapIterator.init(head)
    };
@@ -81,6 +84,7 @@ class StringListMap inherits StringMap {
          if isvoid node then
             {
                head <- new StringListMapNode.init(key, value, head);
+               size <- size + 1;
                node;
             }
          else
@@ -97,6 +101,7 @@ class StringListMap inherits StringMap {
          if isvoid node then
             {
                head <- new StringListMapNode.init(key, value, head);
+               size <- size + 1;
                node;
             }
          else

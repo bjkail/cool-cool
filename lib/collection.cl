@@ -19,6 +19,7 @@ class StringMapIterator {
 };
 
 class StringMap {
+   size() : Int { 0 };
    iterator() : StringMapIterator { new StringMapIterator };
    getWithString(key : String) : Object { let void : Object in void };
    putWithString(key : String, value : Object) : Object { new Object.abort() };

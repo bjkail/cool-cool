@@ -42,11 +42,13 @@ class Main inherits Test {
    testPut() : Object {
       if begin("put") then
          {
+            assertIntEquals("0 size", 0, new StringListMap.size());
             assertVoid("0 void", new StringListMap.getWithString(""));
 
             let map : StringMap <- new StringListMap in
                {
                   assertVoid("1 put", map.putWithString("a", "A"));
+                  assertIntEquals("1 size", 1, map.size());
                   assertVoid("1 get void", map.getWithString(""));
                   assertStringEquals("1 get", "A", case map.getWithString("a") of x : String => x; esac);
                };
@@ -55,6 +57,7 @@ class Main inherits Test {
                {
                   assertVoid("2 put", map.putWithString("a", "A"));
                   assertVoid("2 put", map.putWithString("b", "B"));
+                  assertIntEquals("2 size", 2, map.size());
                   assertVoid("2 get void", map.getWithString(""));
                   assertStringEquals("2 get", "A", case map.getWithString("a") of x : String => x; esac);
                   assertStringEquals("2 get", "B", case map.getWithString("b") of x : String => x; esac);
@@ -64,6 +67,7 @@ class Main inherits Test {
                {
                   map.putWithString("a", "A");
                   assertStringEquals("reput", "A", case map.putWithString("a", "B") of x : String => x; esac);
+                  assertIntEquals("reput size", 1, map.size());
                   assertStringEquals("reput get", "B", case map.getWithString("a") of x : String => x; esac);
                };
          }
@@ -76,6 +80,7 @@ class Main inherits Test {
             let map : StringMap <- new StringListMap in
                {
                   assertVoid("1 put", map.putNewWithString("a", "A"));
+                  assertIntEquals("1 size", 1, map.size());
                   assertVoid("1 get void", map.getWithString(""));
                   assertStringEquals("1 get", "A", case map.getWithString("a") of x : String => x; esac);
                };
@@ -84,6 +89,7 @@ class Main inherits Test {
                {
                   assertVoid("2 put", map.putNewWithString("a", "A"));
                   assertVoid("2 put", map.putNewWithString("b", "B"));
+                  assertIntEquals("2 size", 2, map.size());
                   assertVoid("2 get void", map.getWithString(""));
                   assertStringEquals("2 get", "A", case map.getWithString("a") of x : String => x; esac);
                   assertStringEquals("2 get", "B", case map.getWithString("b") of x : String => x; esac);

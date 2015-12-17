@@ -105,11 +105,11 @@ class AnalyzedType {
       fi
    };
 
-   features : Collection <- new LinkedList;
-   features() : Collection { features };
+   definedFeatures : Collection <- new LinkedList;
+   definedFeatures() : Collection { definedFeatures };
 
-   addFeature(feature : AnalyzedFeature) : Object {
-      features.add(feature)
+   addDefinedFeature(feature : AnalyzedFeature) : Object {
+      definedFeatures.add(feature)
    };
 
    attributes : StringMap;
@@ -128,7 +128,7 @@ class AnalyzedType {
       let old : Object <- attributes.putNewWithString(attr.id(), attr) in
          if isvoid old then
             {
-               addFeature(attr);
+               addDefinedFeature(attr);
                let void : AnalyzedAttribute in void;
             }
          else
@@ -152,7 +152,7 @@ class AnalyzedType {
       let old : Object <- methods.putNewWithString(method.id(), method) in
          if isvoid old then
             {
-               addFeature(method);
+               addDefinedFeature(method);
                let void : AnalyzedMethod in void;
             }
          else
@@ -162,7 +162,7 @@ class AnalyzedType {
 
    addMethodOverride(method : AnalyzedMethod) : Object {{
       methods.putWithString(method.id(), method);
-      addFeature(method);
+      addDefinedFeature(method);
    }};
 
    processInherits() : Object {{
@@ -1453,7 +1453,7 @@ class Analyzer {
                while classIter.next() loop
                   let type : AnalyzedType <- case classIter.get() of x : AnalyzedType => x; esac,
                         env : AnalyzedTypeEnv <- createTypeEnv(type),
-                        featureIter : Iterator <- type.features().iterator() in
+                        featureIter : Iterator <- type.definedFeatures().iterator() in
                      while featureIter.next() loop
                         let feature : AnalyzedFeature <- case featureIter.get() of x : AnalyzedFeature => x; esac,
                               attr : AnalyzedAttribute <- feature.asAttribute() in
@@ -1493,7 +1493,7 @@ class Analyzer {
                         while classIter.next() loop
                            let type : AnalyzedType <- case classIter.get() of x : AnalyzedType => x; esac in
                               {
-                                 let featureIter : Iterator <- type.features().iterator() in
+                                 let featureIter : Iterator <- type.definedFeatures().iterator() in
                                     while featureIter.next() loop
                                        let feature : AnalyzedFeature <- case featureIter.get() of x : AnalyzedFeature => x; esac in
                                           feature.unsetParsedFeature()

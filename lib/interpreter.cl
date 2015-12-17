@@ -72,9 +72,6 @@ class InterpreterMethod {
    index() : Int { index };
    setIndex(index_ : Int) : Object { index <- index_ };
 
-   --containingType : InterpreterType;
-   --containingType() : InterpreterType { containingType };
-
    expr : InterpreterExpr;
    expr() : InterpreterExpr { expr };
    setExpr(expr_ : InterpreterExpr) : Object { expr <- expr_ };

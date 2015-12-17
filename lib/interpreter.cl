@@ -353,8 +353,13 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
    visitWhile(expr : AnalyzedWhileExpr) : Object { new ObjectUtil.abortObject(self, "visitWhile: unimplemented") };
    visitLet(expr : AnalyzedLetExpr) : Object { new ObjectUtil.abortObject(self, "visitLet: unimplemented") };
    visitCase(expr : AnalyzedCaseExpr) : Object { new ObjectUtil.abortObject(self, "visitCase: unimplemented") };
-   visitAssignment(expr : AnalyzedAssignmentExpr) : Object { new ObjectUtil.abortObject(self, "visitAssignment: unimplemented") };
-   visitObject(expr : AnalyzedObjectExpr) : Object { new ObjectUtil.abortObject(self, "visitObject: unimplemented") };
+   visitFormalAssignment(index : Int, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitFormalAssignment: unimplemented") };
+   visitVarAssignment(index : Int, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitVarAssignment: unimplemented") };
+   visitAttributeAssignment(attribute : AnalyzedAttribute, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitAttributeAssignment: unimplemented") };
+   visitSelf() : Object { new ObjectUtil.abortObject(self, "visitSelf unimplemented") };
+   visitFormal(index : Int) : Object { new ObjectUtil.abortObject(self, "visitFormal unimplemented") };
+   visitVar(index : Int) : Object { new ObjectUtil.abortObject(self, "visitVar unimplemented") };
+   visitAttribute(attribute : AnalyzedAttribute) : Object { new ObjectUtil.abortObject(self, "visitAttribute unimplemented") };
 
    visitNew(expr : AnalyzedNewExpr) : Object {
       let type : InterpreterType <- getType(expr.type()).type() in

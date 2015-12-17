@@ -281,6 +281,9 @@ class AnalyzedMethod inherits AnalyzedFeature {
 class AnalyzedObject {
    type : AnalyzedType;
    type() : AnalyzedType { type };
+
+   acceptAssignment(visitor : AnalyzedExprVisitor, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "acceptAssignment: unimplemented") };
+   accept(visitor : AnalyzedExprVisitor) : Object { new ObjectUtil.abortObject(self, "accept: unimplemented") };
 };
 
 class AnalyzedSelfObject inherits AnalyzedObject {
@@ -288,6 +291,8 @@ class AnalyzedSelfObject inherits AnalyzedObject {
       type <- type_;
       self;
    }};
+
+   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitSelf() };
 };
 
 class AnalyzedFormalObject inherits AnalyzedObject {
@@ -299,6 +304,9 @@ class AnalyzedFormalObject inherits AnalyzedObject {
       index <- index_;
       self;
    }};
+
+   acceptAssignment(visitor : AnalyzedExprVisitor, expr : AnalyzedExpr) : Object { visitor.visitFormalAssignment(index, expr) };
+   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitFormal(index) };
 };
 
 class AnalyzedVarObject inherits AnalyzedObject {
@@ -310,6 +318,9 @@ class AnalyzedVarObject inherits AnalyzedObject {
       index <- index_;
       self;
    }};
+
+   acceptAssignment(visitor : AnalyzedExprVisitor, expr : AnalyzedExpr) : Object { visitor.visitVarAssignment(index, expr) };
+   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitVar(index) };
 };
 
 class AnalyzedAttributeObject inherits AnalyzedObject {
@@ -321,6 +332,9 @@ class AnalyzedAttributeObject inherits AnalyzedObject {
       attribute <- attribute_;
       self;
    }};
+
+   acceptAssignment(visitor : AnalyzedExprVisitor, expr : AnalyzedExpr) : Object { visitor.visitAttributeAssignment(attribute, expr) };
+   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitAttribute(attribute) };
 };
 
 class AnalyzedExprVisitor {
@@ -329,8 +343,13 @@ class AnalyzedExprVisitor {
    visitWhile(expr : AnalyzedWhileExpr) : Object { new ObjectUtil.abortObject(self, "visitWhile: unimplemented") };
    visitLet(expr : AnalyzedLetExpr) : Object { new ObjectUtil.abortObject(self, "visitLet: unimplemented") };
    visitCase(expr : AnalyzedCaseExpr) : Object { new ObjectUtil.abortObject(self, "visitCase: unimplemented") };
-   visitAssignment(expr : AnalyzedAssignmentExpr) : Object { new ObjectUtil.abortObject(self, "visitAssignment: unimplemented") };
-   visitObject(expr : AnalyzedObjectExpr) : Object { new ObjectUtil.abortObject(self, "visitObject: unimplemented") };
+   visitFormalAssignment(index : Int, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitFormalAssignment: unimplemented") };
+   visitVarAssignment(index : Int, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitVarAssignment: unimplemented") };
+   visitAttributeAssignment(attribute : AnalyzedAttribute, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitAttributeAssignment: unimplemented") };
+   visitSelf() : Object { new ObjectUtil.abortObject(self, "visitSelf unimplemented") };
+   visitFormal(index : Int) : Object { new ObjectUtil.abortObject(self, "visitFormal unimplemented") };
+   visitVar(index : Int) : Object { new ObjectUtil.abortObject(self, "visitVar unimplemented") };
+   visitAttribute(attribute : AnalyzedAttribute) : Object { new ObjectUtil.abortObject(self, "visitAttribute unimplemented") };
    visitNew(expr : AnalyzedNewExpr) : Object { new ObjectUtil.abortObject(self, "visitNew: unimplemented") };
    visitDispatch(expr : AnalyzedDispatchExpr) : Object { new ObjectUtil.abortObject(self, "visitDispatch: unimplemented") };
    visitUnary(expr : AnalyzedUnaryExpr) : Object { new ObjectUtil.abortObject(self, "visitUnary: unimplemented") };
@@ -491,7 +510,7 @@ class AnalyzedAssignmentExpr inherits AnalyzedExpr {
       self;
    }};
 
-   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitAssignment(self) };
+   accept(visitor : AnalyzedExprVisitor) : Object { object.acceptAssignment(visitor, expr) };
 };
 
 class AnalyzedObjectExpr inherits AnalyzedExpr {
@@ -504,7 +523,9 @@ class AnalyzedObjectExpr inherits AnalyzedExpr {
       self;
    }};
 
-   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitObject(self) };
+   accept(visitor : AnalyzedExprVisitor) : Object {
+      object.accept(visitor)
+   };
 };
 
 class AnalyzedNewExpr inherits AnalyzedExpr {

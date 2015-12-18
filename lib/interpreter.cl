@@ -65,6 +65,9 @@ class InterpreterType {
 };
 
 class InterpreterMethod {
+   containingType : InterpreterType;
+   containingType() : InterpreterType { containingType };
+
    id : String;
    id() : String { id };
 
@@ -76,11 +79,18 @@ class InterpreterMethod {
    expr() : InterpreterExpr { expr };
    setExpr(expr_ : InterpreterExpr) : Object { expr <- expr_ };
 
-   init(id_ : String, index_ : Int) : SELF_TYPE {{
+   init(containingType_ : InterpreterType, id_ : String, index_ : Int) : SELF_TYPE {{
+      containingType <- containingType_;
       id <- id_;
       index <- index_;
       self;
    }};
+
+   toString() : String {
+      containingType.name()
+            .concat(".").concat(id())
+            .concat(":").concat(new StringUtil.fromInt(index))
+   };
 };
 
 class InterpreterAnalyzerAttribute {
@@ -109,9 +119,9 @@ class InterpreterAnalyzerMethod {
    index() : Int { method.index() };
    setIndex(index_ : Int) : Object { method.setIndex(index_) };
 
-   init(index_ : Int, analyzedMethod_ : AnalyzedMethod) : SELF_TYPE {{
+   init(containingType : InterpreterType, index_ : Int, analyzedMethod_ : AnalyzedMethod) : SELF_TYPE {{
       analyzedMethod <- analyzedMethod_;
-      method <- new InterpreterMethod.init(analyzedMethod_.id(), index_);
+      method <- new InterpreterMethod.init(containingType, analyzedMethod_.id(), index_);
       self;
    }};
 };
@@ -129,7 +139,14 @@ class InterpreterAnalyzerType {
 
    setInheritsType(inheritsType_ : InterpreterAnalyzerType) : Object {{
       inheritsType <- inheritsType_;
-      type.setInheritsType(inheritsType_.type());
+      nextAttributeIndex <- inheritsType_.nextAttributeIndex();
+      nextMethodIndex <- inheritsType_.nextMethodIndex();
+
+      let inheritsType : InterpreterType <- inheritsType_.type() in
+         {
+            type.setInheritsType(inheritsType);
+            type.methods().putAll(inheritsType.methods());
+         };
    }};
 
    definedFeatures : Bool;
@@ -146,8 +163,17 @@ class InterpreterAnalyzerType {
    definedAttributes : Collection <- new LinkedList;
    definedAttributes() : Collection { definedAttributes };
 
+   nextAttributeIndex : Int;
+   nextAttributeIndex() : Int { nextAttributeIndex };
+
    addAttribute(analyzedAttr : AnalyzedAttribute) : Object {
-      let attr : InterpreterAnalyzerAttribute <- new InterpreterAnalyzerAttribute.init(attributes.size(), analyzedAttr) in
+      let index : Int <-
+               let index : Int <- nextAttributeIndex in
+                  {
+                     nextAttributeIndex <- index + 1;
+                     index;
+                  },
+            attr : InterpreterAnalyzerAttribute <- new InterpreterAnalyzerAttribute.init(index, analyzedAttr) in
          {
             attributes.putWithString(attr.id(), attr);
             definedAttributes.add(attr);
@@ -170,15 +196,26 @@ class InterpreterAnalyzerType {
    methods : StringMap <- new StringListMap;
    methods() : StringMap { methods };
 
-   addMethod(analyzedMethod : AnalyzedMethod) : Object {
-      let method : InterpreterAnalyzerMethod <- new InterpreterAnalyzerMethod.init(methods.size(), analyzedMethod) in
-         {
-            let old : Object <- methods.putWithString(analyzedMethod.id(), method) in
-               if not isvoid old then
-                  method.setIndex(case old of x : InterpreterAnalyzerMethod => x.index(); esac)
-               else false fi;
+   nextMethodIndex : Int;
+   nextMethodIndex() : Int { nextMethodIndex };
 
-            type.methods().putWithInt(method.index(), method.method());
+   addMethod(analyzedMethod : AnalyzedMethod) : Object {
+      let id : String <- analyzedMethod.id(),
+            index : Int <-
+               let old : InterpreterAnalyzerMethod <- inheritsType.getMethod(analyzedMethod.id()) in
+                  if isvoid old then
+                     let index : Int <- nextMethodIndex in
+                        {
+                           nextMethodIndex <- index + 1;
+                           index;
+                        }
+                  else
+                     old.index()
+                  fi,
+            method : InterpreterAnalyzerMethod <- new InterpreterAnalyzerMethod.init(type, index, analyzedMethod) in
+         {
+            methods.putWithString(id, method);
+            type.methods().putWithInt(index, method.method());
          }
    };
 
@@ -221,31 +258,31 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
    };
 
    defineFeatures(type : InterpreterAnalyzerType) : Object {
-      let analyzedType : AnalyzedType <- type.analyzedType() in
+      if not type.definedFeatures() then
          {
-            let inheritsType : InterpreterAnalyzerType <- getType(analyzedType.inheritsType()) in
+            type.setDefinedFeatures(true);
+
+            let analyzedType : AnalyzedType <- type.analyzedType() in
                {
-                  if not inheritsType.definedFeatures() then
+                  let inheritsType : InterpreterAnalyzerType <- getType(analyzedType.inheritsType()) in
                      {
-                        inheritsType.setDefinedFeatures(true);
                         defineFeatures(inheritsType);
-                     }
-                  else false fi;
+                        type.setInheritsType(inheritsType);
+                     };
 
-                  type.setInheritsType(inheritsType);
+                  let analyzedFeatureIter : Iterator <- analyzedType.definedFeatures().iterator() in
+                     while analyzedFeatureIter.next() loop
+                        let analyzedFeature : AnalyzedFeature <- case analyzedFeatureIter.get() of x : AnalyzedFeature => x; esac,
+                              analyzedAttribute : AnalyzedAttribute <- analyzedFeature.asAttribute() in
+                           if isvoid analyzedAttribute then
+                              type.addMethod(analyzedFeature.asMethod())
+                           else
+                              type.addAttribute(analyzedAttribute)
+                           fi
+                     pool;
                };
-
-            let analyzedFeatureIter : Iterator <- analyzedType.definedFeatures().iterator() in
-               while analyzedFeatureIter.next() loop
-                  let analyzedFeature : AnalyzedFeature <- case analyzedFeatureIter.get() of x : AnalyzedFeature => x; esac,
-                        analyzedAttribute : AnalyzedAttribute <- analyzedFeature.asAttribute() in
-                     if isvoid analyzedAttribute then
-                        type.addMethod(analyzedFeature.asMethod())
-                     else
-                        type.addAttribute(analyzedAttribute)
-                     fi
-               pool;
          }
+      else false fi
    };
 
    analyzeExpr(expr : AnalyzedExpr) : InterpreterExpr {
@@ -265,29 +302,30 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
    };
 
    analyzeAttributes(type : InterpreterAnalyzerType) : Object {
-      let inheritsType : InterpreterAnalyzerType <- type.inheritsType() in
+      if not type.analyzedAttributes() then
          {
-            if not inheritsType.analyzedAttributes() then
+            type.setAnalyzedAttributes(true);
+
+            let inheritsType : InterpreterAnalyzerType <- type.inheritsType() in
                {
-                  inheritsType.setAnalyzedAttributes(true);
                   analyzeAttributes(inheritsType);
-               }
-            else false fi;
 
-            let attrInits : LinkedList <- type.type().attributeInits() in
-               {
-                  attrInits.addAll(inheritsType.type().attributeInits());
+                  let attrInits : LinkedList <- type.type().attributeInits() in
+                     {
+                        attrInits.addAll(inheritsType.type().attributeInits());
 
-                  let iter : Iterator <- type.definedAttributes().iterator() in
-                     while iter.next() loop
-                        let attr : InterpreterAnalyzerAttribute <- case iter.get() of x : InterpreterAnalyzerAttribute => x; esac,
-                              expr : AnalyzedExpr <- attr.analyzedAttr().expr() in
-                           if not isvoid expr then
-                              attrInits.add(new InterpreterAttributeInit.init(attr.index(), analyzeExpr(expr)))
-                           else false fi
-                     pool;
+                        let iter : Iterator <- type.definedAttributes().iterator() in
+                           while iter.next() loop
+                              let attr : InterpreterAnalyzerAttribute <- case iter.get() of x : InterpreterAnalyzerAttribute => x; esac,
+                                    expr : AnalyzedExpr <- attr.analyzedAttr().expr() in
+                                 if not isvoid expr then
+                                    attrInits.add(new InterpreterAttributeInit.init(attr.index(), analyzeExpr(expr)))
+                                 else false fi
+                           pool;
+                     };
                };
          }
+      else false fi
    };
 
    analyze(program : AnalyzedProgram) : InterpreterProgram {{
@@ -356,7 +394,11 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
    visitFormalAssignment(index : Int, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitFormalAssignment: unimplemented") };
    visitVarAssignment(index : Int, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitVarAssignment: unimplemented") };
    visitAttributeAssignment(attribute : AnalyzedAttribute, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitAttributeAssignment: unimplemented") };
-   visitSelf() : Object { new ObjectUtil.abortObject(self, "visitSelf unimplemented") };
+
+   visitSelf() : Object {
+      new InterpreterSelfExpr
+   };
+
    visitFormal(index : Int) : Object { new ObjectUtil.abortObject(self, "visitFormal unimplemented") };
    visitVar(index : Int) : Object { new ObjectUtil.abortObject(self, "visitVar unimplemented") };
    visitAttribute(attribute : AnalyzedAttribute) : Object { new ObjectUtil.abortObject(self, "visitAttribute unimplemented") };
@@ -374,9 +416,14 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
    };
 
    visitDispatch(expr : AnalyzedDispatchExpr) : Object {
-      -- TODO: static
-      let method : AnalyzedMethod <- expr.method() in
-         new InterpreterDispatchExpr.init(
+      let method : AnalyzedMethod <- expr.method(),
+            dispatchExpr : InterpreterDispatchExpr <-
+               if expr.static() then
+                  new InterpreterStaticDispatchExpr
+               else
+                  new InterpreterDispatchExpr
+               fi in
+         dispatchExpr.init(
                analyzeExprCollection(expr.arguments()),
                analyzeExpr(expr.expr()),
                getType(method.containingType()).getMethod(method.id()).method())
@@ -461,6 +508,12 @@ class InterpreterExpr {
    interpret(interpreter : Interpreter) : Bool { new ObjectUtil.abortBool(self, "interpret: unimplemented") };
 };
 
+class InterpreterSelfExpr inherits InterpreterExpr {
+   interpret(interpreter : Interpreter) : Bool {
+      interpreter.interpretValue(interpreter.selfObject())
+   };
+};
+
 class InterpreterSimpleNewExpr inherits InterpreterExpr {
    type : InterpreterType;
 
@@ -491,6 +544,12 @@ class InterpreterDispatchExpr inherits InterpreterExpr {
    };
 };
 
+class InterpreterStaticDispatchExpr inherits InterpreterDispatchExpr {
+   interpret(interpreter : Interpreter) : Bool {
+      interpreter.pushState(new InterpreterStaticDispatchExprState.init(arguments, target, method))
+   };
+};
+
 class InterpreterDispatchExprState inherits InterpreterExprState {
    numArgs : Int;
    argExprIter : Iterator;
@@ -499,9 +558,11 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
 
    args : IntMap <- new IntTreeMap;
    hasTarget : Bool;
-   target : InterpreterValue;
+   target : InterpreterObjectValue;
    hasResult : Bool;
    result : InterpreterValue;
+
+   savedSelfObject : InterpreterObjectValue;
 
    init(argExprs : Collection, targetExpr_ : InterpreterExpr, method_ : InterpreterMethod) : SELF_TYPE {{
       numArgs <- argExprs.size();
@@ -517,7 +578,7 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
       else
          if not hasTarget then
             {
-               target <- value;
+               target <- case value of x : InterpreterObjectValue => x; esac;
                hasTarget <- true;
             }
          else
@@ -527,6 +588,10 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
             }
          fi
       fi
+   };
+
+   lookupMethod() : InterpreterMethod {
+      target.type().getMethod(method.index())
    };
 
    proceed(interpreter : Interpreter) : Bool {
@@ -540,17 +605,29 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
                {
                   -- TODO: target void check
                   -- TODO: push self object
-                  let method : InterpreterMethod <- target.type().getMethod(method.index()) in
+
+                  savedSelfObject <- interpreter.selfObject();
+                  interpreter.setContext(target);
+
+                  let method : InterpreterMethod <- lookupMethod() in
+--{new IO.out_string("interpreter: dispatch: method=").out_string(method.toString()).out_string("\n");
                      method.expr().interpret(interpreter);
+--};
                }
             else
                {
+                  interpreter.setContext(savedSelfObject);
                   interpreter.proceedValue(result);
-                  -- TODO: pop self object
                }
             fi
          fi
       fi
+   };
+};
+
+class InterpreterStaticDispatchExprState inherits InterpreterDispatchExprState {
+   lookupMethod() : InterpreterMethod {
+      method
    };
 };
 
@@ -619,7 +696,10 @@ class InterpreterExitValueExprState inherits InterpreterExprState {
 class Interpreter {
    selfObject : InterpreterObjectValue;
    selfObject() : InterpreterObjectValue { selfObject };
-   setSelfObject(selfObject_ : InterpreterObjectValue) : Object { selfObject <- selfObject_ };
+
+   setContext(selfObject_ : InterpreterObjectValue) : Object {{
+      selfObject <- selfObject_;
+   }};
 
    value : InterpreterValue;
    exprState : InterpreterExprState <- new InterpreterExitValueExprState.init(self);

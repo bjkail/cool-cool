@@ -1,6 +1,7 @@
 class Main inherits Test {
    test() : Object {{
       testConstant();
+      testDispatch();
    }};
 
    interpret(context : String, program : String) : InterpreterValue {
@@ -81,6 +82,31 @@ class Main inherits Test {
             assertTrue("true", interpretBoolExpr("true", "true"));
             assertIntEquals("int", 1, interpretIntExpr("int", "1"));
             assertStringEquals("string", "a", interpretStringExpr("string", "\"a\""));
+         }
+      else false fi
+   };
+
+   testDispatch() : Object {
+      if begin("dispatch") then
+         {
+            assertIntEquals("dispatch", 1, interpretInt("dispatch",
+                  "class Main inherits A { x : Bool; }; class A { main() : Int { 1 }; };"));
+
+            assertIntEquals("implicit self dispatch", 2, interpretInt("implicit self dispatch",
+                  "class Main inherits A { main() : Int { a() }; a() : Int { 2 }; };"
+                  .concat("class A { a() : Int { 1 }; };")));
+
+            assertIntEquals("self dispatch", 2, interpretInt("self dispatch",
+                  "class Main inherits A { main() : Int { self.a() }; a() : Int { 2 }; };"
+                  .concat("class A { a() : Int { 1 }; };")));
+
+            assertIntEquals("static dispatch", 1, interpretInt("static dispatch",
+                  "class Main inherits A { main() : Int { self@A.a() }; a() : Int { 2 }; };"
+                  .concat("class A { a() : Int { 1 }; };")));
+
+            assertIntEquals("override dispatch", 2, interpretInt("dispatch",
+                  "class Main inherits A { main() : Int { a() }; b() : Int { 2 }; };"
+                  .concat("class A { a() : Int { b() }; b() : Int { 1 }; };")));
          }
       else false fi
    };

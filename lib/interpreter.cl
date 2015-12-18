@@ -587,8 +587,9 @@ class InterpreterAttributeExpr inherits InterpreterExpr {
    index : Int;
    defaultValue : InterpreterValue;
 
-   init(index_ : Int, defaultValue : InterpreterValue) : SELF_TYPE {{
+   init(index_ : Int, defaultValue_ : InterpreterValue) : SELF_TYPE {{
       index <- index_;
+      defaultValue <- defaultValue_;
       self;
    }};
 

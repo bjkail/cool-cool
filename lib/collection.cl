@@ -19,16 +19,30 @@ class Collection inherits Iterable {
    };
 };
 
+class IntMapIterator {
+   next() : Bool { false };
+   key() : Int { new ObjectUtil.abortInt(self, "key: unimplemented") };
+   value() : Object { new ObjectUtil.abortObject(self, "value: unimplemented") };
+};
+
 class IntMap {
    size() : Int { 0 };
+   iterator() : IntMapIterator { new IntMapIterator };
    getWithInt(key : Int) : Object { let void : Object in void };
    putWithInt(key : Int, value : Object) : Object { new ObjectUtil.abortObject(self, "putWithInt: unimplemented") };
+
+   putAll(map : IntMap) : Object {
+      let iter : IntMapIterator <- map.iterator() in
+         while iter.next() loop
+            putWithInt(iter.key(), iter.value())
+         pool
+   };
 };
 
 class StringMapIterator {
    next() : Bool { false };
-   key() : String { new ObjectUtil.abortString(self, "key unimplemented") };
-   value() : Object { new ObjectUtil.abortObject(self, "value unimplemented") };
+   key() : String { new ObjectUtil.abortString(self, "key: unimplemented") };
+   value() : Object { new ObjectUtil.abortObject(self, "value: unimplemented") };
 };
 
 class StringMap {

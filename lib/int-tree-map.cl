@@ -49,11 +49,86 @@ class IntTreeMapNode {
    }};
 };
 
+class IntTreeMapIterator inherits IntMapIterator {
+   node : IntTreeMapNode;
+   root : IntTreeMapNode;
+
+   init(root_ : IntTreeMapNode) : SELF_TYPE {{
+      root <- root_;
+      self;
+   }};
+
+   minimum(x : IntTreeMapNode) : IntTreeMapNode {{
+      let lx : IntTreeMapNode <- x.left() in
+         while not isvoid lx loop
+            {
+               x <- lx;
+               lx <- lx.left();
+            }
+         pool;
+
+      x;
+   }};
+
+   successor(x : IntTreeMapNode) : IntTreeMapNode {
+      let rx : IntTreeMapNode <- x.right() in
+         if not isvoid rx then
+            minimum(rx)
+         else
+            let px : IntTreeMapNode <- x.parent() in
+               {
+                  while if not isvoid px then
+                        x = px.right()
+                     else false fi
+                  loop
+                     {
+                        x <- px;
+                        px <- px.parent();
+                     }
+                  pool;
+
+                  px;
+               }
+         fi
+   };
+
+   next() : Bool {
+      if isvoid node then
+         if isvoid root then
+            false
+         else
+            {
+               node <- minimum(root);
+               root <- let void : IntTreeMapNode in void;
+               not isvoid node;
+            }
+         fi
+      else
+         {
+            node <- successor(node);
+            not isvoid node;
+         }
+      fi
+   };
+
+   key() : Int {
+      node.key()
+   };
+
+   value() : Object {
+      node.value()
+   };
+};
+
 class IntTreeMap inherits IntMap {
    root : IntTreeMapNode;
 
    size : Int;
    size() : Int { size };
+
+   iterator() : IntMapIterator {
+      new IntTreeMapIterator.init(root)
+   };
 
    parentOf(node : IntTreeMapNode) : IntTreeMapNode {
       if isvoid node then
@@ -150,10 +225,6 @@ class IntTreeMap inherits IntMap {
             }
       else false fi
    };
-
-keyString(x : IntTreeMapNode) : String {
-   if isvoid x then "void" else new StringUtil.fromInt(x.key()) fi
-};
 
    insertFixup(z : IntTreeMapNode) : Object {{
       while if not isvoid z then

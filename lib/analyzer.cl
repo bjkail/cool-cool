@@ -532,7 +532,11 @@ class AnalyzedObjectExpr inherits AnalyzedExpr {
 };
 
 class AnalyzedNewExpr inherits AnalyzedExpr {
-   init(type_ : AnalyzedType) : SELF_TYPE {{
+   line : Int;
+   line() : Int { line };
+
+   init(line_ : Int, type_ : AnalyzedType) : SELF_TYPE {{
+      line <- line_;
       type <- type_;
       self;
    }};
@@ -892,7 +896,7 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
 
    visitNew(parsedExpr : ParsedNewExpr) : Object {
       let type : AnalyzedType <- analyzer.getTypeAllowSelf(parsedExpr, " for 'new' expression", parsedExpr.type(), containingType) in
-         new AnalyzedNewExpr.init(type)
+         new AnalyzedNewExpr.init(parsedExpr.line(), type)
    };
 
    visitDispatch(parsedExpr : ParsedDispatchExpr) : Object {

@@ -1,6 +1,7 @@
 class Main inherits Test {
    test() : Object {{
       testConstant();
+      testNew();
       testDispatch();
    }};
 
@@ -101,6 +102,37 @@ class Main inherits Test {
             assertTrue("true", interpretBoolExpr("true", "true"));
             assertIntEquals("int", 1, interpretIntExpr("int", "1"));
             assertStringEquals("string", "a", interpretStringExpr("string", "\"a\""));
+         }
+      else false fi
+   };
+
+   testNew() : Object {
+      if begin("new") then
+         {
+            assertBoolEquals("bool default", false, interpretBool("bool default",
+                  "class Main { a : Bool; main() : Object { a }; };"));
+
+            assertIntEquals("int default", 0, interpretInt("int default",
+                  "class Main { a : Int; main() : Object { a }; };"));
+
+            assertStringEquals("string default", "", interpretString("string default",
+                  "class Main { a : String; main() : Object { a }; };"));
+
+            assertBoolEquals("bool", true, interpretBool("bool",
+                  "class Main { a : Bool <- true; main() : Object { a }; };"));
+
+            assertIntEquals("int", 1, interpretInt("int",
+                  "class Main { a : Int <- 1; main() : Object { a }; };"));
+
+            assertStringEquals("string", "a", interpretString("string",
+                  "class Main { a : String <- \"a\"; main() : Object { a }; };"));
+
+            assertErrorEquals("dispatch void",
+                  "dispatch on void for method 'void' in type 'Main'",
+                  "\tat Main.b (line 1)\n"
+                     .concat("\tat new Main (line 1)\n"),
+                  interpretError("void dispatch",
+                     "class Main { a : Main <- b(); b() : Main { a.void() }; void() : Main { a }; main() : Object { 0 }; };"));
          }
       else false fi
    };

@@ -411,7 +411,7 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
                   type : InterpreterAnalyzerType <- getType(mainType),
                   -- Manually build and analyze a "new Main.main()" expression
                   -- to use as the program entry point.
-                  newExpr : AnalyzedExpr <- new AnalyzedNewExpr.init(mainType),
+                  newExpr : AnalyzedExpr <- new AnalyzedNewExpr.init(0, mainType),
                   dispatchExpr : AnalyzedExpr <- new AnalyzedDispatchExpr.init(0, mainMethod.returnType(), newExpr, mainMethod, true, new Collection) in
                new InterpreterProgram.init(lineMap, analyzeExpr(dispatchExpr));
          };
@@ -441,13 +441,10 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
 
    visitNew(expr : AnalyzedNewExpr) : Object {
       let type : InterpreterType <- getType(expr.type()).type() in
-         -- TODO: detect static inits - can't check attributeInits since it might not be populated yet
-         --       class A { a : Object <- new A; };
-         --    or class A { a : B <- new B; }; class B { b : Bool <- true; };
-         if true then
+         if type.attributeInits().size() = 0 then
             new InterpreterSimpleNewExpr.init(type)
          else
-            new ObjectUtil.abortObject(self, "visitNew: unimplemented: attrInits")
+            new InterpreterNewExpr.init(expr.line(), type)
          fi
    };
 
@@ -607,6 +604,68 @@ class InterpreterAttributeExpr inherits InterpreterExpr {
             .concat(if isvoid defaultValue then "" else ":".concat(defaultValue.toString()) fi)
             .concat("]")
    };
+};
+
+class InterpreterNewExpr inherits InterpreterExpr {
+   line : Int;
+   type : InterpreterType;
+
+   init(line_ : Int, type_ : InterpreterType) : SELF_TYPE {{
+      line <- line_;
+      type <- type_;
+      self;
+   }};
+
+   interpret(interpreter : Interpreter) : Bool {
+      interpreter.pushState(new InterpreterNewExprState.init(line, type, interpreter))
+   };
+
+   toString() : String { "new[".concat(type.name()).concat("]") };
+};
+
+class InterpreterNewExprState inherits InterpreterExprState {
+   line : Int;
+   line() : Int { line };
+
+   type : InterpreterType;
+   attrInitIter : Iterator;
+
+   selfObject : InterpreterObjectValue;
+   selfObjectAttributes : IntMap;
+   attrInit : InterpreterAttributeInit;
+
+   init(line_ : Int, type_ : InterpreterType, interpreter : Interpreter) : SELF_TYPE {{
+      line <- line_;
+      type <- type_;
+      attrInitIter <- type.attributeInits().iterator();
+
+      selfObject <- new InterpreterObjectValue.init(type_);
+      selfObjectAttributes <- selfObject.attributes();
+      interpreter.setContext(selfObject);
+
+      self;
+   }};
+
+   proceed(interpreter : Interpreter) : Bool {
+      if attrInitIter.next() then
+         {
+            attrInit <- case attrInitIter.get() of x : InterpreterAttributeInit => x; esac;
+            attrInit.expr().interpret(interpreter);
+         }
+      else
+         interpreter.proceedValue(selfObject)
+      fi
+   };
+
+   addValue(value : InterpreterValue) : Object {
+      selfObjectAttributes.putWithInt(attrInit.index(), value)
+   };
+
+   stackEntry() : String {
+      "new ".concat(selfObject.type().name())
+   };
+
+   toString() : String { "new[".concat(type.name()).concat("]") };
 };
 
 class InterpreterSimpleNewExpr inherits InterpreterExpr {
@@ -904,13 +963,16 @@ class Interpreter {
                while not isvoid exprState loop
                   {
                      case exprState of
+                        x : InterpreterNewExprState =>
+                           {
+                              stack <- stack.concat(formatStackEntry(x.stackEntry(), line));
+                              line <- x.line();
+                           };
                         x : InterpreterDispatchExprState =>
                            {
                               let stackEntry : String <- x.stackEntry() in
                                  if not stackEntry = "" then
-                                    stack <- stack.concat("\tat ").concat(stackEntry)
-                                       .concat(" (").concat(lineMap.lineToString(line))
-                                       .concat(")\n")
+                                    stack <- stack.concat(formatStackEntry(stackEntry, line))
                                  else false fi;
                               line <- x.line();
                            };
@@ -927,8 +989,8 @@ class Interpreter {
          }
    };
 
-   formatStackEntry(s : String, line : Int) : String {
-      "\tat ".concat(s).concat(" (").concat(lineMap.lineToString(line)).concat(")\n")
+   formatStackEntry(stackEntry : String, line : Int) : String {
+      "\tat ".concat(stackEntry).concat(" (").concat(lineMap.lineToString(line)).concat(")\n")
    };
 
    pushState(exprState_ : InterpreterExprState) : Bool {{

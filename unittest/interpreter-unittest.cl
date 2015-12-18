@@ -118,6 +118,9 @@ class Main inherits Test {
             assertStringEquals("string default", "", interpretString("string default",
                   "class Main { a : String; main() : Object { a }; };"));
 
+            assertVoid("object default", interpret("object default",
+                  "class Main { a : Object; main() : Object { a }; };"));
+
             assertBoolEquals("bool", true, interpretBool("bool",
                   "class Main { a : Bool <- true; main() : Object { a }; };"));
 
@@ -126,6 +129,9 @@ class Main inherits Test {
 
             assertStringEquals("string", "a", interpretString("string",
                   "class Main { a : String <- \"a\"; main() : Object { a }; };"));
+
+            interpretObject("object default", "Object",
+                  "class Main { a : Object <- new Object; main() : Object { a }; };");
 
             assertErrorEquals("dispatch void",
                   "dispatch on void for method 'void' in type 'Main'",

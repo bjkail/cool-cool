@@ -440,11 +440,24 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
    };
 
    visitNew(expr : AnalyzedNewExpr) : Object {
-      let type : InterpreterType <- getType(expr.type()).type() in
-         if type.attributeInits().size() = 0 then
-            new InterpreterSimpleNewExpr.init(type)
+      let type : InterpreterAnalyzerType <- getType(expr.type()) in
+         if type = boolType then
+            new InterpreterConstantBoolExpr.init(boolType.type(), false)
          else
-            new InterpreterNewExpr.init(expr.line(), type)
+            if type = intType then
+               new InterpreterConstantIntExpr.init(intType.type(), 0)
+            else
+               if type = stringType then
+                  new InterpreterConstantStringExpr.init(stringType.type(), "")
+               else
+                  let type : InterpreterType <- type.type() in
+                     if type.attributeInits().size() = 0 then
+                        new InterpreterSimpleNewExpr.init(type)
+                     else
+                        new InterpreterNewExpr.init(expr.line(), type)
+                     fi
+               fi
+            fi
          fi
    };
 

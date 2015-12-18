@@ -2,6 +2,7 @@ class Main inherits Test {
    test() : Object {{
       testConstant();
       testNew();
+      testInitialization();
       testDispatch();
    }};
 
@@ -108,6 +109,25 @@ class Main inherits Test {
 
    testNew() : Object {
       if begin("new") then
+         {
+            assertBoolEquals("bool", false, interpretBool("bool",
+                  "class Main { main() : Object { new Bool }; };"));
+
+            assertIntEquals("int", 0, interpretInt("int",
+                  "class Main { main() : Object { new Int }; };"));
+
+            assertStringEquals("string", "", interpretString("string",
+                  "class Main { main() : Object { new String }; };"));
+
+            interpretObject("object", "Object", "class Main { main() : Object { new Object }; };");
+
+            interpretObject("main", "Main", "class Main { main() : Object { new Main }; };");
+         }
+      else false fi
+   };
+
+   testInitialization() : Object {
+      if begin("initialization") then
          {
             assertBoolEquals("bool default", false, interpretBool("bool default",
                   "class Main { a : Bool; main() : Object { a }; };"));

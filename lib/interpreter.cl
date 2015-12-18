@@ -88,10 +88,37 @@ class InterpreterMethod {
       self;
    }};
 
+   interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {{
+      if interpreter.debug() then
+         interpreter.debugOut("  method=".concat(toString())
+               .concat(", expr=").concat(expr.toString()))
+      else false fi;
+
+      state.interpretDispatch(interpreter, expr);
+   }};
+
    toString() : String {
       containingType.name()
             .concat(".").concat(id())
             .concat(":").concat(new StringUtil.fromInt(index))
+   };
+};
+
+class InterpreterBasicObjectAbortMethod inherits InterpreterMethod {
+   interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
+      interpreter.proceedError(0, "abort")
+   };
+};
+
+class InterpreterBasicObjectTypeNameMethod inherits InterpreterMethod {
+   interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
+      interpreter.proceedError(state.line(), "TODO: Object.type_name")
+   };
+};
+
+class InterpreterBasicObjectCopyMethod inherits InterpreterMethod {
+   interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
+      interpreter.proceedError(state.line(), "TODO: Object.copy")
    };
 };
 
@@ -113,7 +140,9 @@ class InterpreterAnalyzerAttribute {
 class InterpreterAnalyzerMethod {
    analyzedMethod : AnalyzedMethod;
    analyzedMethod() : AnalyzedMethod { analyzedMethod };
-   id() : String { analyzedMethod.id() };
+
+   id : String;
+   id() : String { id };
 
    method : InterpreterMethod;
    method() : InterpreterMethod { method };
@@ -121,8 +150,15 @@ class InterpreterAnalyzerMethod {
    index() : Int { method.index() };
    setIndex(index_ : Int) : Object { method.setIndex(index_) };
 
+   initBasic(containingType : InterpreterType, method_ : InterpreterMethod) : SELF_TYPE {{
+      id <- method_.id();
+      method <- method_;
+      self;
+   }};
+
    init(containingType : InterpreterType, index_ : Int, analyzedMethod_ : AnalyzedMethod) : SELF_TYPE {{
       analyzedMethod <- analyzedMethod_;
+      id <- analyzedMethod_.id();
       method <- new InterpreterMethod.init(containingType, analyzedMethod_.id(), index_);
       self;
    }};
@@ -198,27 +234,37 @@ class InterpreterAnalyzerType {
    methods : StringMap <- new StringListMap;
    methods() : StringMap { methods };
 
+   addMethodImpl(method : InterpreterAnalyzerMethod) : Object {{
+      methods.putWithString(method.id(), method);
+      type.methods().putWithInt(method.index(), method.method());
+   }};
+
    nextMethodIndex : Int;
    nextMethodIndex() : Int { nextMethodIndex };
+
+   allocateNextMethodIndex() : Int {
+      let index : Int <- nextMethodIndex in
+         {
+            nextMethodIndex <- index + 1;
+            index;
+         }
+   };
+
+   addBasicMethod(id : String, method : InterpreterMethod) : Object {
+      let index : Int <- allocateNextMethodIndex() in
+         addMethodImpl(new InterpreterAnalyzerMethod.initBasic(type, method.init(type, id, index)))
+   };
 
    addMethod(analyzedMethod : AnalyzedMethod) : Object {
       let id : String <- analyzedMethod.id(),
             index : Int <-
                let old : InterpreterAnalyzerMethod <- inheritsType.getMethod(analyzedMethod.id()) in
                   if isvoid old then
-                     let index : Int <- nextMethodIndex in
-                        {
-                           nextMethodIndex <- index + 1;
-                           index;
-                        }
+                     allocateNextMethodIndex()
                   else
                      old.index()
-                  fi,
-            method : InterpreterAnalyzerMethod <- new InterpreterAnalyzerMethod.init(type, index, analyzedMethod) in
-         {
-            methods.putWithString(id, method);
-            type.methods().putWithInt(index, method.method());
-         }
+                  fi in
+         addMethodImpl(new InterpreterAnalyzerMethod.init(type, index, analyzedMethod))
    };
 
    getMethod(id : String) : InterpreterAnalyzerMethod {
@@ -364,10 +410,22 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
             ioType : InterpreterAnalyzerType <- new InterpreterAnalyzerType.initBasic("IO") in
          {
             types.putWithString(objectType.name(), objectType);
+            objectType.addBasicMethod("abort", new InterpreterBasicObjectAbortMethod);
+            objectType.addBasicMethod("type_name", new InterpreterBasicObjectTypeNameMethod);
+            objectType.addBasicMethod("copy", new InterpreterBasicObjectCopyMethod);
+
             types.putWithString(ioType.name(), ioType);
+            ioType.setInheritsType(objectType);
+
             types.putWithString(intType.name(), intType);
+            intType.setInheritsType(objectType);
+
             types.putWithString(stringType.name(), stringType);
+            stringType.setInheritsType(objectType);
+
             types.putWithString(boolType.name(), boolType);
+            boolType.setInheritsType(objectType);
+
             -- TODO: builtin methods
          };
 
@@ -710,17 +768,13 @@ class InterpreterDispatchExpr inherits InterpreterExpr {
       self;
    }};
 
+   createState() : InterpreterDispatchExprState { new InterpreterDispatchExprState };
+
    interpret(interpreter : Interpreter) : Bool {
-      interpreter.pushState(new InterpreterDispatchExprState.init(line, arguments, target, method))
+      interpreter.pushState(createState().init(line, arguments, target, method))
    };
 
    toString() : String { "dispatch[".concat(method.toString()).concat("]") };
-};
-
-class InterpreterStaticDispatchExpr inherits InterpreterDispatchExpr {
-   interpret(interpreter : Interpreter) : Bool {
-      interpreter.pushState(new InterpreterStaticDispatchExprState.init(line, arguments, target, method))
-   };
 };
 
 class InterpreterDispatchExprState inherits InterpreterExprState {
@@ -734,7 +788,10 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
 
    args : IntMap <- new IntTreeMap;
    hasTarget : Bool;
+
    target : InterpreterValue;
+   target() : InterpreterValue { target };
+
    hasResult : Bool;
    result : InterpreterValue;
 
@@ -795,20 +852,7 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
                   interpreter.proceedError(line, "dispatch on void for method '".concat(method.id())
                         .concat("' in type '").concat(method.containingType().name()).concat("'"))
                else
-                  {
-                     savedSelfObject <- interpreter.selfObject();
-                     interpreter.setContext(case target of x : InterpreterObjectValue => x; esac);
-
-                     let method : InterpreterMethod <- lookupMethod() in
-                        {
-                           if interpreter.debug() then
-                              interpreter.debugOut("  method=".concat(method.toString())
-                                    .concat(", expr=").concat(method.expr().toString()))
-                           else false fi;
-
-                           method.expr().interpret(interpreter);
-                        };
-                  }
+                  lookupMethod().interpret(interpreter, self)
                fi
             else
                {
@@ -824,6 +868,13 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
       fi
    };
 
+   interpretDispatch(interpreter : Interpreter, expr : InterpreterExpr) : Bool {{
+      savedSelfObject <- interpreter.selfObject();
+      interpreter.setContext(case target of x : InterpreterObjectValue => x; esac);
+
+      expr.interpret(interpreter);
+   }};
+
    stackEntry() : String {
       if not isvoid target then
          method.containingType().name().concat(".").concat(method.id())
@@ -833,10 +884,12 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
    toString() : String { "dispatch" };
 };
 
+class InterpreterStaticDispatchExpr inherits InterpreterDispatchExpr {
+   createState() : InterpreterDispatchExprState { new InterpreterStaticDispatchExprState };
+};
+
 class InterpreterStaticDispatchExprState inherits InterpreterDispatchExprState {
-   lookupMethod() : InterpreterMethod {
-      method
-   };
+   lookupMethod() : InterpreterMethod { method };
 };
 
 class InterpreterConstantBoolExpr inherits InterpreterExpr {
@@ -983,10 +1036,12 @@ class Interpreter {
                            };
                         x : InterpreterDispatchExprState =>
                            {
-                              let stackEntry : String <- x.stackEntry() in
-                                 if not stackEntry = "" then
-                                    stack <- stack.concat(formatStackEntry(stackEntry, line))
-                                 else false fi;
+                              if not line = 0 then
+                                 let stackEntry : String <- x.stackEntry() in
+                                    if not stackEntry = "" then
+                                       stack <- stack.concat(formatStackEntry(stackEntry, line))
+                                    else false fi
+                              else false fi;
                               line <- x.line();
                            };
                         x : Object => false;

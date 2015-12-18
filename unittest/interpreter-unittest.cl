@@ -4,6 +4,7 @@ class Main inherits Test {
       testNew();
       testInitialization();
       testDispatch();
+      testBasicClasses();
    }};
 
    interpret(context : String, program : String) : InterpreterValue {
@@ -191,6 +192,37 @@ class Main inherits Test {
                      .concat("\tat Main.main (line 1)\n"),
                   interpretError("void dispatch",
                      "class Main { a : Main; main() : Int { a() }; a() : Int { a.void() }; void() : Int { 0 }; };"));
+         }
+      else false fi
+   };
+
+   testBasicClasses() : Object {
+      if begin("basicClasses") then
+         {
+            assertErrorEquals("self abort",
+                  "abort",
+                  "\tat Main.main (line 1)\n",
+                  interpretError("self abort", "class Main { main() : Object { abort() }; };"));
+
+            assertErrorEquals("bool abort",
+                  "abort",
+                  "\tat Main.main (line 1)\n",
+                  interpretError("bool abort", "class Main { main() : Object { false.abort() }; };"));
+
+            assertErrorEquals("int abort",
+                  "abort",
+                  "\tat Main.main (line 1)\n",
+                  interpretError("int abort", "class Main { main() : Object { 0.abort() }; };"));
+
+            assertErrorEquals("string abort",
+                  "abort",
+                  "\tat Main.main (line 1)\n",
+                  interpretError("string abort", "class Main { main() : Object { \"\".abort() }; };"));
+
+            assertErrorEquals("object abort",
+                  "abort",
+                  "\tat Main.main (line 1)\n",
+                  interpretError("object abort", "class Main { main() : Object { new Object.abort() }; };"));
          }
       else false fi
    };

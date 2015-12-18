@@ -37,6 +37,13 @@ class StringMap {
    getWithString(key : String) : Object { let void : Object in void };
    putWithString(key : String, value : Object) : Object { new ObjectUtil.abortObject(self, "putWithString: unimplemented") };
    putNewWithString(key : String, value : Object) : Object { new ObjectUtil.abortObject(self, "putNewWithString: unimplemented") };
+
+   putAll(map : StringMap) : Object {
+      let iter : StringMapIterator <- map.iterator() in
+         while iter.next() loop
+            putWithString(iter.key(), iter.value())
+         pool
+   };
 };
 
 class Comparator {

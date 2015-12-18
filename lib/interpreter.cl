@@ -485,6 +485,8 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
 class InterpreterValue {
    type : InterpreterType;
    type() : InterpreterType { type };
+
+   toString() : String { self.type_name() };
 };
 
 class InterpreterErrorValue inherits InterpreterValue {
@@ -499,6 +501,8 @@ class InterpreterErrorValue inherits InterpreterValue {
       stack <- stack_;
       self;
    }};
+
+   toString() : String { "error[".concat(value).concat("]") };
 };
 
 class InterpreterObjectValue inherits InterpreterValue {
@@ -509,6 +513,8 @@ class InterpreterObjectValue inherits InterpreterValue {
       type <- type_;
       self;
    }};
+
+   toString() : String { "object[".concat(type().name()).concat("]") };
 };
 
 class InterpreterBoolValue inherits InterpreterValue {
@@ -520,6 +526,8 @@ class InterpreterBoolValue inherits InterpreterValue {
       value <- value_;
       self;
    }};
+
+   toString() : String { if value then "true" else "false" fi };
 };
 
 class InterpreterIntValue inherits InterpreterValue {
@@ -531,6 +539,8 @@ class InterpreterIntValue inherits InterpreterValue {
       value <- value_;
       self;
    }};
+
+   toString() : String { new StringUtil.fromInt(value) };
 };
 
 class InterpreterStringValue inherits InterpreterValue {
@@ -542,6 +552,8 @@ class InterpreterStringValue inherits InterpreterValue {
       value <- value_;
       self;
    }};
+
+   toString() : String { "string[".concat(value).concat("]") };
 };
 
 class InterpreterExprState {
@@ -552,17 +564,23 @@ class InterpreterExprState {
    -- Must call proceedValue or pushState
    proceed(interpreter : Interpreter) : Bool { new ObjectUtil.abortBool(self, "proceed: unimplemented") };
    addValue(value : InterpreterValue) : Object { new ObjectUtil.abortObject(self, "addValue: unimplemented") };
+
+   toString() : String { self.type_name() };
 };
 
 class InterpreterExpr {
    -- Must call interpretValue or pushState
    interpret(interpreter : Interpreter) : Bool { new ObjectUtil.abortBool(self, "interpret: unimplemented") };
+
+   toString() : String { self.type_name() };
 };
 
 class InterpreterSelfExpr inherits InterpreterExpr {
    interpret(interpreter : Interpreter) : Bool {
       interpreter.interpretValue(interpreter.selfObject())
    };
+
+   toString() : String { "self" };
 };
 
 class InterpreterAttributeExpr inherits InterpreterExpr {
@@ -582,6 +600,12 @@ class InterpreterAttributeExpr inherits InterpreterExpr {
             interpreter.interpretValue(case value of x : InterpreterValue => x; esac)
          fi
    };
+
+   toString() : String {
+      "attribute[".concat(new StringUtil.fromInt(index))
+            .concat(if isvoid defaultValue then "" else ":".concat(defaultValue.toString()) fi)
+            .concat("]")
+   };
 };
 
 class InterpreterSimpleNewExpr inherits InterpreterExpr {
@@ -595,6 +619,8 @@ class InterpreterSimpleNewExpr inherits InterpreterExpr {
    interpret(interpreter : Interpreter) : Bool {
       interpreter.interpretValue(new InterpreterObjectValue.init(type))
    };
+
+   toString() : String { "new.simple[".concat(type.name()).concat("]") };
 };
 
 class InterpreterDispatchExpr inherits InterpreterExpr {
@@ -614,6 +640,8 @@ class InterpreterDispatchExpr inherits InterpreterExpr {
    interpret(interpreter : Interpreter) : Bool {
       interpreter.pushState(new InterpreterDispatchExprState.init(line, arguments, target, method))
    };
+
+   toString() : String { "dispatch[".concat(method.toString()).concat("]") };
 };
 
 class InterpreterStaticDispatchExpr inherits InterpreterDispatchExpr {
@@ -672,10 +700,22 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
 
    proceed(interpreter : Interpreter) : Bool {
       if argExprIter.next() then
-            case argExprIter.get() of x : InterpreterExpr => x.interpret(interpreter); esac
+         {
+            if interpreter.debug() then
+               interpreter.debugOut("  arg ".concat(new StringUtil.fromInt(args.size() + 1)))
+            else false fi;
+
+            case argExprIter.get() of x : InterpreterExpr => x.interpret(interpreter); esac;
+         }
       else
          if not hasTarget then
-            targetExpr.interpret(interpreter)
+            {
+               if interpreter.debug() then
+                  interpreter.debugOut("  target")
+               else false fi;
+
+               targetExpr.interpret(interpreter);
+            }
          else
             if not hasResult then
                if isvoid target then
@@ -687,13 +727,22 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
                      interpreter.setContext(case target of x : InterpreterObjectValue => x; esac);
 
                      let method : InterpreterMethod <- lookupMethod() in
---{new IO.out_string("interpreter: dispatch: method=").out_string(method.toString()).out_string("\n");
-                        method.expr().interpret(interpreter);
---};
+                        {
+                           if interpreter.debug() then
+                              interpreter.debugOut("  method=".concat(method.toString())
+                                    .concat(", expr=").concat(method.expr().toString()))
+                           else false fi;
+
+                           method.expr().interpret(interpreter);
+                        };
                   }
                fi
             else
                {
+                  if interpreter.debug() then
+                     interpreter.debugOut("  result")
+                  else false fi;
+
                   interpreter.setContext(savedSelfObject);
                   interpreter.proceedValue(result);
                }
@@ -707,6 +756,8 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
          method.containingType().name().concat(".").concat(method.id())
       else "" fi
    };
+
+   toString() : String { "dispatch" };
 };
 
 class InterpreterStaticDispatchExprState inherits InterpreterDispatchExprState {
@@ -728,6 +779,8 @@ class InterpreterConstantBoolExpr inherits InterpreterExpr {
    interpret(interpreter : Interpreter) : Bool {
       interpreter.interpretValue(new InterpreterBoolValue.init(type, value))
    };
+
+   toString() : String { if value then "true" else "false" fi };
 };
 
 class InterpreterConstantIntExpr inherits InterpreterExpr {
@@ -743,6 +796,8 @@ class InterpreterConstantIntExpr inherits InterpreterExpr {
    interpret(interpreter : Interpreter) : Bool {
       interpreter.interpretValue(new InterpreterIntValue.init(type, value))
    };
+
+   toString() : String { new StringUtil.fromInt(value) };
 };
 
 class InterpreterConstantStringExpr inherits InterpreterExpr {
@@ -758,6 +813,8 @@ class InterpreterConstantStringExpr inherits InterpreterExpr {
    interpret(interpreter : Interpreter) : Bool {
       interpreter.interpretValue(new InterpreterStringValue.init(type, value))
    };
+
+   toString() : String { "string[".concat(value).concat("]") };
 };
 
 class InterpreterExitValueExprState inherits InterpreterExprState {
@@ -775,9 +832,14 @@ class InterpreterExitValueExprState inherits InterpreterExprState {
    proceed(interpreter : Interpreter) : Bool {
       false
    };
+
+   toString() : String { "exit" };
 };
 
 class Interpreter {
+   debug : Bool;
+   debug() : Bool { debug };
+
    lineMap : TokenizerLineMap;
 
    init(lineMap_ : TokenizerLineMap) : SELF_TYPE {{
@@ -797,14 +859,34 @@ class Interpreter {
    exitValue : InterpreterValue;
    continue : Bool <- true;
 
+   valueString(value : InterpreterValue) : String {
+      if isvoid value then
+         "void"
+      else
+         value.toString()
+      fi
+   };
+
+   debugOut(s : String) : Object {
+      new IO.out_string("DEBUG: interpreter: [").out_string(exprState.toString())
+            .out_string("] ").out_string(s)
+            .out_string("\n")
+   };
+
    interpretValue(value_ : InterpreterValue) : Bool {{
---new IO.out_string("interpreter: interpretValue state=").out_string(exprState.type_name()).out_string(", value=").out_string(if isvoid value_ then "void" else value_.type_name() fi).out_string("\n");
+      if debug then
+         debugOut("interpretValue: ".concat(valueString(value_)))
+      else false fi;
+
       value <- value_;
       true;
    }};
 
    proceedValue(value_ : InterpreterValue) : Bool {{
---new IO.out_string("interpreter: proceedValue state=").out_string(exprState.type_name()).out_string(", value=").out_string(if isvoid value_ then "void" else value_.type_name() fi).out_string("\n");
+      if debug then
+         debugOut("interpretValue: ".concat(valueString(value_)))
+      else false fi;
+
       exprState <- exprState.prev();
       value <- value_;
       true;
@@ -813,7 +895,10 @@ class Interpreter {
    proceedError(line : Int, value_ : String) : Bool {
       let stack : String in
          {
---new IO.out_string("interpreter: proceedError state=").out_string(exprState.type_name()).out_string(", line=").out_int(line).out_string(", value=").out_string(if isvoid value_ then "void" else value_ fi).out_string("\n");
+            if debug then
+               debugOut("proceedError: [".concat(value_).concat("]"))
+            else false fi;
+
             let exprState : InterpreterExprState <- exprState in
                while not isvoid exprState loop
                   {
@@ -846,21 +931,30 @@ class Interpreter {
    };
 
    pushState(exprState_ : InterpreterExprState) : Bool {{
+      if debug then
+         debugOut("pushState: ".concat(exprState_.type_name()))
+      else false fi;
+
       exprState_.setPrev(exprState);
       exprState <- exprState_;
---new IO.out_string("interpreter: pushState state=").out_string(exprState.type_name()).out_string("\n");
       false;
    }};
 
    addExitValue(value : InterpreterValue) : Object {{
---new IO.out_string("interpreter: addExitValue state=").out_string(exprState.type_name()).out_string(", value=").out_string(if isvoid value then "void" else value.type_name() fi).out_string("\n");
+      if debug then
+         debugOut("addExitValue: ".concat(valueString(value)))
+      else false fi;
+
       exitValue <- value;
       continue <- false;
    }};
 
    pushExitState() : Bool {{
+      if debug then
+         debugOut("pushExitState")
+      else false fi;
+
       exprState <- let void : InterpreterExprState in void;
---new IO.out_string("interpreter: pushExitState state=").out_string(exprState.type_name()).out_string("\n");
       false;
    }};
 
@@ -872,7 +966,10 @@ class Interpreter {
          new ObjectUtil.abortObject(self, "maximum steps exceeded")
       else false fi;
 
---new IO.out_string("interpreter: - proceed state=").out_string(exprState.type_name()).out_string("\n");
+      if debug then
+         debugOut("proceed")
+      else false fi;
+
       exprState.proceed(self);
    }};
 
@@ -881,7 +978,6 @@ class Interpreter {
          {
             while proceed() loop
                {
---new IO.out_string("interpreter: - addValue state=").out_string(exprState.type_name()).out_string(", value=").out_string(if isvoid value then "void" else value.type_name() fi).out_string("\n");
                   exprState.addValue(value);
                   value <- let void : InterpreterValue in void;
                }
@@ -889,7 +985,10 @@ class Interpreter {
          }
       pool;
 
---new IO.out_string("interpreter: - exit value=").out_string(if isvoid exitValue then "void" else exitValue.type_name() fi).out_string("\n");
+      if debug then
+         debugOut("exit")
+      else false fi;
+
       exitValue;
    }};
 };

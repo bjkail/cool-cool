@@ -23,6 +23,19 @@ class Main inherits Test {
       interpret(context, "class Main { main() : Object { ".concat(program).concat(" }; };"))
    };
 
+   getError(context : String, value : InterpreterValue) : String {{
+      assertVoid(context.concat(" type"), value.type());
+      case value of x : InterpreterErrorValue => x.value(); esac;
+   }};
+
+   interpretError(context : String, program : String) : String {
+      getError(context, interpret(context, program))
+   };
+
+   interpretErrorExpr(context : String, program : String) : String {
+      getError(context, interpretExpr(context, program))
+   };
+
    getBool(context : String, value : InterpreterValue) : Bool {{
       assertStringEquals(context.concat(" type"), "Bool", value.type().name());
       case value of x : InterpreterBoolValue => x.value(); esac;
@@ -107,6 +120,10 @@ class Main inherits Test {
             assertIntEquals("override dispatch", 2, interpretInt("dispatch",
                   "class Main inherits A { main() : Int { a() }; b() : Int { 2 }; };"
                   .concat("class A { a() : Int { b() }; b() : Int { 1 }; };")));
+
+            assertStringEquals("dispatch void",
+                  "dispatch on void for method 'main' in type 'Main'",
+                  interpretError("void dispatch", "class Main { a : Main; main() : Object { a.main() }; };"));
          }
       else false fi
    };

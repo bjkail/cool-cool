@@ -248,13 +248,35 @@ class InterpreterAnalyzerType {
 
 class InterpreterAnalyzer inherits AnalyzedExprVisitor {
    boolType : InterpreterAnalyzerType <- new InterpreterAnalyzerType.initBasic("Bool");
+   defaultBoolValue : InterpreterBoolValue <- new InterpreterBoolValue.init(boolType.type(), false);
+
    intType : InterpreterAnalyzerType <- new InterpreterAnalyzerType.initBasic("Int");
+   defaultIntValue : InterpreterIntValue <- new InterpreterIntValue.init(intType.type(), 0);
+
    stringType : InterpreterAnalyzerType <- new InterpreterAnalyzerType.initBasic("String");
+   defaultStringValue : InterpreterStringValue <- new InterpreterStringValue.init(stringType.type(), "");
 
    types : StringMap <- new StringListMap;
 
    getType(type : AnalyzedType) : InterpreterAnalyzerType {
       case types.getWithString(type.name()) of x : InterpreterAnalyzerType => x; esac
+   };
+
+   getDefaultValue(type : AnalyzedType) : InterpreterValue {
+      let name : String <- type.name() in
+         if name = "Bool" then
+            defaultBoolValue
+         else
+            if name = "Int" then
+               defaultIntValue
+            else
+               if name = "String" then
+                  defaultStringValue
+               else
+                  let void : InterpreterValue in void
+               fi
+            fi
+         fi
    };
 
    defineFeatures(type : InterpreterAnalyzerType) : Object {
@@ -401,7 +423,12 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
 
    visitFormal(index : Int) : Object { new ObjectUtil.abortObject(self, "visitFormal unimplemented") };
    visitVar(index : Int) : Object { new ObjectUtil.abortObject(self, "visitVar unimplemented") };
-   visitAttribute(attribute : AnalyzedAttribute) : Object { new ObjectUtil.abortObject(self, "visitAttribute unimplemented") };
+
+   visitAttribute(attribute : AnalyzedAttribute) : Object {
+      new InterpreterAttributeExpr.init(
+            getType(attribute.containingType()).getAttribute(attribute.id()).index(),
+            getDefaultValue(attribute.type()))
+   };
 
    visitNew(expr : AnalyzedNewExpr) : Object {
       let type : InterpreterType <- getType(expr.type()).type() in
@@ -448,6 +475,16 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
 class InterpreterValue {
    type : InterpreterType;
    type() : InterpreterType { type };
+};
+
+class InterpreterErrorValue inherits InterpreterValue {
+   value : String;
+   value() : String { value };
+
+   init(value_ : String) : SELF_TYPE {{
+      value <- value_;
+      self;
+   }};
 };
 
 class InterpreterObjectValue inherits InterpreterValue {
@@ -514,6 +551,25 @@ class InterpreterSelfExpr inherits InterpreterExpr {
    };
 };
 
+class InterpreterAttributeExpr inherits InterpreterExpr {
+   index : Int;
+   defaultValue : InterpreterValue;
+
+   init(index_ : Int, defaultValue : InterpreterValue) : SELF_TYPE {{
+      index <- index_;
+      self;
+   }};
+
+   interpret(interpreter : Interpreter) : Bool {
+      let value : Object <- interpreter.selfObject().attributes().getWithInt(index) in
+         if isvoid value then
+            interpreter.interpretValue(defaultValue)
+         else
+            interpreter.interpretValue(case value of x : InterpreterValue => x; esac)
+         fi
+   };
+};
+
 class InterpreterSimpleNewExpr inherits InterpreterExpr {
    type : InterpreterType;
 
@@ -558,7 +614,7 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
 
    args : IntMap <- new IntTreeMap;
    hasTarget : Bool;
-   target : InterpreterObjectValue;
+   target : InterpreterValue;
    hasResult : Bool;
    result : InterpreterValue;
 
@@ -578,7 +634,7 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
       else
          if not hasTarget then
             {
-               target <- case value of x : InterpreterObjectValue => x; esac;
+               target <- value;
                hasTarget <- true;
             }
          else
@@ -602,18 +658,20 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
             targetExpr.interpret(interpreter)
          else
             if not hasResult then
-               {
-                  -- TODO: target void check
-                  -- TODO: push self object
+               if isvoid target then
+                  interpreter.proceedError("dispatch on void for method '".concat(method.id())
+                        .concat("' in type '").concat(method.containingType().name()).concat("'"))
+               else
+                  {
+                     savedSelfObject <- interpreter.selfObject();
+                     interpreter.setContext(case target of x : InterpreterObjectValue => x; esac);
 
-                  savedSelfObject <- interpreter.selfObject();
-                  interpreter.setContext(target);
-
-                  let method : InterpreterMethod <- lookupMethod() in
+                     let method : InterpreterMethod <- lookupMethod() in
 --{new IO.out_string("interpreter: dispatch: method=").out_string(method.toString()).out_string("\n");
-                     method.expr().interpret(interpreter);
+                        method.expr().interpret(interpreter);
 --};
-               }
+                  }
+               fi
             else
                {
                   interpreter.setContext(savedSelfObject);
@@ -716,6 +774,13 @@ class Interpreter {
 --new IO.out_string("interpreter: proceedValue state=").out_string(exprState.type_name()).out_string(", value=").out_string(if isvoid value_ then "void" else value_.type_name() fi).out_string("\n");
       exprState <- exprState.prev();
       value <- value_;
+      true;
+   }};
+
+   proceedError(value_ : String) : Bool {{
+--new IO.out_string("interpreter: proceedError state=").out_string(exprState.type_name()).out_string(", value=").out_string(if isvoid value_ then "void" else value_.type_name() fi).out_string("\n");
+      exprState <- new InterpreterExitValueExprState.init(self);
+      value <- new InterpreterErrorValue.init(value_);
       true;
    }};
 

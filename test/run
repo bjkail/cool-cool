@@ -1,0 +1,32 @@
+#!/bin/bash
+
+dir=$(dirname "$0")
+
+run_tests() {
+  option=$1
+
+  for file in *.cl; do
+    echo -n "$option/$file: "
+
+    actual=$(../../bin/cool --$option "$file")
+    if test "$OSTYPE" = "cygwin"; then
+      actual=$(echo "$actual" | tr -d '\r')
+    fi
+    expected=$(cat "${file%.cl}.txt")
+
+    if test "$actual" != "$expected"; then
+      echo "TEST FAILED" >&2
+      echo "-- ACTUAL:" >&2
+      echo "$actual" | cat -v >&2
+      echo "-- EXPECTED:" >&2
+      echo "$expected" | cat -v >&2
+      exit 1
+    else
+      echo "TEST PASSED"
+    fi
+  done
+}
+
+for option in interpret; do
+  (cd "$dir/$option" && run_tests $option)
+done

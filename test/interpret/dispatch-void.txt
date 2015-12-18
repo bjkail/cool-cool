@@ -1,0 +1,5 @@
+ERROR: dispatch on void for method 'void' in type 'Main'
+	at Main.c (dispatch-void.cl: line 10)
+	at Main.b (dispatch-void.cl: line 8)
+	at Main.a (dispatch-void.cl: line 6)
+	at Main.main (dispatch-void.cl: line 4)

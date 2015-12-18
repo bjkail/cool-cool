@@ -1,13 +1,15 @@
 class InterpreterProgram {
+   lineMap : TokenizerLineMap;
    expr : InterpreterExpr;
 
-   init(expr_ : InterpreterExpr) : SELF_TYPE {{
+   init(lineMap_ : TokenizerLineMap, expr_ : InterpreterExpr) : SELF_TYPE {{
+      lineMap <- lineMap_;
       expr <- expr_;
       self;
    }};
 
    interpret() : InterpreterValue {
-      let interpreter : Interpreter <- new Interpreter in
+      let interpreter : Interpreter <- new Interpreter.init(lineMap) in
          {
 --new IO.out_string("\ninterpreter: begin\n");
             expr.interpret(interpreter);
@@ -247,6 +249,13 @@ class InterpreterAnalyzerType {
 };
 
 class InterpreterAnalyzer inherits AnalyzedExprVisitor {
+   lineMap : TokenizerLineMap;
+
+   init(lineMap_ : TokenizerLineMap) : SELF_TYPE {{
+      lineMap <- lineMap_;
+      self;
+   }};
+
    boolType : InterpreterAnalyzerType <- new InterpreterAnalyzerType.initBasic("Bool");
    defaultBoolValue : InterpreterBoolValue <- new InterpreterBoolValue.init(boolType.type(), false);
 
@@ -404,7 +413,7 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
                   -- to use as the program entry point.
                   newExpr : AnalyzedExpr <- new AnalyzedNewExpr.init(mainType),
                   dispatchExpr : AnalyzedExpr <- new AnalyzedDispatchExpr.init(0, mainMethod.returnType(), newExpr, mainMethod, true, new Collection) in
-               new InterpreterProgram.init(analyzeExpr(dispatchExpr));
+               new InterpreterProgram.init(lineMap, analyzeExpr(dispatchExpr));
          };
    }};
 
@@ -451,6 +460,7 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
                   new InterpreterDispatchExpr
                fi in
          dispatchExpr.init(
+               expr.line(),
                analyzeExprCollection(expr.arguments()),
                analyzeExpr(expr.expr()),
                getType(method.containingType()).getMethod(method.id()).method())
@@ -481,8 +491,12 @@ class InterpreterErrorValue inherits InterpreterValue {
    value : String;
    value() : String { value };
 
-   init(value_ : String) : SELF_TYPE {{
+   stack : String;
+   stack() : String { stack };
+
+   init(value_ : String, stack_ : String) : SELF_TYPE {{
       value <- value_;
+      stack <- stack_;
       self;
    }};
 };
@@ -584,11 +598,13 @@ class InterpreterSimpleNewExpr inherits InterpreterExpr {
 };
 
 class InterpreterDispatchExpr inherits InterpreterExpr {
+   line : Int;
    arguments : Collection;
    target : InterpreterExpr;
    method : InterpreterMethod;
 
-   init(arguments_ : Collection, target_ : InterpreterExpr, method_ : InterpreterMethod) : SELF_TYPE {{
+   init(line_ : Int, arguments_ : Collection, target_ : InterpreterExpr, method_ : InterpreterMethod) : SELF_TYPE {{
+      line <- line_;
       arguments <- arguments_;
       target <- target_;
       method <- method_;
@@ -596,17 +612,20 @@ class InterpreterDispatchExpr inherits InterpreterExpr {
    }};
 
    interpret(interpreter : Interpreter) : Bool {
-      interpreter.pushState(new InterpreterDispatchExprState.init(arguments, target, method))
+      interpreter.pushState(new InterpreterDispatchExprState.init(line, arguments, target, method))
    };
 };
 
 class InterpreterStaticDispatchExpr inherits InterpreterDispatchExpr {
    interpret(interpreter : Interpreter) : Bool {
-      interpreter.pushState(new InterpreterStaticDispatchExprState.init(arguments, target, method))
+      interpreter.pushState(new InterpreterStaticDispatchExprState.init(line, arguments, target, method))
    };
 };
 
 class InterpreterDispatchExprState inherits InterpreterExprState {
+   line : Int;
+   line() : Int { line };
+
    numArgs : Int;
    argExprIter : Iterator;
    targetExpr : InterpreterExpr;
@@ -620,7 +639,8 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
 
    savedSelfObject : InterpreterObjectValue;
 
-   init(argExprs : Collection, targetExpr_ : InterpreterExpr, method_ : InterpreterMethod) : SELF_TYPE {{
+   init(line_ : Int, argExprs : Collection, targetExpr_ : InterpreterExpr, method_ : InterpreterMethod) : SELF_TYPE {{
+      line <- line_;
       numArgs <- argExprs.size();
       argExprIter <- argExprs.iterator();
       targetExpr <- targetExpr_;
@@ -659,7 +679,7 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
          else
             if not hasResult then
                if isvoid target then
-                  interpreter.proceedError("dispatch on void for method '".concat(method.id())
+                  interpreter.proceedError(line, "dispatch on void for method '".concat(method.id())
                         .concat("' in type '").concat(method.containingType().name()).concat("'"))
                else
                   {
@@ -680,6 +700,12 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
             fi
          fi
       fi
+   };
+
+   stackEntry() : String {
+      if not isvoid target then
+         method.containingType().name().concat(".").concat(method.id())
+      else "" fi
    };
 };
 
@@ -752,6 +778,13 @@ class InterpreterExitValueExprState inherits InterpreterExprState {
 };
 
 class Interpreter {
+   lineMap : TokenizerLineMap;
+
+   init(lineMap_ : TokenizerLineMap) : SELF_TYPE {{
+      lineMap <- lineMap_;
+      self;
+   }};
+
    selfObject : InterpreterObjectValue;
    selfObject() : InterpreterObjectValue { selfObject };
 
@@ -777,12 +810,40 @@ class Interpreter {
       true;
    }};
 
-   proceedError(value_ : String) : Bool {{
---new IO.out_string("interpreter: proceedError state=").out_string(exprState.type_name()).out_string(", value=").out_string(if isvoid value_ then "void" else value_.type_name() fi).out_string("\n");
-      exprState <- new InterpreterExitValueExprState.init(self);
-      value <- new InterpreterErrorValue.init(value_);
-      true;
-   }};
+   proceedError(line : Int, value_ : String) : Bool {
+      let stack : String in
+         {
+--new IO.out_string("interpreter: proceedError state=").out_string(exprState.type_name()).out_string(", line=").out_int(line).out_string(", value=").out_string(if isvoid value_ then "void" else value_ fi).out_string("\n");
+            let exprState : InterpreterExprState <- exprState in
+               while not isvoid exprState loop
+                  {
+                     case exprState of
+                        x : InterpreterDispatchExprState =>
+                           {
+                              let stackEntry : String <- x.stackEntry() in
+                                 if not stackEntry = "" then
+                                    stack <- stack.concat("\tat ").concat(stackEntry)
+                                       .concat(" (").concat(lineMap.lineToString(line))
+                                       .concat(")\n")
+                                 else false fi;
+                              line <- x.line();
+                           };
+                        x : Object => false;
+                     esac;
+
+                     exprState <- exprState.prev();
+                  }
+               pool;
+
+            exprState <- new InterpreterExitValueExprState.init(self);
+            value <- new InterpreterErrorValue.init(value_, stack);
+            true;
+         }
+   };
+
+   formatStackEntry(s : String, line : Int) : String {
+      "\tat ".concat(s).concat(" (").concat(lineMap.lineToString(line)).concat(")\n")
+   };
 
    pushState(exprState_ : InterpreterExprState) : Bool {{
       exprState_.setPrev(exprState);

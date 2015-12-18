@@ -10,11 +10,12 @@ class Main inherits Test {
             program : ParsedProgram <- parser.parse() in
          {
             assertNotVoid(context.concat(" parse"), program);
-            let analyzer : Analyzer <- new Analyzer.init(tokenizer.lineMap()),
+            let lineMap : TokenizerLineMap <- tokenizer.lineMap(),
+                  analyzer : Analyzer <- new Analyzer.init(lineMap),
                   program : AnalyzedProgram <- analyzer.analyze(program) in
                {
                   assertNotVoid(context.concat(" analyze"), program);
-                  new InterpreterAnalyzer.analyze(program).interpret();
+                  new InterpreterAnalyzer.init(lineMap).analyze(program).interpret();
                };
          }
    };
@@ -23,18 +24,23 @@ class Main inherits Test {
       interpret(context, "class Main { main() : Object { ".concat(program).concat(" }; };"))
    };
 
-   getError(context : String, value : InterpreterValue) : String {{
+   getError(context : String, value : InterpreterValue) : InterpreterErrorValue {{
       assertVoid(context.concat(" type"), value.type());
-      case value of x : InterpreterErrorValue => x.value(); esac;
+      case value of x : InterpreterErrorValue => x; esac;
    }};
 
-   interpretError(context : String, program : String) : String {
+   interpretError(context : String, program : String) : InterpreterErrorValue {
       getError(context, interpret(context, program))
    };
 
-   interpretErrorExpr(context : String, program : String) : String {
+   interpretErrorExpr(context : String, program : String) : InterpreterErrorValue {
       getError(context, interpretExpr(context, program))
    };
+
+   assertErrorEquals(context : String, message : String, stack : String, error : InterpreterErrorValue) : Object {{
+      assertStringEquals(context.concat(" message"), message, error.value());
+      assertStringEquals(context.concat(" stack"), stack, error.stack());
+   }};
 
    getBool(context : String, value : InterpreterValue) : Bool {{
       assertStringEquals(context.concat(" type"), "Bool", value.type().name());
@@ -121,9 +127,12 @@ class Main inherits Test {
                   "class Main inherits A { main() : Int { a() }; b() : Int { 2 }; };"
                   .concat("class A { a() : Int { b() }; b() : Int { 1 }; };")));
 
-            assertStringEquals("dispatch void",
-                  "dispatch on void for method 'main' in type 'Main'",
-                  interpretError("void dispatch", "class Main { a : Main; main() : Object { a.main() }; };"));
+            assertErrorEquals("dispatch void",
+                  "dispatch on void for method 'void' in type 'Main'",
+                  "\tat Main.a (line 1)\n"
+                     .concat("\tat Main.main (line 1)\n"),
+                  interpretError("void dispatch",
+                     "class Main { a : Main; main() : Int { a() }; a() : Int { a.void() }; void() : Int { 0 }; };"));
          }
       else false fi
    };

@@ -164,7 +164,8 @@ class AnalyzedType {
    processInherits() : Object {{
       inheritsDepth <- inheritsType.inheritsDepth() + 1;
       attributes <- inheritsType.attributes().copy();
-      methods <- inheritsType.methods().copy();
+      methods <- new StringListMap;
+      methods.putAll(inheritsType.methods());
       selfTypeType <- new AnalyzedType.initSelfType(self);
    }};
 
@@ -274,6 +275,8 @@ class AnalyzedMethod inherits AnalyzedFeature {
       parsedMethod <- parsedMethod_;
       initBuiltin(containingType, parsedMethod_.id(), formalTypes, returnType);
    }};
+
+   toString() : String { containingType().name().concat(".").concat(id()) };
 
    asMethod() : AnalyzedMethod { self };
 };

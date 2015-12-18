@@ -188,29 +188,49 @@ class Main inherits Test {
                   "class A { a() : Bool { 0 }; };");
 
             let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("method",
-                     "class A { a() : Object { false }; b(a : Int) : Bool { false }; };"),
-                  program : AnalyzedProgram <- analyzer.analyzeTest(),
-                  type : AnalyzedType <- program.getType("A") in
+                     "class A inherits B { a() : Object { false }; b(a : Int) : Bool { false }; };"
+                     .concat("class B { b(a : Int) : Bool { false }; };")),
+                  program : AnalyzedProgram <- analyzer.analyzeTest() in
                {
-                  let method : AnalyzedMethod <- type.getMethod("a") in
+                  let type : AnalyzedType <- program.getType("A") in
                      {
-                        assertSameType("a defining", type, method.containingType());
-                        assertStringEquals("a id", "a", method.id());
-                        assertSameType("a return", analyzer.objectType(), method.returnType());
-                        assertIntEquals("a formals", 0, method.formalTypes().size());
+                        let method : AnalyzedMethod <- type.getMethod("a") in
+                           {
+                              assertSameType("a containing", type, method.containingType());
+                              assertStringEquals("a id", "a", method.id());
+                              assertSameType("a return", analyzer.objectType(), method.returnType());
+                              assertIntEquals("a formals", 0, method.formalTypes().size());
+                           };
+
+                        let method : AnalyzedMethod <- type.getMethod("b") in
+                           {
+                              assertSameType("A.b containing", type, method.containingType());
+                              assertStringEquals("A.b id", "b", method.id());
+                              assertSameType("A.b return", analyzer.boolType(), method.returnType());
+
+                              let formalIter : Iterator <- method.formalTypes().iterator() in
+                                 {
+                                    assertSameType("A.b formal", analyzer.intType(),
+                                          case getIteratorNext(formalIter) of x : AnalyzedType => x; esac);
+                                    assertFalse("A.b formals", formalIter.next());
+                                 };
+                           };
                      };
 
-                  let method : AnalyzedMethod <- type.getMethod("b") in
+                  let type : AnalyzedType <- program.getType("B") in
                      {
-                        assertSameType("b defining", type, method.containingType());
-                        assertStringEquals("b id", "b", method.id());
-                        assertSameType("b return", analyzer.boolType(), method.returnType());
-
-                        let formalIter : Iterator <- method.formalTypes().iterator() in
+                        let method : AnalyzedMethod <- type.getMethod("b") in
                            {
-                              assertSameType("b formal", analyzer.intType(),
-                                    case getIteratorNext(formalIter) of x : AnalyzedType => x; esac);
-                              assertFalse("b formals", formalIter.next());
+                              assertSameType("B.b containing", type, method.containingType());
+                              assertStringEquals("B.b id", "b", method.id());
+                              assertSameType("B.b return", analyzer.boolType(), method.returnType());
+
+                              let formalIter : Iterator <- method.formalTypes().iterator() in
+                                 {
+                                    assertSameType("B.b formal", analyzer.intType(),
+                                          case getIteratorNext(formalIter) of x : AnalyzedType => x; esac);
+                                    assertFalse("B.b formals", formalIter.next());
+                                 };
                            };
                      };
                };

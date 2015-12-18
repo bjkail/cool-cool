@@ -11,8 +11,7 @@ for arg in "$@"; do
   --) shift; files+=("$@"); break;;
   --bootstrap) files=("${coolfiles[@]}");;
   --format-errors) interpreteroptions+=(--format-errors);;
-  --lex) options+=(--lex);;
-  --parse) options+=(--parse);;
+  --lex | --parse | --analyze | --interpret) options+=($1);;
   -*) echo "$0: $1: unrecognized option" >&2; exit 1;;
   *) files+=("$1")
   esac

@@ -15,10 +15,27 @@ class Main {
                      lex(tokenizer)
                   else
                      let program : ParsedProgram <- parser.parse() in
-                        if not listener.parse() then
+                        if if not isvoid program then
+                              not listener.parse()
+                           else false fi
+                        then
                            let analyzer : Analyzer <- new Analyzer.init(tokenizer.lineMap()),
                                  program : AnalyzedProgram <- analyzer.analyze(program) in
-                              false
+                              if if not isvoid program then
+                                    if not listener.analyze() then
+                                       listener.interpret()
+                                    else false fi
+                                 else false fi
+                              then
+                                 let program : InterpreterProgram <- new InterpreterAnalyzer.init(tokenizer.lineMap()).analyze(program),
+                                       value : InterpreterValue <- program.interpret() in
+                                    case value of
+                                       x : InterpreterErrorValue =>
+                                          new IO.out_string("ERROR: ").out_string(x.value())
+                                                .out_string("\n").out_string(x.stack());
+                                       x : Object => false;
+                                    esac
+                              else false fi
                         else false fi
                   fi
                fi;
@@ -56,6 +73,12 @@ class MainTokenizerListener inherits TokenizerListener {
    parse : Bool;
    parse() : Bool { parse };
 
+   analyze : Bool;
+   analyze() : Bool { analyze };
+
+   interpret : Bool;
+   interpret() : Bool { interpret };
+
    init(is_ : IOInputStream) : SELF_TYPE {{
       is <- is_;
       self;
@@ -77,7 +100,15 @@ class MainTokenizerListener inherits TokenizerListener {
             if option = "--parse" then
                parse <- true
             else
-               optionError <- option.concat(": unrecognized option")
+               if option = "--analyze" then
+                  analyze <- true
+               else
+                  if option = "--interpret" then
+                     interpret <- true
+                  else
+                     optionError <- option.concat(": unrecognized option")
+                  fi
+               fi
             fi
          fi
       else false fi

@@ -125,7 +125,16 @@ class InterpreterBasicObjectTypeNameMethod inherits InterpreterMethod {
 
 class InterpreterBasicObjectCopyMethod inherits InterpreterMethod {
    interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
-      interpreter.proceedError(state.line(), "TODO: Object.copy")
+      let target : InterpreterValue <- state.target() in
+         case target of
+            target : InterpreterObjectValue =>
+               let copy : InterpreterObjectValue <- new InterpreterObjectValue.init(target.type()) in
+                  {
+                     copy.attributes().putAll(target.attributes());
+                     interpreter.proceedValue(target);
+                  };
+            target : InterpreterValue => interpreter.proceedValue(target);
+         esac
    };
 };
 

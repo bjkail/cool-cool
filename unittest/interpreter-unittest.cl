@@ -229,6 +229,15 @@ class Main inherits Test {
             assertStringEquals("string type_name", "String", interpretStringExpr("string type_name", "\"\".type_name()"));
             assertStringEquals("object type_name", "Object", interpretStringExpr("object type_name", "new Object.type_name()"));
             assertStringEquals("main type_name", "Main", interpretStringExpr("main type_name", "type_name()"));
+
+            assertFalse("false copy", interpretBoolExpr("bool copy", "false.copy()"));
+            assertTrue("true copy", interpretBoolExpr("bool copy", "true.copy()"));
+            assertIntEquals("int copy", 1, interpretIntExpr("int copy", "1.copy()"));
+            assertStringEquals("string copy", "a", interpretStringExpr("string copy", "\"a\".copy()"));
+            -- TODO: test equality
+            interpretObjectExpr("object copy", "Object", "new Object.copy()");
+            -- TODO: test attribute
+            interpretObjectExpr("main copy", "Main", "copy()");
          }
       else false fi
    };

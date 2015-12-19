@@ -250,7 +250,12 @@ class Main inherits Test {
             interpretObjectExpr("main copy", "Main", "copy()");
 
             let io : TestIO <- new TestIO.init(self, "out_string", new Collection, new LinkedList.add("a")) in
-               interpretIO("out_string", io, "class Main { main() : Object { new IO.out_string(\"a\") }; };");
+               getObject("out_string", "IO",
+                     interpretIO("out_string", io, "class Main { main() : Object { new IO.out_string(\"a\") }; };"));
+
+            let io : TestIO <- new TestIO.init(self, "out_int", new Collection, new LinkedList.add(1)) in
+               getObject("out_string", "IO",
+                     interpretIO("out_int", io, "class Main { main() : Object { new IO.out_int(1) }; };"));
          }
       else false fi
    };

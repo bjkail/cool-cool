@@ -188,6 +188,21 @@ class TestIO inherits IO {
       self;
    }};
 
+   out_int(actual : Int) : SELF_TYPE {{
+      if not outIter.next() then
+         test.failContext(context.concat(" out_string #").concat(new StringUtil.fromInt(outIndex)),
+               "expected=void, actual=".concat(new StringUtil.fromInt(actual)))
+      else false fi;
+
+      let expected : Int <- case outIter.get() of x : Int => x; esac in
+         if not actual = expected then
+            test.assertIntEquals(context.concat(" out_int #").concat(new StringUtil.fromInt(outIndex)), expected, actual)
+         else false fi;
+
+      outIndex <- outIndex + 1;
+      self;
+   }};
+
    assert() : Object {
       test.assertFalse(context.concat(" end"), outIter.next())
    };

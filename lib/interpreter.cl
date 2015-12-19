@@ -148,6 +148,16 @@ class InterpreterBasicIOOutStringMethod inherits InterpreterMethod {
    };
 };
 
+class InterpreterBasicIOOutIntMethod inherits InterpreterMethod {
+   interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
+      let arg : InterpreterIntValue <- case state.args().getWithInt(0) of x : InterpreterIntValue => x; esac in
+         {
+            interpreter.io().out_int(arg.value());
+            interpreter.proceedValue(state.target());
+         }
+   };
+};
+
 class InterpreterAnalyzerAttribute {
    index : Int;
    index() : Int { index };
@@ -443,6 +453,7 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
             types.putWithString(ioType.name(), ioType);
             ioType.setInheritsType(objectType);
             ioType.addBasicMethod("out_string", new InterpreterBasicIOOutStringMethod);
+            ioType.addBasicMethod("out_int", new InterpreterBasicIOOutIntMethod);
 
             types.putWithString(intType.name(), intType);
             intType.setInheritsType(objectType);

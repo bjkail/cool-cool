@@ -8,8 +8,8 @@ class InterpreterProgram {
       self;
    }};
 
-   interpret() : InterpreterValue {
-      let interpreter : Interpreter <- new Interpreter.init(lineMap) in
+   interpret(io : IO) : InterpreterValue {
+      let interpreter : Interpreter <- new Interpreter.init(lineMap, io) in
          {
 --new IO.out_string("\ninterpreter: begin\n");
             expr.interpret(interpreter);
@@ -135,6 +135,16 @@ class InterpreterBasicObjectCopyMethod inherits InterpreterMethod {
                   };
             target : InterpreterValue => interpreter.proceedValue(target);
          esac
+   };
+};
+
+class InterpreterBasicIOOutStringMethod inherits InterpreterMethod {
+   interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
+      let arg : InterpreterStringValue <- case state.args().getWithInt(0) of x : InterpreterStringValue => x; esac in
+         {
+            interpreter.io().out_string(arg.value());
+            interpreter.proceedValue(state.target());
+         }
    };
 };
 
@@ -432,6 +442,7 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
 
             types.putWithString(ioType.name(), ioType);
             ioType.setInheritsType(objectType);
+            ioType.addBasicMethod("out_string", new InterpreterBasicIOOutStringMethod);
 
             types.putWithString(intType.name(), intType);
             intType.setInheritsType(objectType);
@@ -803,6 +814,8 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
    method : InterpreterMethod;
 
    args : IntMap <- new IntTreeMap;
+   args() : IntMap { args };
+
    hasTarget : Bool;
 
    target : InterpreterValue;
@@ -984,8 +997,12 @@ class Interpreter {
 
    lineMap : TokenizerLineMap;
 
-   init(lineMap_ : TokenizerLineMap) : SELF_TYPE {{
+   io : IO;
+   io() : IO { io };
+
+   init(lineMap_ : TokenizerLineMap, io_ : IO) : SELF_TYPE {{
       lineMap <- lineMap_;
+      io <- io_;
       self;
    }};
 

@@ -24,8 +24,8 @@ class Main inherits Test {
       new Tokenizer.init(new TestStringInputStream.init(s))
    };
 
-   newIOTokenizer(lines : Collection) : Tokenizer {
-      let is : IOInputStream <- new TestIOInputStream.init(new TestIO.init(lines)) in
+   newIOTokenizer(context : String, lines : Collection) : Tokenizer {
+      let is : IOInputStream <- new TestIOInputStream.init(new TestIO.init(self, context, lines, new Collection)) in
          new Tokenizer.init(is).setListener(new TestTokenizerListener.init(is))
    };
 
@@ -184,7 +184,7 @@ class Main inherits Test {
    testEofDirective() : Object {
       if begin("eofDirective") then
          {
-            let t : Tokenizer <- newIOTokenizer(new LinkedList
+            let t : Tokenizer <- newIOTokenizer("", new LinkedList
                      .add("--cool:eof=1")
                      .add(".")
                      .add("")
@@ -299,7 +299,7 @@ class Main inherits Test {
    testFilesDirective() : Object {
       if begin("filesDirective") then
          {
-            let t : Tokenizer <- newIOTokenizer(new LinkedList
+            let t : Tokenizer <- newIOTokenizer("", new LinkedList
                      .add("--cool:files=2")
                      .add("--cool:eof=1")
                      .add("1")

@@ -151,19 +151,45 @@ class TestStringInputStream inherits InputStream {
 
 -- Custom IO instance that uses a LinkedList
 class TestIO inherits IO {
-   iter : Iterator;
+   test : Test;
+   context : String;
+   inIter : Iterator;
+   outIter : Iterator;
+   outIndex : Int;
 
-   init(lines : Collection) : SELF_TYPE {{
-      iter <- lines.iterator();
+   init(test_ : Test, context_ : String, in_ : Collection, out : Collection) : SELF_TYPE {{
+      test <- test_;
+      context <- context_;
+      inIter <- in_.iterator();
+      outIter <- out.iterator();
       self;
    }};
 
    in_string() : String {
-      if iter.next() then
-         case iter.get() of x : String => x; esac
+      if inIter.next() then
+         case inIter.get() of x : String => x; esac
       else
          ""
       fi
+   };
+
+   out_string(actual : String) : SELF_TYPE {{
+      if not outIter.next() then
+         test.failContext(context.concat(" out_string #").concat(new StringUtil.fromInt(outIndex)),
+               "expected=void, actual=".concat(actual))
+      else false fi;
+
+      let expected : String <- case outIter.get() of x : String => x; esac in
+         if not actual = expected then
+            test.assertStringEquals(context.concat(" out_string #").concat(new StringUtil.fromInt(outIndex)), expected, actual)
+         else false fi;
+
+      outIndex <- outIndex + 1;
+      self;
+   }};
+
+   assert() : Object {
+      test.assertFalse(context.concat(" end"), outIter.next())
    };
 };
 

@@ -7,7 +7,7 @@ class Main inherits Test {
       testBasicClasses();
    }};
 
-   interpret(context : String, program : String) : InterpreterValue {
+   interpretIO(context : String, io : TestIO, program : String) : InterpreterValue {
       let tokenizer : Tokenizer <- new Tokenizer.init(new TestStringInputStream.init(program)),
             parser : Parser <- new Parser.init(tokenizer),
             program : ParsedProgram <- parser.parse() in
@@ -18,9 +18,19 @@ class Main inherits Test {
                   program : AnalyzedProgram <- analyzer.analyze(program) in
                {
                   assertNotVoid(context.concat(" analyze"), program);
-                  new InterpreterAnalyzer.init(lineMap).analyze(program).interpret();
+                  let value : InterpreterValue <- new InterpreterAnalyzer.init(lineMap).analyze(program).interpret(io) in
+                     {
+                        io.assert();
+                        value;
+                     };
                };
          }
+   };
+
+   interpret(context : String, program : String) : InterpreterValue {
+      let empty : Collection <- new Collection,
+            io : TestIO <- new TestIO.init(self, context, empty, empty) in
+         interpretIO(context, io, program)
    };
 
    interpretExpr(context : String, program : String) : InterpreterValue {
@@ -238,6 +248,9 @@ class Main inherits Test {
             interpretObjectExpr("object copy", "Object", "new Object.copy()");
             -- TODO: test attribute
             interpretObjectExpr("main copy", "Main", "copy()");
+
+            let io : TestIO <- new TestIO.init(self, "out_string", new Collection, new LinkedList.add("a")) in
+               interpretIO("out_string", io, "class Main { main() : Object { new IO.out_string(\"a\") }; };");
          }
       else false fi
    };

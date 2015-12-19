@@ -28,7 +28,7 @@ class Main {
                                  else false fi
                               then
                                  let program : InterpreterProgram <- new InterpreterAnalyzer.init(tokenizer.lineMap()).analyze(program),
-                                       value : InterpreterValue <- program.interpret() in
+                                       value : InterpreterValue <- program.interpret(new IO) in
                                     case value of
                                        x : InterpreterErrorValue =>
                                           new IO.out_string("ERROR: ").out_string(x.value())

@@ -173,6 +173,14 @@ class TestIO inherits IO {
       fi
    };
 
+   in_int() : Int {
+      if inIter.next() then
+         case inIter.get() of x : Int => x; esac
+      else
+         0
+      fi
+   };
+
    out_string(actual : String) : SELF_TYPE {{
       if not outIter.next() then
          test.failContext(context.concat(" out_string #").concat(new StringUtil.fromInt(outIndex)),

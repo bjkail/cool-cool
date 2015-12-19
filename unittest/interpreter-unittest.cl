@@ -268,6 +268,10 @@ class Main inherits Test {
             let io : TestIO <- new TestIO.init(self, "in_int", new LinkedList.add(1), new Collection) in
                assertIntEquals("in_int", 1, getInt("in_int",
                      interpretIO("in_int", io, "class Main { main() : Object { new IO.in_int() }; };")));
+
+            assertIntEquals("length 0", 0, interpretIntExpr("length 0", "\"\".length()"));
+            assertIntEquals("length 1", 1, interpretIntExpr("length 1", "\"a\".length()"));
+            assertIntEquals("length special", 7, interpretIntExpr("length linefeed", "\"a\\nb\\tc\\\\d\".length()"));
          }
       else false fi
    };

@@ -223,6 +223,12 @@ class Main inherits Test {
                   "abort",
                   "\tat Main.main (line 1)\n",
                   interpretError("object abort", "class Main { main() : Object { new Object.abort() }; };"));
+
+            assertStringEquals("bool type_name", "Bool", interpretStringExpr("bool type_name", "false.type_name()"));
+            assertStringEquals("int type_name", "Int", interpretStringExpr("int type_name", "0.type_name()"));
+            assertStringEquals("string type_name", "String", interpretStringExpr("string type_name", "\"\".type_name()"));
+            assertStringEquals("object type_name", "Object", interpretStringExpr("object type_name", "new Object.type_name()"));
+            assertStringEquals("main type_name", "Main", interpretStringExpr("main type_name", "type_name()"));
          }
       else false fi
    };

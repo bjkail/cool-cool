@@ -111,8 +111,15 @@ class InterpreterBasicObjectAbortMethod inherits InterpreterMethod {
 };
 
 class InterpreterBasicObjectTypeNameMethod inherits InterpreterMethod {
+   stringType : InterpreterType;
+
+   initStringType(stringType_ : InterpreterType) : SELF_TYPE {{
+      stringType <- stringType_;
+      self;
+   }};
+
    interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
-      interpreter.proceedError(state.line(), "TODO: Object.type_name")
+      interpreter.proceedValue(new InterpreterStringValue.init(stringType, state.target().type().name()))
    };
 };
 
@@ -411,7 +418,7 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
          {
             types.putWithString(objectType.name(), objectType);
             objectType.addBasicMethod("abort", new InterpreterBasicObjectAbortMethod);
-            objectType.addBasicMethod("type_name", new InterpreterBasicObjectTypeNameMethod);
+            objectType.addBasicMethod("type_name", new InterpreterBasicObjectTypeNameMethod.initStringType(stringType.type()));
             objectType.addBasicMethod("copy", new InterpreterBasicObjectCopyMethod);
 
             types.putWithString(ioType.name(), ioType);

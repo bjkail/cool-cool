@@ -253,6 +253,10 @@ class Main inherits Test {
                getObject("out_string", "IO",
                      interpretIO("out_string", io, "class Main { main() : Object { new IO.out_string(\"a\") }; };"));
 
+            let io : TestIO <- new TestIO.init(self, "out_string", new Collection, new LinkedList.add("a".concat(stringUtil.backslash()).concat("b\nc"))) in
+               getObject("out_string", "IO",
+                     interpretIO("out_string", io, "class Main { main() : Object { new IO.out_string(\"a\\\\b\\nc\") }; };"));
+
             let io : TestIO <- new TestIO.init(self, "out_int", new Collection, new LinkedList.add(1)) in
                getObject("out_string", "IO",
                      interpretIO("out_int", io, "class Main { main() : Object { new IO.out_int(1) }; };"));

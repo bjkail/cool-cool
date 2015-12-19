@@ -131,16 +131,21 @@ class Main inherits Test {
          }
    };
 
-   assertTokenString(context : String, value : String, t : Tokenizer) : Object {
+   assertTokenStringEscapes(context : String, value : String, escapes : Int, t : Tokenizer) : Object {
       let token : Token <- t.next(),
             tokenString : TokenString <- token.asString() in
          {
             if isvoid tokenString then
-               failContext(context.concat(" void"), "expected=".concat(tokenToString(new TokenString.init(0, value)))
+               failContext(context.concat(" void"), "expected=".concat(tokenToString(new TokenString.init(0, value, escapes)))
                      .concat(", actual=").concat(tokenToString(token)))
             else false fi;
             assertStringEquals(context, value, tokenString.value());
+            assertIntEquals(context.concat(" escapes"), escapes, tokenString.escapes());
          }
+   };
+
+   assertTokenString(context : String, value : String, t : Tokenizer) : Object {
+      assertTokenStringEscapes(context, value, 0, t)
    };
 
 
@@ -570,15 +575,38 @@ class Main inherits Test {
    testString() : Object {
       if begin("string") then
          {
-            let t : Tokenizer <- newTokenizer("\"\" \"a\" \"\\c\\b\\t\\n\\f\" \"\\\\\" \"\\\"\" \"\\\n\"") in
-               {
-                  assertTokenString("", "", t);
-                  assertTokenString("", "a", t);
-                  assertTokenString("", "c\b\t\n\f", t);
-                  assertTokenString("", stringUtil.backslash(), t);
-                  assertTokenString("", stringUtil.doubleQuote(), t);
-                  assertTokenString("", "\n", t);
-               };
+            let t : Tokenizer <- newTokenizer("\"\"") in
+               assertTokenString("empty", "", t);
+
+            let t : Tokenizer <- newTokenizer("\"a\"") in
+               assertTokenString("single", "a", t);
+
+            let t : Tokenizer <- newTokenizer("\"\\c\"") in
+               assertTokenString("escape ignored", "c", t);
+
+            let t : Tokenizer <- newTokenizer("\"\\b\"") in
+               assertTokenStringEscapes("backspace", "\b", "\b".length() - 1, t);
+
+            let t : Tokenizer <- newTokenizer("\"\\t\"") in
+               assertTokenStringEscapes("tab", "\t", "\t".length() - 1, t);
+
+            let t : Tokenizer <- newTokenizer("\"\\n\"") in
+               assertTokenStringEscapes("linefeed", "\n", "\n".length() - 1, t);
+
+            let t : Tokenizer <- newTokenizer("\"\\f\"") in
+               assertTokenStringEscapes("formfeed", "\f", "\f".length() - 1, t);
+
+            let t : Tokenizer <- newTokenizer("\"\\\\\"") in
+               assertTokenStringEscapes("backslash", "\\", "\\".length() - 1, t);
+
+            let t : Tokenizer <- newTokenizer("\"\\\"\"") in
+               assertTokenString("double quote", stringUtil.doubleQuote(), t);
+
+            let t : Tokenizer <- newTokenizer("\"\\\n\"") in
+               assertTokenStringEscapes("escaped linefeed", "\n", "\n".length() - 1, t);
+
+            let t : Tokenizer <- newTokenizer("\"\\n\\n\"") in
+               assertTokenStringEscapes("linefeed linefeed", "\n\n", "\n\n".length() - 2, t);
 
             let s8 : String <- "01234567",
                   s64 : String <- s8.concat(s8).concat(s8).concat(s8).concat(s8).concat(s8).concat(s8).concat(s8),

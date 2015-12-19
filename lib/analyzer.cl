@@ -651,9 +651,15 @@ class AnalyzedConstantStringExpr inherits AnalyzedExpr {
    value : String;
    value() : String { value };
 
-   init(type_ : AnalyzedType, value_ : String) : SELF_TYPE {{
+   -- The number of literal two-character escape sequences used in this string
+   -- (e.g., "\n" actually stored as "\\n").
+   escapes : Int;
+   escapes() : Int { escapes };
+
+   init(type_ : AnalyzedType, value_ : String, escapes_ : Int) : SELF_TYPE {{
       type <- type_;
       value <- value_;
+      escapes <- escapes_;
       self;
    }};
 
@@ -1110,7 +1116,7 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
    };
 
    visitConstantString(parsedExpr : ParsedConstantStringExpr) : Object {
-      new AnalyzedConstantStringExpr.init(analyzer.stringType(), parsedExpr.value())
+      new AnalyzedConstantStringExpr.init(analyzer.stringType(), parsedExpr.value(), parsedExpr.escapes())
    };
 };
 

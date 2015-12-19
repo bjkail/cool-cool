@@ -360,9 +360,15 @@ class ParsedConstantStringExpr inherits ParsedExpr {
    value : String;
    value() : String { value };
 
-   init(line_ : Int, value_ : String) : SELF_TYPE {{
+   -- The number of literal two-character escape sequences used in this string
+   -- (e.g., "\n" actually stored as "\\n").
+   escapes : Int;
+   escapes() : Int { escapes };
+
+   init(line_ : Int, value_ : String, escapes_ : Int) : SELF_TYPE {{
       line <- line_;
       value <- value_;
+      escapes <- escapes_;
       self;
    }};
 
@@ -839,7 +845,7 @@ class Parser {
                            else
                               let tokenString : TokenString <- token.asString() in
                                  if not isvoid tokenString then
-                                    new ParsedConstantStringExpr.init(line(), tokenString.value())
+                                    new ParsedConstantStringExpr.init(line(), tokenString.value(), tokenString.escapes())
                                  else
                                     {
                                        errorToken(token, "expected expression".concat(where));

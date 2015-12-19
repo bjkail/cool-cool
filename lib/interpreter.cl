@@ -119,7 +119,7 @@ class InterpreterBasicObjectTypeNameMethod inherits InterpreterMethod {
    }};
 
    interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
-      interpreter.proceedValue(new InterpreterStringValue.init(stringType, state.target().type().name()))
+      interpreter.proceedValue(new InterpreterStringValue.init(stringType, state.target().type().name(), 0))
    };
 };
 
@@ -139,10 +139,43 @@ class InterpreterBasicObjectCopyMethod inherits InterpreterMethod {
 };
 
 class InterpreterBasicIOOutStringMethod inherits InterpreterMethod {
+   backslash : String <- new StringUtil.backslash();
+
    interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
-      let arg : InterpreterStringValue <- case state.args().getWithInt(0) of x : InterpreterStringValue => x; esac in
+      let arg : InterpreterStringValue <- case state.args().getWithInt(0) of x : InterpreterStringValue => x; esac,
+            s : String <- arg.value(),
+            out : String in
          {
-            interpreter.io().out_string(arg.value());
+            let escapes : Int <- arg.escapes() in
+               if escapes = 0 then
+                  out <- s
+               else
+                  let i : Int,
+                        begin : Int in
+                     {
+                        while i < s.length() loop
+                           if s.substr(i, 1) = backslash then
+                              if s.substr(i + 1, 1) = backslash then
+                                 {
+                                    out <- out.concat(s.substr(begin, i + 1 - begin));
+                                    begin <- i + 2;
+                                    i <- begin;
+                                 }
+                              else
+                                 i <- i + 2
+                              fi
+                           else
+                              i <- i + 1
+                           fi
+                        pool;
+
+                        if begin < s.length() then
+                           out <- out.concat(s.substr(begin, s.length() - begin))
+                        else false fi;
+                     }
+               fi;
+
+            interpreter.io().out_string(out);
             interpreter.proceedValue(state.target());
          }
    };
@@ -167,7 +200,7 @@ class InterpreterBasicIOInStringMethod inherits InterpreterMethod {
    }};
 
    interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
-      interpreter.proceedValue(new InterpreterStringValue.init(stringType, interpreter.io().in_string()))
+      interpreter.proceedValue(new InterpreterStringValue.init(stringType, interpreter.io().in_string(), 0))
    };
 };
 
@@ -371,7 +404,7 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
    defaultIntValue : InterpreterIntValue <- new InterpreterIntValue.init(intType.type(), 0);
 
    stringType : InterpreterAnalyzerType <- new InterpreterAnalyzerType.initBasic("String");
-   defaultStringValue : InterpreterStringValue <- new InterpreterStringValue.init(stringType.type(), "");
+   defaultStringValue : InterpreterStringValue <- new InterpreterStringValue.init(stringType.type(), "", 0);
 
    types : StringMap <- new StringListMap;
 
@@ -572,7 +605,7 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
                new InterpreterConstantIntExpr.init(intType.type(), 0)
             else
                if type = stringType then
-                  new InterpreterConstantStringExpr.init(stringType.type(), "")
+                  new InterpreterConstantStringExpr.init(stringType.type(), "", 0)
                else
                   let type : InterpreterType <- type.type() in
                      if type.attributeInits().size() = 0 then
@@ -612,7 +645,7 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
    };
 
    visitConstantString(expr : AnalyzedConstantStringExpr) : Object {
-      new InterpreterConstantStringExpr.init(stringType.type(), expr.value())
+      new InterpreterConstantStringExpr.init(stringType.type(), expr.value(), expr.escapes())
    };
 };
 
@@ -681,9 +714,13 @@ class InterpreterStringValue inherits InterpreterValue {
    value : String;
    value() : String { value };
 
-   init(type_ : InterpreterType, value_ : String) : SELF_TYPE {{
+   escapes : Int;
+   escapes() : Int { escapes };
+
+   init(type_ : InterpreterType, value_ : String, escapes_ : Int) : SELF_TYPE {{
       type <- type_;
       value <- value_;
+      escapes <- escapes_;
       self;
    }};
 
@@ -997,15 +1034,17 @@ class InterpreterConstantIntExpr inherits InterpreterExpr {
 class InterpreterConstantStringExpr inherits InterpreterExpr {
    type : InterpreterType;
    value : String;
+   escapes : Int;
 
-   init(type_ : InterpreterType, value_ : String) : SELF_TYPE {{
+   init(type_ : InterpreterType, value_ : String, escapes_ : Int) : SELF_TYPE {{
       type <- type_;
       value <- value_;
+      escapes <- escapes_;
       self;
    }};
 
    interpret(interpreter : Interpreter) : Bool {
-      interpreter.interpretValue(new InterpreterStringValue.init(type, value))
+      interpreter.interpretValue(new InterpreterStringValue.init(type, value, escapes))
    };
 
    toString() : String { "string[".concat(value).concat("]") };

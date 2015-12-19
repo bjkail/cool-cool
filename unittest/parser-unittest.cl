@@ -652,7 +652,15 @@ class Main inherits Test {
             let expr : ParsedConstantStringExpr <- case assertExpr("string", "\n\"a\"\n") of x : ParsedConstantStringExpr => x; esac in
                {
                   assertStringEquals("string", "a", expr.value());
+                  assertIntEquals("string escapes", 0, expr.escapes());
                   assertIntEquals("string line", 2, expr.line());
+               };
+
+            let expr : ParsedConstantStringExpr <- case assertExpr("string linefeed", "\n\"\\n\"\n") of x : ParsedConstantStringExpr => x; esac in
+               {
+                  assertStringEquals("string linefeed", "\n", expr.value());
+                  assertIntEquals("string linefeed escapes", "\n".length() - 1, expr.escapes());
+                  assertIntEquals("string linefeed line", 2, expr.line());
                };
 
             let expr : ParsedConstantBoolExpr <- case assertExpr("false", "\nfalse\n") of x : ParsedConstantBoolExpr => x; esac in

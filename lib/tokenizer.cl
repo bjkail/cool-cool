@@ -91,9 +91,15 @@ class TokenString inherits Token {
    value : String;
    value() : String { value };
 
-   init(line_ : Int, value_ : String) : SELF_TYPE {{
+   -- The number of literal two-character escape sequences used in this string
+   -- (e.g., "\n" actually stored as "\\n").
+   escapes : Int;
+   escapes() : Int { escapes };
+
+   init(line_ : Int, value_ : String, escapes_ : Int) : SELF_TYPE {{
       line <- line_;
       value <- value_;
+      escapes <- escapes_;
       self;
    }};
 
@@ -675,6 +681,7 @@ class Tokenizer {
 
    readString() : Token {
       let s : String,
+            escapes : Int,
             token : Token,
             line_ : Int <- line,
             c : String <- readChar() in
@@ -711,10 +718,21 @@ class Tokenizer {
                                           else
                                              if c = "f" then
                                                 c <- if ffChar = "" then "\f" else ffChar fi
-                                             else false fi
+                                             else
+                                                if c = stringUtil.backslash() then
+                                                   -- Support UVA Cool dialect.
+                                                   if "\\".length() = 2 then
+                                                      c <- "\\"
+                                                   else false fi
+                                                else false fi
+                                             fi
                                           fi
                                        fi
                                     fi;
+
+                                    if c.length() = 2 then
+                                       escapes <- escapes + 1
+                                    else false fi;
                                  }
                               else
                                  -- XXX: No way to represent NUL.
@@ -737,7 +755,7 @@ class Tokenizer {
                pool;
 
             if isvoid token then
-               new TokenString.init(line_, s)
+               new TokenString.init(line_, s, escapes)
             else
                token
             fi;

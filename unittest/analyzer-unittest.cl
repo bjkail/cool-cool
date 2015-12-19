@@ -267,6 +267,15 @@ class Main inherits Test {
                {
                   assertSameType("string", analyzer.stringType(), expr.type());
                   assertStringEquals("string value", "a", expr.value());
+                  assertIntEquals("string value escapes", 0, expr.escapes());
+               };
+
+            let analyzer : TestAnalyzer <- newAnalyzerExpr("string linefeed", "\"\\n\""),
+                  expr : AnalyzedConstantStringExpr <- case assertAnalyzeExpr("string linefeed", analyzer) of x : AnalyzedConstantStringExpr => x; esac in
+               {
+                  assertSameType("string linefeed", analyzer.stringType(), expr.type());
+                  assertStringEquals("string linefeed value", "\n", expr.value());
+                  assertIntEquals("string linefeed escapes", "\n".length() - 1, expr.escapes());
                };
 
             let analyzer : TestAnalyzer <- newAnalyzer("new", "class Main { main() : Object { new Main }; };"),

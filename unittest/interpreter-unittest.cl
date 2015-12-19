@@ -256,6 +256,10 @@ class Main inherits Test {
             let io : TestIO <- new TestIO.init(self, "out_int", new Collection, new LinkedList.add(1)) in
                getObject("out_string", "IO",
                      interpretIO("out_int", io, "class Main { main() : Object { new IO.out_int(1) }; };"));
+
+            let io : TestIO <- new TestIO.init(self, "in_string", new LinkedList.add("a"), new Collection) in
+               assertStringEquals("in_string", "a", getString("in_string",
+                     interpretIO("in_string", io, "class Main { main() : Object { new IO.in_string() }; };")));
          }
       else false fi
    };

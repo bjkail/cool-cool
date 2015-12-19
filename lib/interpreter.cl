@@ -158,6 +158,19 @@ class InterpreterBasicIOOutIntMethod inherits InterpreterMethod {
    };
 };
 
+class InterpreterBasicIOInStringMethod inherits InterpreterMethod {
+   stringType : InterpreterType;
+
+   initStringType(stringType_ : InterpreterType) : SELF_TYPE {{
+      stringType <- stringType_;
+      self;
+   }};
+
+   interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
+      interpreter.proceedValue(new InterpreterStringValue.init(stringType, interpreter.io().in_string()))
+   };
+};
+
 class InterpreterAnalyzerAttribute {
    index : Int;
    index() : Int { index };
@@ -454,6 +467,7 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
             ioType.setInheritsType(objectType);
             ioType.addBasicMethod("out_string", new InterpreterBasicIOOutStringMethod);
             ioType.addBasicMethod("out_int", new InterpreterBasicIOOutIntMethod);
+            ioType.addBasicMethod("in_string", new InterpreterBasicIOInStringMethod.initStringType(stringType.type()));
 
             types.putWithString(intType.name(), intType);
             intType.setInheritsType(objectType);

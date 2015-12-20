@@ -713,7 +713,12 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
    visitCase(expr : AnalyzedCaseExpr) : Object { new ObjectUtil.abortObject(self, "visitCase: unimplemented") };
    visitFormalAssignment(index : Int, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitFormalAssignment: unimplemented") };
    visitVarAssignment(index : Int, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitVarAssignment: unimplemented") };
-   visitAttributeAssignment(attribute : AnalyzedAttribute, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitAttributeAssignment: unimplemented") };
+
+   visitAttributeAssignment(attribute : AnalyzedAttribute, expr : AnalyzedExpr) : Object {
+      new InterpreterAttributeAssignmentExpr.init(
+            getType(attribute.containingType()).getAttribute(attribute.id()).index(),
+            analyzeExpr(expr))
+   };
 
    visitSelf() : Object {
       new InterpreterSelfExpr
@@ -890,6 +895,45 @@ class InterpreterExpr {
    interpret(interpreter : Interpreter) : Bool { new ObjectUtil.abortBool(self, "interpret: unimplemented") };
 
    toString() : String { self.type_name() };
+};
+
+class InterpreterAttributeAssignmentExpr inherits InterpreterExpr {
+   index : Int;
+   expr : InterpreterExpr;
+
+   init(index_ : Int, expr_ : InterpreterExpr) : SELF_TYPE {{
+      index <- index_;
+      expr <- expr_;
+      self;
+   }};
+
+   interpret(interpreter : Interpreter) : Bool {{
+      interpreter.pushState(new InterpreterAttributeAssignmentExprState.init(index));
+      expr.interpret(interpreter);
+   }};
+
+   toString() : String {
+      "assignment.attribute[".concat(new StringUtil.fromInt(index)).concat("]")
+   };
+};
+
+class InterpreterAttributeAssignmentExprState inherits InterpreterExprState {
+   index : Int;
+   value : InterpreterValue;
+
+   init(index_ : Int) : SELF_TYPE {{
+      index <- index_;
+      self;
+   }};
+
+   addValue(value_ : InterpreterValue) : Object {
+      value <- value_
+   };
+
+   proceed(interpreter : Interpreter) : Bool {{
+      interpreter.selfObject().attributes().putWithInt(index, value);
+      interpreter.proceedValue(value);
+   }};
 };
 
 class InterpreterSelfExpr inherits InterpreterExpr {

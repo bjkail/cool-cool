@@ -293,6 +293,54 @@ class Main inherits Test {
             assertStringEquals("concat 1 0", "a", interpretStringExpr("concat 1 0", "\"a\".concat(\"\")"));
             assertStringEquals("concat 0 1", "a", interpretStringExpr("concat 0 1", "\"\".concat(\"a\")"));
             assertStringEquals("concat 1 1", "ab", interpretStringExpr("concat 0 1", "\"a\".concat(\"b\")"));
+
+            assertErrorEquals("substr begin low",
+                  "substr(-1, 0) is out of range for string of length 0",
+                  "\tat Main.main (line 1)\n",
+                  interpretErrorExpr("substr begin low", "\"\".substr(~1, 0)"));
+            assertErrorEquals("substr begin high",
+                  "substr(1, 0) is out of range for string of length 0",
+                  "\tat Main.main (line 1)\n",
+                  interpretErrorExpr("substr begin high", "\"\".substr(1, 0)"));
+            assertErrorEquals("substr length low",
+                  "substr(0, -1) is out of range for string of length 0",
+                  "\tat Main.main (line 1)\n",
+                  interpretErrorExpr("substr length low", "\"\".substr(0, ~1)"));
+            assertErrorEquals("substr length high",
+                  "substr(0, 1) is out of range for string of length 0",
+                  "\tat Main.main (line 1)\n",
+                  interpretErrorExpr("substr length high", "\"\".substr(0, 1)"));
+            assertErrorEquals("substr escapes begin high",
+                  "substr(2, 0) is out of range for string of length 1",
+                  "\tat Main.main (line 1)\n",
+                  interpretErrorExpr("substr escapes begin high", "\"\\n\".substr(2, 0)"));
+            assertErrorEquals("substr escapes length high",
+                  "substr(0, 2) is out of range for string of length 1",
+                  "\tat Main.main (line 1)\n",
+                  interpretErrorExpr("substr escapes begin high", "\"\\n\".substr(0, 2)"));
+
+            assertStringEquals("substr 0 0 0", "", interpretStringExpr("substr 0 0 0", "\"\".substr(0, 0)"));
+            assertStringEquals("substr 1 0 1", "a", interpretStringExpr("substr 1 0 1", "\"a\".substr(0, 1)"));
+            assertStringEquals("substr 1 1 0", "", interpretStringExpr("substr 1 1 0", "\"a\".substr(1, 0)"));
+            assertStringEquals("substr 2 0 1", "a", interpretStringExpr("substr 2 1 1", "\"ab\".substr(0, 1)"));
+            assertStringEquals("substr 2 1 1", "b", interpretStringExpr("substr 2 1 1", "\"ab\".substr(1, 1)"));
+            assertStringEquals("substr 2 0 2", "ab", interpretStringExpr("substr 2 0 2", "\"ab\".substr(0, 2)"));
+            assertStringEquals("substr escapes 0 4", "\b\t\n\f",
+                  interpretStringExpr("substr escapes 0 4", "\"\\b\\t\\n\\f\".substr(0, 4)"));
+            assertStringEquals("substr escapes 0 2", "\b\t",
+                  interpretStringExpr("substr escapes 0 2", "\"\\b\\t\\n\\f\".substr(0, 2)"));
+            assertStringEquals("substr escapes 1 2", "\t\n",
+                  interpretStringExpr("substr escapes 1 2", "\"\\b\\t\\n\\f\".substr(1, 2)"));
+            assertStringEquals("substr escapes 2 2", "\n\f",
+                  interpretStringExpr("substr escapes 2 2", "\"\\b\\t\\n\\f\".substr(2, 2)"));
+            assertIntEquals("substr escapes 0 4 length 0 4 length", 4,
+                  interpretIntExpr("substr escapes", "\"\\b\\t\\n\\f\".substr(0, 4).length()"));
+            assertIntEquals("substr escapes 0 2 length 0 2 length", 2,
+                  interpretIntExpr("substr escapes", "\"\\b\\t\\n\\f\".substr(0, 2).length()"));
+            assertIntEquals("substr escapes 1 2 length 1 2 length", 2,
+                  interpretIntExpr("substr escapes", "\"\\b\\t\\n\\f\".substr(1, 2).length()"));
+            assertIntEquals("substr escapes 2 2 length", 2,
+                  interpretIntExpr("substr escapes 2 2 length", "\"\\b\\t\\n\\f\".substr(2, 2).length()"));
          }
       else false fi
    };

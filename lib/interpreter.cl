@@ -246,6 +246,87 @@ class InterpreterBasicStringConcatMethod inherits InterpreterMethod {
    };
 };
 
+class InterpreterBasicStringSubstrMethod inherits InterpreterMethod {
+   backslash : String <- new StringUtil.backslash();
+   stringType : InterpreterType;
+
+   initIntType(stringType_ : InterpreterType) : SELF_TYPE {{
+      stringType <- stringType_;
+      self;
+   }};
+
+   interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
+      let value : InterpreterStringValue <- case state.target() of x : InterpreterStringValue => x; esac,
+            valueLength : Int <- value.length(),
+            s : String <- value.value(),
+            argBegin : Int <- case state.args().getWithInt(0) of x : InterpreterIntValue => x.value(); esac,
+            argLength : Int <- case state.args().getWithInt(1) of x : InterpreterIntValue => x.value(); esac in
+         if if argBegin < 0 then
+               true
+            else
+               if argLength < 0 then
+                  true
+               else
+                  valueLength < argBegin + argLength
+               fi
+            fi
+         then
+            let stringUtil : StringUtil <- new StringUtil in
+               interpreter.proceedError(0, "substr(".concat(stringUtil.fromInt(argBegin))
+                     .concat(", ").concat(stringUtil.fromInt(argLength))
+                     .concat(") is out of range for string of length ").concat(stringUtil.fromInt(valueLength)))
+         else
+            let escapes : Int <- value.escapes() in
+               if escapes = 0 then
+                  interpreter.proceedValue(new InterpreterStringValue.init(stringType, s.substr(argBegin, argLength), 0))
+               else
+                  let result : String,
+                        begin : Int <- argBegin,
+                        escapes : Int,
+                        i : Int in
+                     {
+                        let j : Int in
+                           while j < argBegin loop
+                              {
+                                 if s.substr(i, 1) = backslash then
+                                    {
+                                       begin <- begin + 1;
+                                       i <- i + 2;
+                                    }
+                                 else
+                                    i <- i + 1
+                                 fi;
+
+                                 j <- j + 1;
+                              }
+                        pool;
+
+                        let j : Int in
+                           while j < argLength loop
+                              {
+                                 if s.substr(i, 1) = backslash then
+                                    {
+                                       escapes <- escapes + 1;
+                                       i <- i + 2;
+                                    }
+                                 else
+                                    i <- i + 1
+                                 fi;
+
+                                 j <- j + 1;
+                              }
+                           pool;
+
+                        interpreter.proceedValue(new InterpreterStringValue.init(
+                              stringType,
+                              s.substr(begin, argLength + escapes),
+                              escapes));
+                     }
+               fi
+         fi
+   };
+};
+
 class InterpreterAnalyzerAttribute {
    index : Int;
    index() : Int { index };
@@ -552,6 +633,7 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
             stringType.setInheritsType(objectType);
             stringType.addBasicMethod("length", new InterpreterBasicStringLengthMethod.initIntType(intType.type()));
             stringType.addBasicMethod("concat", new InterpreterBasicStringConcatMethod.initIntType(stringType.type()));
+            stringType.addBasicMethod("substr", new InterpreterBasicStringSubstrMethod.initIntType(stringType.type()));
 
             types.putWithString(boolType.name(), boolType);
             boolType.setInheritsType(objectType);

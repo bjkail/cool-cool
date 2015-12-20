@@ -271,18 +271,30 @@ class Main inherits Test {
                   io : TestIO <- new TestIO.init(self, "out_string", new Collection, out) in
                getObject("out_string", "IO",
                      interpretIO("out_string", io, "class Main { main() : Object { new IO.out_string(\"a\\\\b\\nc\") }; };"));
+            let io : TestIO <- new TestIO.init(self, "out_string override", new Collection, new Collection) in
+               getObject("out_string override", "Main", interpretIO("out_string override", io,
+                     "class Main inherits IO { main() : Object { out_string(\"\") }; out_string(s : String) : SELF_TYPE { self }; };"));
 
             let io : TestIO <- new TestIO.init(self, "out_int", new Collection, new LinkedList.add(1)) in
-               getObject("out_string", "IO",
+               getObject("out_int", "IO",
                      interpretIO("out_int", io, "class Main { main() : Object { new IO.out_int(1) }; };"));
+            let io : TestIO <- new TestIO.init(self, "out_int override", new Collection, new Collection) in
+               getObject("out_int override", "Main", interpretIO("out_int override", io,
+                     "class Main inherits IO { main() : Object { out_int(0) }; out_int(i : Int) : SELF_TYPE { self }; };"));
 
             let io : TestIO <- new TestIO.init(self, "in_string", new LinkedList.add("a"), new Collection) in
                assertStringEquals("in_string", "a", getString("in_string",
                      interpretIO("in_string", io, "class Main { main() : Object { new IO.in_string() }; };")));
+            let io : TestIO <- new TestIO.init(self, "in_string override", new Collection, new Collection) in
+               assertStringEquals("in_string override", "", getString("in_string override", interpretIO("in_string override", io,
+                     "class Main { main() : Object { in_string() }; in_string() : String { \"\" }; };")));
 
             let io : TestIO <- new TestIO.init(self, "in_int", new LinkedList.add(1), new Collection) in
                assertIntEquals("in_int", 1, getInt("in_int",
                      interpretIO("in_int", io, "class Main { main() : Object { new IO.in_int() }; };")));
+            let io : TestIO <- new TestIO.init(self, "in_int override", new Collection, new Collection) in
+               assertIntEquals("in_int override", 0, getInt("in_int override", interpretIO("in_int override", io,
+                     "class Main { main() : Object { in_int() }; in_int() : Int { 0 }; };")));
 
             assertIntEquals("length 0", 0, interpretIntExpr("length 0", "\"\".length()"));
             assertIntEquals("length 1", 1, interpretIntExpr("length 1", "\"a\".length()"));

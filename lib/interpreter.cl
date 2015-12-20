@@ -143,12 +143,11 @@ class InterpreterBasicIOOutStringMethod inherits InterpreterMethod {
 
    interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
       let arg : InterpreterStringValue <- case state.args().getWithInt(0) of x : InterpreterStringValue => x; esac,
-            s : String <- arg.value(),
-            out : String in
+            s : String <- arg.value() in
          {
             let escapes : Int <- arg.escapes() in
                if escapes = 0 then
-                  out <- s
+                  interpreter.io().out_string(s)
                else
                   let i : Int,
                         begin : Int in
@@ -157,7 +156,7 @@ class InterpreterBasicIOOutStringMethod inherits InterpreterMethod {
                            if s.substr(i, 1) = backslash then
                               if s.substr(i + 1, 1) = backslash then
                                  {
-                                    out <- out.concat(s.substr(begin, i + 1 - begin));
+                                    interpreter.io().out_string(s.substr(begin, i + 1 - begin));
                                     begin <- i + 2;
                                     i <- begin;
                                  }
@@ -170,12 +169,11 @@ class InterpreterBasicIOOutStringMethod inherits InterpreterMethod {
                         pool;
 
                         if begin < s.length() then
-                           out <- out.concat(s.substr(begin, s.length() - begin))
+                           interpreter.io().out_string(s.substr(begin, s.length() - begin))
                         else false fi;
                      }
                fi;
 
-            interpreter.io().out_string(out);
             interpreter.proceedValue(state.target());
          }
    };

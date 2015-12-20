@@ -1,0 +1,4 @@
+backslash [\\] [\]
+tab [\t] [	]
+linefeed [\n] [
+]

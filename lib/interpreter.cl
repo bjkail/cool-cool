@@ -658,8 +658,6 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
 
             types.putWithString(boolType.name(), boolType);
             boolType.setInheritsType(objectType);
-
-            -- TODO: builtin methods
          };
 
       let typeList : Collection <- new LinkedList in

@@ -592,7 +592,7 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
       case expr.accept(self) of x : InterpreterExpr => x; esac
    };
 
-   analyzeExprCollection(exprs : Collection) : Collection {
+   analyzeExprs(exprs : Collection) : Collection {
       let result : Collection <- new LinkedList in
          {
             let iter : Iterator <- exprs.iterator() in
@@ -765,7 +765,7 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
                fi in
          dispatchExpr.init(
                expr.line(),
-               analyzeExprCollection(expr.arguments()),
+               analyzeExprs(expr.arguments()),
                analyzeExpr(expr.expr()),
                getType(method.containingType()).getMethod(method.id()).method())
    };

@@ -367,7 +367,7 @@ class IntTreeMap inherits IntMap {
       let node : IntTreeMapNode <- insertTreeNode(key),
             oldValue : Object <- node.value() in
          {
-            insertTreeNode(key).setValue(value);
+            node.setValue(value);
             oldValue;
          }
    };

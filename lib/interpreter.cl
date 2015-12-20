@@ -239,10 +239,18 @@ class InterpreterBasicStringConcatMethod inherits InterpreterMethod {
    interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
       let value : InterpreterStringValue <- case state.target() of x : InterpreterStringValue => x; esac,
             arg : InterpreterStringValue <- case state.args().getWithInt(0) of x : InterpreterStringValue => x; esac in
-         interpreter.proceedValue(new InterpreterStringValue.init(
-               stringType,
-               value.value().concat(arg.value()),
-               value.escapes() + arg.escapes()))
+         if arg.isEmpty() then
+            interpreter.proceedValue(value)
+         else
+            if value.isEmpty() then
+               interpreter.proceedValue(arg)
+            else
+               interpreter.proceedValue(new InterpreterStringValue.init(
+                     stringType,
+                     value.value().concat(arg.value()),
+                     value.escapes() + arg.escapes()))
+            fi
+         fi
    };
 };
 
@@ -845,6 +853,10 @@ class InterpreterStringValue inherits InterpreterValue {
 
    length() : Int {
       value.length() - escapes
+   };
+
+   isEmpty() : Bool {
+      value.length() = 0
    };
 
    toString() : String { "string[".concat(value).concat("]") };

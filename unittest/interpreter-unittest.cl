@@ -252,6 +252,9 @@ class Main inherits Test {
    testBinary() : Object {
       if begin("binary") then
          {
+            assertIntEquals("add", 3, interpretIntExpr("add", "1 + 2"));
+            assertIntEquals("add overflow", ~2147483647 - 1, interpretIntExpr("add overflow", "2147483647 + 1"));
+
             assertTrue("less", interpretBoolExpr("less", "0 < 1"));
             assertFalse("less", interpretBoolExpr("less", "1 < 0"));
          }

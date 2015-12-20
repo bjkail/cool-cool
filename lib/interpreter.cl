@@ -787,9 +787,13 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
       let left : InterpreterExpr <- analyzeExpr(expr.left()),
             right : InterpreterExpr <- analyzeExpr(expr.right()),
             op : String <- expr.op() in
-         if op = "<" then
-            new InterpreterLessExpr.init(boolType.type(), left, right)
-         else new ObjectUtil.abortObject(self, "visitBinary: unimplemented".concat(op)) fi
+         if op = "+" then
+            new InterpreterAddExpr.init(intType.type(), left, right)
+         else
+            if op = "<" then
+               new InterpreterLessExpr.init(boolType.type(), left, right)
+            else new ObjectUtil.abortObject(self, "visitBinary: unimplemented".concat(op)) fi
+         fi
    };
 
    visitConstantBool(expr : AnalyzedConstantBoolExpr) : Object {
@@ -1365,6 +1369,20 @@ class InterpreterBinaryExprState inherits InterpreterExprState {
       else
          interpreter.proceedValue(result)
       fi
+   };
+};
+
+class InterpreterAddExpr inherits InterpreterBinaryExpr {
+   newState() : InterpreterBinaryExprState {
+      new InterpreterAddExprState
+   };
+};
+
+class InterpreterAddExprState inherits InterpreterBinaryExprState {
+   interpret(right : InterpreterValue) : InterpreterValue {
+      let left : InterpreterIntValue <- case left of x : InterpreterIntValue => x; esac,
+            right : InterpreterIntValue <- case right of x : InterpreterIntValue => x; esac in
+         new InterpreterIntValue.init(type, left.value() + right.value())
    };
 };
 

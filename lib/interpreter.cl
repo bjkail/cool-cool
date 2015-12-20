@@ -710,7 +710,10 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
       new InterpreterBlockExpr.init(analyzeExprs(expr.exprs()))
    };
 
-   visitIf(expr : AnalyzedIfExpr) : Object { new ObjectUtil.abortObject(self, "visitIf: unimplemented") };
+   visitIf(expr : AnalyzedIfExpr) : Object {
+      new InterpreterIfExpr.init(analyzeExpr(expr.expr()), analyzeExpr(expr.then_()), analyzeExpr(expr.else_()))
+   };
+
    visitWhile(expr : AnalyzedWhileExpr) : Object { new ObjectUtil.abortObject(self, "visitWhile: unimplemented") };
    visitLet(expr : AnalyzedLetExpr) : Object { new ObjectUtil.abortObject(self, "visitLet: unimplemented") };
    visitCase(expr : AnalyzedCaseExpr) : Object { new ObjectUtil.abortObject(self, "visitCase: unimplemented") };
@@ -932,6 +935,48 @@ class InterpreterBlockExprState inherits InterpreterExprState {
 
    addValue(value_ : InterpreterValue) : Object {
       value <- value_
+   };
+};
+
+class InterpreterIfExpr inherits InterpreterExpr {
+   expr : InterpreterExpr;
+   then_ : InterpreterExpr;
+   else_ : InterpreterExpr;
+
+   init(expr_ : InterpreterExpr, then__ : InterpreterExpr, else__ : InterpreterExpr) : SELF_TYPE {{
+      expr <- expr_;
+      then_ <- then__;
+      else_ <- else__;
+      self;
+   }};
+
+   interpret(interpreter : Interpreter) : Bool {{
+      interpreter.pushState(new InterpreterIfExprState.init(then_, else_));
+      expr.interpret(interpreter);
+   }};
+};
+
+class InterpreterIfExprState inherits InterpreterExprState {
+   then_ : InterpreterExpr;
+   else_ : InterpreterExpr;
+   expr : InterpreterExpr;
+
+   init(then__ : InterpreterExpr, else__ : InterpreterExpr) : SELF_TYPE {{
+      then_ <- then__;
+      else_ <- else__;
+      self;
+   }};
+
+   addValue(value : InterpreterValue) : Object {
+      if case value of x : InterpreterBoolValue => x.value(); esac then
+         expr <- then_
+      else
+         expr <- else_
+      fi
+   };
+
+   proceed(interpreter : Interpreter) : Bool {
+      interpreter.proceedExpr(expr)
    };
 };
 
@@ -1383,12 +1428,21 @@ class Interpreter {
 
    proceedValue(value_ : InterpreterValue) : Bool {{
       if debug then
-         debugOut("interpretValue: ".concat(valueString(value_)))
+         debugOut("proceedValue: ".concat(valueString(value_)))
       else false fi;
 
       exprState <- exprState.prev();
       value <- value_;
       true;
+   }};
+
+   proceedExpr(expr : InterpreterExpr) : Bool {{
+      if debug then
+         debugOut("proceedExpr ".concat(expr.toString()))
+      else false fi;
+
+      exprState <- exprState.prev();
+      expr.interpret(self);
    }};
 
    proceedError(line : Int, value_ : String) : Bool {

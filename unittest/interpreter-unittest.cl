@@ -2,6 +2,7 @@ class Main inherits Test {
    test() : Object {{
       testConstant();
       testBlock();
+      testIf();
       testAssignment();
       testNew();
       testInitialization();
@@ -127,6 +128,15 @@ class Main inherits Test {
             assertIntEquals("single", 1, interpretIntExpr("single", "{ 1; }"));
             assertIntEquals("multiple", 1, interpretInt("multiple",
                   "class Main { a : Int; main() : Object {{ a <- 1; a; }}; };"));
+         }
+      else false fi
+   };
+
+   testIf() : Object {
+      if begin("if") then
+         {
+            assertIntEquals("then", 1, interpretIntExpr("then", "if true then 1 else 0 fi"));
+            assertIntEquals("else", 1, interpretIntExpr("else", "if false then 0 else 1 fi"));
          }
       else false fi
    };

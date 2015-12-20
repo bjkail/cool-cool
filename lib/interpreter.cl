@@ -664,7 +664,13 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
                getType(method.containingType()).getMethod(method.id()).method())
    };
 
-   visitUnary(expr : AnalyzedUnaryExpr) : Object { new ObjectUtil.abortObject(self, "visitUnary: unimplemented") };
+   visitUnary(expr : AnalyzedUnaryExpr) : Object {
+      let op : String <- expr.op() in
+         if expr.op() = "~" then
+            new InterpreterComplementExpr.init(intType.type(), analyzeExpr(expr.expr()))
+         else new ObjectUtil.abortObject(self, "visitUnary: unimplemented ".concat(op)) fi
+   };
+
    visitBinary(expr : AnalyzedBinaryExpr) : Object { new ObjectUtil.abortObject(self, "visitBinary: unimplemented") };
 
    visitConstantBool(expr : AnalyzedConstantBoolExpr) : Object {
@@ -1030,6 +1036,40 @@ class InterpreterStaticDispatchExpr inherits InterpreterDispatchExpr {
 
 class InterpreterStaticDispatchExprState inherits InterpreterDispatchExprState {
    lookupMethod() : InterpreterMethod { method };
+};
+
+class InterpreterComplementExpr inherits InterpreterExpr {
+   type : InterpreterType;
+   expr : InterpreterExpr;
+
+   init(type_ : InterpreterType, expr_ : InterpreterExpr) : SELF_TYPE {{
+      type <- type_;
+      expr <- expr_;
+      self;
+   }};
+
+   interpret(interpreter : Interpreter) : Bool {{
+      interpreter.pushState(new InterpreterComplementExprState.init(type));
+      expr.interpret(interpreter);
+   }};
+};
+
+class InterpreterComplementExprState inherits InterpreterExprState {
+   type : InterpreterType;
+   value : InterpreterIntValue;
+
+   init(type_ : InterpreterType) : SELF_TYPE {{
+      type <- type_;
+      self;
+   }};
+
+   addValue(value_ : InterpreterValue) : Object {
+      value <- case value_ of x : InterpreterIntValue => x; esac
+   };
+
+   proceed(interpreter : Interpreter) : Bool {
+      interpreter.proceedValue(new InterpreterIntValue.init(type, ~value.value()))
+   };
 };
 
 class InterpreterConstantBoolExpr inherits InterpreterExpr {

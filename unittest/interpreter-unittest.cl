@@ -4,6 +4,7 @@ class Main inherits Test {
       testNew();
       testInitialization();
       testDispatch();
+      testUnary();
       testBasicClasses();
    }};
 
@@ -202,6 +203,14 @@ class Main inherits Test {
                      .concat("\tat Main.main (line 1)\n"),
                   interpretError("void dispatch",
                      "class Main { a : Main; main() : Int { a() }; a() : Int { a.void() }; void() : Int { 0 }; };"));
+         }
+      else false fi
+   };
+
+   testUnary() : Object {
+      if begin("unary") then
+         {
+            assertIntEquals("complement", ~1, interpretIntExpr("complement", "~1"));
          }
       else false fi
    };

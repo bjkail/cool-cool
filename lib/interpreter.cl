@@ -228,6 +228,24 @@ class InterpreterBasicStringLengthMethod inherits InterpreterMethod {
    };
 };
 
+class InterpreterBasicStringConcatMethod inherits InterpreterMethod {
+   stringType : InterpreterType;
+
+   initIntType(stringType_ : InterpreterType) : SELF_TYPE {{
+      stringType <- stringType_;
+      self;
+   }};
+
+   interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
+      let value : InterpreterStringValue <- case state.target() of x : InterpreterStringValue => x; esac,
+            arg : InterpreterStringValue <- case state.args().getWithInt(0) of x : InterpreterStringValue => x; esac in
+         interpreter.proceedValue(new InterpreterStringValue.init(
+               stringType,
+               value.value().concat(arg.value()),
+               value.escapes() + arg.escapes()))
+   };
+};
+
 class InterpreterAnalyzerAttribute {
    index : Int;
    index() : Int { index };
@@ -533,6 +551,7 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
             types.putWithString(stringType.name(), stringType);
             stringType.setInheritsType(objectType);
             stringType.addBasicMethod("length", new InterpreterBasicStringLengthMethod.initIntType(intType.type()));
+            stringType.addBasicMethod("concat", new InterpreterBasicStringConcatMethod.initIntType(stringType.type()));
 
             types.putWithString(boolType.name(), boolType);
             boolType.setInheritsType(objectType);

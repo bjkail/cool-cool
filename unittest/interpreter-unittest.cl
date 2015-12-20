@@ -278,6 +278,12 @@ class Main inherits Test {
             assertIntEquals("length 0", 0, interpretIntExpr("length 0", "\"\".length()"));
             assertIntEquals("length 1", 1, interpretIntExpr("length 1", "\"a\".length()"));
             assertIntEquals("length special", 7, interpretIntExpr("length linefeed", "\"a\\nb\\tc\\\\d\".length()"));
+            assertIntEquals("length concat special", 2, interpretIntExpr("length linefeed", "\"\\n\".concat(\"\\n\").length()"));
+
+            assertStringEquals("concat 0 0", "", interpretStringExpr("concat 0 0", "\"\".concat(\"\")"));
+            assertStringEquals("concat 1 0", "a", interpretStringExpr("concat 1 0", "\"a\".concat(\"\")"));
+            assertStringEquals("concat 0 1", "a", interpretStringExpr("concat 0 1", "\"\".concat(\"a\")"));
+            assertStringEquals("concat 1 1", "ab", interpretStringExpr("concat 0 1", "\"a\".concat(\"b\")"));
          }
       else false fi
    };

@@ -706,7 +706,10 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
          };
    }};
 
-   visitBlock(expr : AnalyzedBlockExpr) : Object { new ObjectUtil.abortObject(self, "visitBlock: unimplemented") };
+   visitBlock(expr : AnalyzedBlockExpr) : Object {
+      new InterpreterBlockExpr.init(analyzeExprs(expr.exprs()))
+   };
+
    visitIf(expr : AnalyzedIfExpr) : Object { new ObjectUtil.abortObject(self, "visitIf: unimplemented") };
    visitWhile(expr : AnalyzedWhileExpr) : Object { new ObjectUtil.abortObject(self, "visitWhile: unimplemented") };
    visitLet(expr : AnalyzedLetExpr) : Object { new ObjectUtil.abortObject(self, "visitLet: unimplemented") };
@@ -895,6 +898,41 @@ class InterpreterExpr {
    interpret(interpreter : Interpreter) : Bool { new ObjectUtil.abortBool(self, "interpret: unimplemented") };
 
    toString() : String { self.type_name() };
+};
+
+class InterpreterBlockExpr inherits InterpreterExpr {
+   exprs : Collection;
+
+   init(exprs_ : Collection) : SELF_TYPE {{
+      exprs <- exprs_;
+      self;
+   }};
+
+   interpret(interpreter : Interpreter) : Bool {{
+      interpreter.pushState(new InterpreterBlockExprState.init(exprs));
+   }};
+};
+
+class InterpreterBlockExprState inherits InterpreterExprState {
+   exprIter : Iterator;
+   value : InterpreterValue;
+
+   init(exprs : Collection) : SELF_TYPE {{
+      exprIter <- exprs.iterator();
+      self;
+   }};
+
+   proceed(interpreter : Interpreter) : Bool {
+      if exprIter.next() then
+         case exprIter.get() of x : InterpreterExpr => x.interpret(interpreter); esac
+      else
+         interpreter.proceedValue(value)
+      fi
+   };
+
+   addValue(value_ : InterpreterValue) : Object {
+      value <- value_
+   };
 };
 
 class InterpreterAttributeAssignmentExpr inherits InterpreterExpr {

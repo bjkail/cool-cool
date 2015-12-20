@@ -1,6 +1,7 @@
 class Main inherits Test {
    test() : Object {{
       testConstant();
+      testBlock();
       testAssignment();
       testNew();
       testInitialization();
@@ -116,6 +117,16 @@ class Main inherits Test {
             assertTrue("true", interpretBoolExpr("true", "true"));
             assertIntEquals("int", 1, interpretIntExpr("int", "1"));
             assertStringEquals("string", "a", interpretStringExpr("string", "\"a\""));
+         }
+      else false fi
+   };
+
+   testBlock() : Object {
+      if begin("block") then
+         {
+            assertIntEquals("single", 1, interpretIntExpr("single", "{ 1; }"));
+            assertIntEquals("multiple", 1, interpretInt("multiple",
+                  "class Main { a : Int; main() : Object {{ a <- 1; a; }}; };"));
          }
       else false fi
    };

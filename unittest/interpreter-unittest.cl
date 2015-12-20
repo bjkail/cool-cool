@@ -3,6 +3,7 @@ class Main inherits Test {
       testConstant();
       testBlock();
       testIf();
+      testWhile();
       testAssignment();
       testNew();
       testInitialization();
@@ -138,6 +139,22 @@ class Main inherits Test {
          {
             assertIntEquals("then", 1, interpretIntExpr("then", "if true then 1 else 0 fi"));
             assertIntEquals("else", 1, interpretIntExpr("else", "if false then 0 else 1 fi"));
+         }
+      else false fi
+   };
+
+   testWhile() : Object {
+      if begin("while") then
+         {
+            assertVoid("while 0", interpretExpr("while", "while false loop true pool"));
+            assertVoid("while 1", interpret("while 1",
+                  "class Main { a : Int; main() : Object { while a < 1 loop a <- 1 pool }; };"));
+            assertIntEquals("while 1 var", 1, interpretInt("while 1 var",
+                  "class Main { a : Int; main() : Object {{ while a < 1 loop a <- 1 pool; a; }}; };"));
+            assertVoid("while 2", interpret("while 2",
+                  "class Main { a : Int; main() : Object { while a < 2 loop a <- a + 1 pool }; };"));
+            assertIntEquals("while 2 var", 2, interpretInt("while 2 var",
+                  "class Main { a : Int; main() : Object {{ while a < 2 loop a <- a + 1 pool; a; }}; };"));
          }
       else false fi
    };

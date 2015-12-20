@@ -714,7 +714,10 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
       new InterpreterIfExpr.init(analyzeExpr(expr.expr()), analyzeExpr(expr.then_()), analyzeExpr(expr.else_()))
    };
 
-   visitWhile(expr : AnalyzedWhileExpr) : Object { new ObjectUtil.abortObject(self, "visitWhile: unimplemented") };
+   visitWhile(expr : AnalyzedWhileExpr) : Object {
+      new InterpreterWhileExpr.init(analyzeExpr(expr.expr()), analyzeExpr(expr.loop_()))
+   };
+
    visitLet(expr : AnalyzedLetExpr) : Object { new ObjectUtil.abortObject(self, "visitLet: unimplemented") };
    visitCase(expr : AnalyzedCaseExpr) : Object { new ObjectUtil.abortObject(self, "visitCase: unimplemented") };
    visitFormalAssignment(index : Int, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitFormalAssignment: unimplemented") };
@@ -988,6 +991,59 @@ class InterpreterIfExprState inherits InterpreterExprState {
 
    proceed(interpreter : Interpreter) : Bool {
       interpreter.proceedExpr(expr)
+   };
+};
+
+class InterpreterWhileExpr inherits InterpreterExpr {
+   expr : InterpreterExpr;
+   loop_ : InterpreterExpr;
+
+   init(expr_ : InterpreterExpr, loop__ : InterpreterExpr) : SELF_TYPE {{
+      expr <- expr_;
+      loop_ <- loop__;
+      self;
+   }};
+
+   interpret(interpreter : Interpreter) : Bool {{
+      interpreter.pushState(new InterpreterWhileExprState.init(expr, loop_));
+      expr.interpret(interpreter);
+   }};
+};
+
+class InterpreterWhileExprState inherits InterpreterExprState {
+   expr : InterpreterExpr;
+   loop_ : InterpreterExpr;
+   test : Bool <- true;
+   continue : Bool;
+
+   init(expr_ : InterpreterExpr, loop__ : InterpreterExpr) : SELF_TYPE {{
+      expr <- expr_;
+      loop_ <- loop__;
+      self;
+   }};
+
+   addValue(value : InterpreterValue) : Object {
+      if test then
+         continue <- case value of x : InterpreterBoolValue => x.value(); esac
+      else false fi
+   };
+
+   proceed(interpreter : Interpreter) : Bool {
+      if continue then
+         if test then
+            {
+               test <- false;
+               loop_.interpret(interpreter);
+            }
+         else
+            {
+               test <- true;
+               expr.interpret(interpreter);
+            }
+         fi
+      else
+         interpreter.proceedValue(let void : InterpreterValue in void)
+      fi
    };
 };
 

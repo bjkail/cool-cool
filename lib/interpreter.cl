@@ -11,7 +11,6 @@ class InterpreterProgram {
    interpret(io : IO) : InterpreterValue {
       let interpreter : Interpreter <- new Interpreter.init(lineMap, io) in
          {
---new IO.out_string("\ninterpreter: begin\n");
             expr.interpret(interpreter);
             interpreter.interpret();
          }

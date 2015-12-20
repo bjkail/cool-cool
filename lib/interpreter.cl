@@ -778,12 +778,19 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
 
    visitUnary(expr : AnalyzedUnaryExpr) : Object {
       let op : String <- expr.op() in
-         if expr.op() = "~" then
+         if op = "~" then
             new InterpreterComplementExpr.init(intType.type(), analyzeExpr(expr.expr()))
          else new ObjectUtil.abortObject(self, "visitUnary: unimplemented ".concat(op)) fi
    };
 
-   visitBinary(expr : AnalyzedBinaryExpr) : Object { new ObjectUtil.abortObject(self, "visitBinary: unimplemented") };
+   visitBinary(expr : AnalyzedBinaryExpr) : Object {
+      let left : InterpreterExpr <- analyzeExpr(expr.left()),
+            right : InterpreterExpr <- analyzeExpr(expr.right()),
+            op : String <- expr.op() in
+         if op = "<" then
+            new InterpreterLessExpr.init(boolType.type(), left, right)
+         else new ObjectUtil.abortObject(self, "visitBinary: unimplemented".concat(op)) fi
+   };
 
    visitConstantBool(expr : AnalyzedConstantBoolExpr) : Object {
       new InterpreterConstantBoolExpr.init(boolType.type(), expr.value())
@@ -1301,6 +1308,77 @@ class InterpreterComplementExprState inherits InterpreterExprState {
 
    proceed(interpreter : Interpreter) : Bool {
       interpreter.proceedValue(new InterpreterIntValue.init(type, ~value.value()))
+   };
+};
+
+class InterpreterBinaryExpr inherits InterpreterExpr {
+   type : InterpreterType;
+   left : InterpreterExpr;
+   right : InterpreterExpr;
+
+   init(type_ : InterpreterType, left_ : InterpreterExpr, right_ : InterpreterExpr) : SELF_TYPE {{
+      type <- type_;
+      left <- left_;
+      right <- right_;
+      self;
+   }};
+
+   newState() : InterpreterBinaryExprState {{
+      new ObjectUtil.abortObject(self, "createState: unimplemented");
+      let void : InterpreterBinaryExprState in void;
+   }};
+
+   interpret(interpreter : Interpreter) : Bool {{
+      interpreter.pushState(newState().init(type, right));
+      left.interpret(interpreter);
+   }};
+};
+
+class InterpreterBinaryExprState inherits InterpreterExprState {
+   type : InterpreterType;
+   left : InterpreterValue;
+   right : InterpreterExpr;
+   result : InterpreterValue;
+
+   init(type_ : InterpreterType, right_ : InterpreterExpr) : SELF_TYPE {{
+      type <- type_;
+      right <- right_;
+      self;
+   }};
+
+   interpret(right : InterpreterValue) : InterpreterValue {{
+      new ObjectUtil.abortObject(self, "interpret: unimplemented");
+      let void : InterpreterValue in void;
+   }};
+
+   addValue(value : InterpreterValue) : Object {
+      if isvoid left then
+         left <- value
+      else
+         result <- interpret(value)
+      fi
+   };
+
+   proceed(interpreter : Interpreter) : Bool {
+      if isvoid result then
+         right.interpret(interpreter)
+      else
+         interpreter.proceedValue(result)
+      fi
+   };
+};
+
+class InterpreterLessExpr inherits InterpreterBinaryExpr {
+   newState() : InterpreterBinaryExprState {
+      new InterpreterLessExprState
+   };
+};
+
+class InterpreterLessExprState inherits InterpreterBinaryExprState {
+   interpret(right : InterpreterValue) : InterpreterValue {
+      let left : InterpreterIntValue <- case left of x : InterpreterIntValue => x; esac,
+            right : InterpreterIntValue <- case right of x : InterpreterIntValue => x; esac in
+         new InterpreterBoolValue.init(type, left.value() < right.value())
    };
 };
 

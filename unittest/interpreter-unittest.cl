@@ -8,6 +8,7 @@ class Main inherits Test {
       testInitialization();
       testDispatch();
       testUnary();
+      testBinary();
       testBasicClasses();
    }};
 
@@ -244,6 +245,15 @@ class Main inherits Test {
       if begin("unary") then
          {
             assertIntEquals("complement", ~1, interpretIntExpr("complement", "~1"));
+         }
+      else false fi
+   };
+
+   testBinary() : Object {
+      if begin("binary") then
+         {
+            assertTrue("less", interpretBoolExpr("less", "0 < 1"));
+            assertFalse("less", interpretBoolExpr("less", "1 < 0"));
          }
       else false fi
    };

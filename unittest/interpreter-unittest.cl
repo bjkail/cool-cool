@@ -4,6 +4,7 @@ class Main inherits Test {
       testBlock();
       testIf();
       testWhile();
+      testLet();
       testAssignment();
       testNew();
       testInitialization();
@@ -155,6 +156,32 @@ class Main inherits Test {
                   "class Main { a : Int; main() : Object { while a < 2 loop a <- a + 1 pool }; };"));
             assertIntEquals("while 2 var", 2, interpretInt("while 2 var",
                   "class Main { a : Int; main() : Object {{ while a < 2 loop a <- a + 1 pool; a; }}; };"));
+         }
+      else false fi
+   };
+
+   testLet() : Object {
+      if begin("let") then
+         {
+            assertIntEquals("let", 1, interpretIntExpr("let", "let a : Int in 1"));
+
+            assertBoolEquals("let bool default", false, interpretBoolExpr("let", "let a : Bool in a"));
+            assertIntEquals("let int default", 0, interpretIntExpr("let", "let a : Int in a"));
+            assertStringEquals("let string default", "", interpretStringExpr("let", "let a : String in a"));
+
+            assertBoolEquals("bool initialization", true, interpretBoolExpr("let", "let a : Bool <- true in a"));
+            assertIntEquals("int initialization", 1, interpretIntExpr("let", "let a : Int <- 1 in a"));
+            assertStringEquals("string initialization", "", interpretStringExpr("let", "let a : String <- \"\" in a"));
+
+            assertBoolEquals("bool nested", true, interpretBoolExpr("let", "let a : Bool <- true in let a : Bool <- a in a"));
+            assertIntEquals("int nested", 1, interpretIntExpr("let", "let a : Int <- 1 in let a : Int <- a in a"));
+            assertStringEquals("string nested", "", interpretStringExpr("let", "let a : String <- \"\" in let a : String <- a in a"));
+
+            assertIntEquals("dispatch", 3, interpretInt("dispatch",
+                  "class Main { main() : Object { let a : Int <- 1 in a() + a }; a() : Int { 2 }; };"));
+            assertIntEquals("dispatch let", 3, interpretInt("dispatch",
+                  "class Main { main() : Object { let a : Int <- 1 in a() + a };"
+                  .concat("a() : Int { let a : Int <- 2 in a }; };")));
          }
       else false fi
    };

@@ -718,7 +718,31 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
       new InterpreterWhileExpr.init(analyzeExpr(expr.expr()), analyzeExpr(expr.loop_()))
    };
 
-   visitLet(expr : AnalyzedLetExpr) : Object { new ObjectUtil.abortObject(self, "visitLet: unimplemented") };
+   visitLet(expr : AnalyzedLetExpr) : Object {
+      let exprs : Collection <- new LinkedList,
+            vars : Collection <- expr.vars(),
+            firstVarIndex : Int in
+         {
+            let iter : Iterator <- vars.iterator() in
+               {
+                  iter.next();
+                  firstVarIndex <- case iter.get() of x : AnalyzedLetVar => x.object().index(); esac;
+               };
+
+            let iter : Iterator <- vars.iterator() in
+               while iter.next() loop
+                  let var : AnalyzedLetVar <- case iter.get() of x : AnalyzedLetVar => x; esac,
+                        expr : AnalyzedExpr <- var.expr() in
+                     if not isvoid expr then
+                        exprs.add(new InterpreterVarAssignmentExpr.init(var.object().index(), analyzeExpr(expr)))
+                     else false fi
+               pool;
+
+            exprs.add(analyzeExpr(expr.expr()));
+            new InterpreterLetExpr.init(firstVarIndex, vars.size(), exprs);
+         }
+   };
+
    visitCase(expr : AnalyzedCaseExpr) : Object { new ObjectUtil.abortObject(self, "visitCase: unimplemented") };
    visitFormalAssignment(object : AnalyzedFormalObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitFormalAssignment: unimplemented") };
    visitVarAssignment(object : AnalyzedVarObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitVarAssignment: unimplemented") };
@@ -735,7 +759,10 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
    };
 
    visitFormal(object : AnalyzedFormalObject) : Object { new ObjectUtil.abortObject(self, "visitFormal unimplemented") };
-   visitVar(object : AnalyzedVarObject) : Object { new ObjectUtil.abortObject(self, "visitVar unimplemented") };
+
+   visitVar(object : AnalyzedVarObject) : Object {
+      new InterpreterVarExpr.init(object.index(), getDefaultValue(object.type()))
+   };
 
    visitAttribute(object : AnalyzedAttributeObject) : Object {
       let attribute : AnalyzedAttribute <- object.attribute() in
@@ -1049,7 +1076,64 @@ class InterpreterWhileExprState inherits InterpreterExprState {
    };
 };
 
-class InterpreterAttributeAssignmentExpr inherits InterpreterExpr {
+class InterpreterLetExpr inherits InterpreterExpr {
+   firstVarIndex : Int;
+   lastVarIndex : Int;
+   exprs : Collection;
+
+   init(firstVarIndex_ : Int, numVars : Int, exprs_ : Collection) : SELF_TYPE {{
+      firstVarIndex <- firstVarIndex_;
+      lastVarIndex <- firstVarIndex + numVars - 1;
+      exprs <- exprs_;
+      self;
+   }};
+
+   interpret(interpreter : Interpreter) : Bool {{
+      interpreter.initVars();
+      interpreter.pushState(new InterpreterLetExprState.init(firstVarIndex, lastVarIndex, exprs));
+   }};
+};
+
+class InterpreterLetExprState inherits InterpreterExprState {
+   firstVarIndex : Int;
+   lastVarIndex : Int;
+   exprIter : Iterator;
+   value : InterpreterValue;
+
+   init(firstVarIndex_ : Int, lastVarIndex_ : Int, exprs : Collection) : SELF_TYPE {{
+      firstVarIndex <- firstVarIndex_;
+      lastVarIndex <- lastVarIndex_;
+      exprIter <- exprs.iterator();
+      self;
+   }};
+
+   addValue(value_ : InterpreterValue) : Object {
+      value <- value_
+   };
+
+   proceed(interpreter : Interpreter) : Bool {
+      if exprIter.next() then
+         case exprIter.get() of x : InterpreterExpr => x.interpret(interpreter); esac
+      else
+         {
+            if not firstVarIndex = 0 then
+               let i : Int <- lastVarIndex,
+                     vars : IntMap <- interpreter.vars() in
+                  while firstVarIndex <= i loop
+                     {
+                        vars.removeWithInt(i);
+                        i <- i - 1;
+                     }
+                  pool
+            else false fi;
+
+            interpreter.proceedValue(value);
+         }
+      fi
+   };
+};
+
+class InterpreterAssignmentExpr inherits InterpreterExpr {
    index : Int;
    expr : InterpreterExpr;
 
@@ -1059,17 +1143,18 @@ class InterpreterAttributeAssignmentExpr inherits InterpreterExpr {
       self;
    }};
 
-   interpret(interpreter : Interpreter) : Bool {{
-      interpreter.pushState(new InterpreterAttributeAssignmentExprState.init(index));
-      expr.interpret(interpreter);
+   newState() : InterpreterAssignmentExprState {{
+      new ObjectUtil.abortObject(self, "newState: unimplemented");
+      let void : InterpreterAssignmentExprState in void;
    }};
 
-   toString() : String {
-      "assignment.attribute[".concat(new StringUtil.fromInt(index)).concat("]")
-   };
+   interpret(interpreter : Interpreter) : Bool {{
+      interpreter.pushState(newState().init(index));
+      expr.interpret(interpreter);
+   }};
 };
 
-class InterpreterAttributeAssignmentExprState inherits InterpreterExprState {
+class InterpreterAssignmentExprState inherits InterpreterExprState {
    index : Int;
    value : InterpreterValue;
 
@@ -1081,7 +1166,28 @@ class InterpreterAttributeAssignmentExprState inherits InterpreterExprState {
    addValue(value_ : InterpreterValue) : Object {
       value <- value_
    };
+};
 
+class InterpreterVarAssignmentExpr inherits InterpreterAssignmentExpr {
+   newState() : InterpreterAssignmentExprState {
+      new InterpreterVarAssignmentExprState
+   };
+};
+
+class InterpreterVarAssignmentExprState inherits InterpreterAssignmentExprState {
+   proceed(interpreter : Interpreter) : Bool {{
+      interpreter.vars().putWithInt(index, value);
+      interpreter.proceedValue(value);
+   }};
+};
+
+class InterpreterAttributeAssignmentExpr inherits InterpreterAssignmentExpr {
+   newState() : InterpreterAssignmentExprState {
+      new InterpreterAttributeAssignmentExprState
+   };
+};
+
+class InterpreterAttributeAssignmentExprState inherits InterpreterAssignmentExprState {
    proceed(interpreter : Interpreter) : Bool {{
       interpreter.selfObject().attributes().putWithInt(index, value);
       interpreter.proceedValue(value);
@@ -1096,7 +1202,7 @@ class InterpreterSelfExpr inherits InterpreterExpr {
    toString() : String { "self" };
 };
 
-class InterpreterAttributeExpr inherits InterpreterExpr {
+class InterpreterObjectExpr inherits InterpreterExpr {
    index : Int;
    defaultValue : InterpreterValue;
 
@@ -1106,19 +1212,29 @@ class InterpreterAttributeExpr inherits InterpreterExpr {
       self;
    }};
 
+   interpretObject(interpreter : Interpreter) : Object {
+      new ObjectUtil.abortObject(self, "interpretObject: unimplemented")
+   };
+
    interpret(interpreter : Interpreter) : Bool {
-      let value : Object <- interpreter.selfObject().attributes().getWithInt(index) in
+      let value : Object <- interpretObject(interpreter) in
          if isvoid value then
             interpreter.interpretValue(defaultValue)
          else
             interpreter.interpretValue(case value of x : InterpreterValue => x; esac)
          fi
    };
+};
 
-   toString() : String {
-      "attribute[".concat(new StringUtil.fromInt(index))
-            .concat(if isvoid defaultValue then "" else ":".concat(defaultValue.toString()) fi)
-            .concat("]")
+class InterpreterVarExpr inherits InterpreterObjectExpr {
+   interpretObject(interpreter : Interpreter) : Object {
+      interpreter.vars().getWithInt(index)
+   };
+};
+
+class InterpreterAttributeExpr inherits InterpreterObjectExpr {
+   interpretObject(interpreter : Interpreter) : Object {
+      interpreter.selfObject().attributes().getWithInt(index)
    };
 };
 
@@ -1157,7 +1273,7 @@ class InterpreterNewExprState inherits InterpreterExprState {
 
       selfObject <- new InterpreterObjectValue.init(type_);
       selfObjectAttributes <- selfObject.attributes();
-      interpreter.setContext(selfObject);
+      interpreter.setSelfObject(selfObject);
 
       self;
    }};
@@ -1243,6 +1359,7 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
    result : InterpreterValue;
 
    savedSelfObject : InterpreterObjectValue;
+   savedVars : IntMap;
 
    init(line_ : Int, argExprs : Collection, targetExpr_ : InterpreterExpr, method_ : InterpreterMethod) : SELF_TYPE {{
       line <- line_;
@@ -1307,7 +1424,7 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
                      interpreter.debugOut("  result")
                   else false fi;
 
-                  interpreter.setContext(savedSelfObject);
+                  interpreter.setDispatchContext(savedSelfObject, savedVars);
                   interpreter.proceedValue(result);
                }
             fi
@@ -1317,7 +1434,10 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
 
    interpretDispatch(interpreter : Interpreter, expr : InterpreterExpr) : Bool {{
       savedSelfObject <- interpreter.selfObject();
-      interpreter.setContext(case target of x : InterpreterObjectValue => x; esac);
+      savedVars <- interpreter.vars();
+      interpreter.setDispatchContext(
+         case target of x : InterpreterObjectValue => x; esac,
+         let void : IntMap in void);
 
       expr.interpret(interpreter);
    }};
@@ -1547,9 +1667,20 @@ class Interpreter {
 
    selfObject : InterpreterObjectValue;
    selfObject() : InterpreterObjectValue { selfObject };
+   setSelfObject(selfObject_ : InterpreterObjectValue) : Object { selfObject <- selfObject_ };
 
-   setContext(selfObject_ : InterpreterObjectValue) : Object {{
+   vars : IntMap;
+   vars() : IntMap { vars };
+
+   initVars() : Object {
+      if isvoid vars then
+         vars <- new IntTreeMap
+      else false fi
+   };
+
+   setDispatchContext(selfObject_ : InterpreterObjectValue, vars_ : IntMap) : Object {{
       selfObject <- selfObject_;
+      vars <- vars_;
    }};
 
    value : InterpreterValue;

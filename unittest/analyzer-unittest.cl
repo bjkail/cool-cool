@@ -527,6 +527,7 @@ class Main inherits Test {
                {
                   case expr.expr() of x : AnalyzedConstantIntExpr => x; esac;
                   assertSameType("case", analyzer.boolType(), expr.type());
+                  assertIntEquals("case index", 0, expr.varIndex());
 
                   let branchIter : Iterator <- expr.branches().iterator() in
                      {
@@ -545,6 +546,7 @@ class Main inherits Test {
                {
                   case expr.expr() of x : AnalyzedConstantIntExpr => x; esac;
                   assertSameType("case 2", analyzer.objectType(), expr.type());
+                  assertIntEquals("case 2 index", 0, expr.varIndex());
 
                   let branchIter : Iterator <- expr.branches().iterator() in
                      {
@@ -561,6 +563,43 @@ class Main inherits Test {
                            };
 
                         assertFalse("case 2 branches", branchIter.next());
+                     };
+               };
+
+            let analyzer : TestAnalyzer <- newAnalyzerExpr("case nested", "case 0 of a : Bool => case 0 of a : Bool => a; esac; esac"),
+                  expr : AnalyzedCaseExpr <- case assertAnalyzeExpr("case", analyzer) of x : AnalyzedCaseExpr => x; esac in
+               {
+                  case expr.expr() of x : AnalyzedConstantIntExpr => x; esac;
+                  assertSameType("case nested", analyzer.boolType(), expr.type());
+                  assertIntEquals("case nested index", 0, expr.varIndex());
+
+                  let branchIter : Iterator <- expr.branches().iterator() in
+                     {
+                        let branch : AnalyzedCaseBranch <- case getIteratorNext(branchIter) of x : AnalyzedCaseBranch => x; esac in
+                           {
+                              assertSameType("case nested branch 1", analyzer.boolType(), branch.checkType());
+
+                              let expr : AnalyzedCaseExpr <- case branch.expr() of x : AnalyzedCaseExpr => x; esac in
+                                 {
+                                    case expr.expr() of x : AnalyzedConstantIntExpr => x; esac;
+                                    assertSameType("case nested", analyzer.boolType(), expr.type());
+                                    assertIntEquals("case nested index", 1, expr.varIndex());
+
+                                    let branchIter : Iterator <- expr.branches().iterator() in
+                                       {
+                                          let branch : AnalyzedCaseBranch <- case getIteratorNext(branchIter) of x : AnalyzedCaseBranch => x; esac in
+                                             {
+                                                assertSameType("case nested branch 1", analyzer.boolType(), branch.checkType());
+                                                assertIntEquals("case nested branch expr", 1, case branch.expr() of x : AnalyzedObjectExpr =>
+                                                      case x.object() of x : AnalyzedVarObject => x.index(); esac; esac);
+                                             };
+
+                                          assertFalse("case nested branches", branchIter.next());
+                                       };
+                                 };
+                           };
+
+                        assertFalse("case nested branches", branchIter.next());
                      };
                };
 

@@ -177,6 +177,9 @@ class Main inherits Test {
             assertIntEquals("int nested", 1, interpretIntExpr("let", "let a : Int <- 1 in let a : Int <- a in a"));
             assertStringEquals("string nested", "", interpretStringExpr("let", "let a : String <- \"\" in let a : String <- a in a"));
 
+            assertIntEquals("reuse index", 1, interpretIntExpr("reuse index",
+                  "{ let a : Int <- 1 in 0; let a : Int in a; }"));
+
             assertIntEquals("dispatch", 3, interpretInt("dispatch",
                   "class Main { main() : Object { let a : Int <- 1 in a() + a }; a() : Int { 2 }; };"));
             assertIntEquals("dispatch let", 3, interpretInt("dispatch",

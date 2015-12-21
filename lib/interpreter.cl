@@ -1309,8 +1309,6 @@ class InterpreterCaseExprState inherits InterpreterExprState {
             }
       fi
    };
-
-   -- TODO
 };
 
 class InterpreterArgumentAssignmentExpr inherits InterpreterAssignmentExpr {

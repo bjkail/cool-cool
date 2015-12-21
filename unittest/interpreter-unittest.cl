@@ -5,6 +5,7 @@ class Main inherits Test {
       testIf();
       testWhile();
       testLet();
+      testCase();
       testAssignment();
       testNew();
       testInitialization();
@@ -185,6 +186,31 @@ class Main inherits Test {
             assertIntEquals("dispatch let", 3, interpretInt("dispatch",
                   "class Main { main() : Object { let a : Int <- 1 in a() + a };"
                   .concat("a() : Int { let a : Int <- 2 in a }; };")));
+         }
+      else false fi
+   };
+
+   testCase() : Object {
+      if begin("case") then
+         {
+            assertErrorEquals("void",
+                  "case on void",
+                  "\tat Main.main (line 1)\n",
+                  interpretErrorExpr("void", "case let a : Object in a of x : Int => 0; esac"));
+            assertErrorEquals("unmatched",
+                  "case branch not matched for type 'Int'",
+                  "\tat Main.main (line 1)\n",
+                  interpretErrorExpr("unmatched", "case 0 of x : Bool => x; esac"));
+
+            assertIntEquals("single", 3, interpretIntExpr("single", "case 1 of x : Int => x + 2; esac"));
+            assertIntEquals("unrelated", 1, interpretIntExpr("unrelated 2",
+                  "case 0 of x : Int => 1; x : String => 0; esac"));
+            assertIntEquals("unrelated 2", 1, interpretIntExpr("unrelated",
+                  "case 0 of x : String => 0; x : Int => 1; esac"));
+            assertIntEquals("ordered", 1, interpretIntExpr("ordered",
+                  "case 0 of x : Int => 1; x : Object => 0; esac"));
+            assertIntEquals("unordered", 1, interpretIntExpr("unordered",
+                  "case 0 of x : Object => 0; x : Int => 1; esac"));
          }
       else false fi
    };

@@ -39,6 +39,9 @@ class InterpreterType {
    inheritsType() : InterpreterType { inheritsType };
    setInheritsType(inheritsType_ : InterpreterType) : Object { inheritsType <- inheritsType_ };
 
+   inheritsDepth : Int;
+   inheritsDepth() : Int { inheritsDepth };
+
    defaultValue() : InterpreterValue { let void : InterpreterValue in void };
 
    attributeInits : LinkedList <- new LinkedList;
@@ -59,10 +62,23 @@ class InterpreterType {
          fi
    };
 
-   init(name_ : String) : SELF_TYPE {{
+   init(name_ : String, inheritsDepth_ : Int) : SELF_TYPE {{
       name <- name_;
+      inheritsDepth <- inheritsDepth_;
       self;
    }};
+
+   conformsTo(type : InterpreterType) : Bool {
+      let typeInheritsDepth : Int <- type.inheritsDepth(),
+            inheritsType : InterpreterType <- self in
+         {
+            while typeInheritsDepth < inheritsType.inheritsDepth() loop
+               inheritsType <- inheritsType.inheritsType()
+            pool;
+
+            inheritsType = type;
+         }
+   };
 };
 
 class InterpreterMethod {
@@ -506,8 +522,8 @@ class InterpreterAnalyzerType {
          fi
    };
 
-   initBasic(name : String) : SELF_TYPE {{
-      type <- new InterpreterType.init(name);
+   initBasic(name : String, inheritsDepth : Int) : SELF_TYPE {{
+      type <- new InterpreterType.init(name, inheritsDepth);
       definedFeatures <- true;
       analyzedAttributes <- true;
       self;
@@ -515,7 +531,7 @@ class InterpreterAnalyzerType {
 
    init(analyzedType_ : AnalyzedType) : SELF_TYPE {{
       analyzedType <- analyzedType_;
-      type <- new InterpreterType.init(analyzedType_.name());
+      type <- new InterpreterType.init(analyzedType_.name(), analyzedType_.inheritsDepth());
       self;
    }};
 };
@@ -528,13 +544,13 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
       self;
    }};
 
-   boolType : InterpreterAnalyzerType <- new InterpreterAnalyzerType.initBasic("Bool");
+   boolType : InterpreterAnalyzerType <- new InterpreterAnalyzerType.initBasic("Bool", 1);
    defaultBoolValue : InterpreterBoolValue <- new InterpreterBoolValue.init(boolType.type(), false);
 
-   intType : InterpreterAnalyzerType <- new InterpreterAnalyzerType.initBasic("Int");
+   intType : InterpreterAnalyzerType <- new InterpreterAnalyzerType.initBasic("Int", 1);
    defaultIntValue : InterpreterIntValue <- new InterpreterIntValue.init(intType.type(), 0);
 
-   stringType : InterpreterAnalyzerType <- new InterpreterAnalyzerType.initBasic("String");
+   stringType : InterpreterAnalyzerType <- new InterpreterAnalyzerType.initBasic("String", 1);
    defaultStringValue : InterpreterStringValue <- new InterpreterStringValue.init(stringType.type(), "", 0);
 
    types : StringMap <- new StringListMap;
@@ -632,8 +648,8 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
    };
 
    analyze(program : AnalyzedProgram) : InterpreterProgram {{
-      let objectType : InterpreterAnalyzerType <- new InterpreterAnalyzerType.initBasic("Object"),
-            ioType : InterpreterAnalyzerType <- new InterpreterAnalyzerType.initBasic("IO") in
+      let objectType : InterpreterAnalyzerType <- new InterpreterAnalyzerType.initBasic("Object", 0),
+            ioType : InterpreterAnalyzerType <- new InterpreterAnalyzerType.initBasic("IO", 1) in
          {
             types.putWithString(objectType.name(), objectType);
             objectType.addBasicMethod("abort", new InterpreterBasicObjectAbortMethod);
@@ -743,7 +759,19 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
          }
    };
 
-   visitCase(expr : AnalyzedCaseExpr) : Object { new ObjectUtil.abortObject(self, "visitCase: unimplemented") };
+   visitCase(expr : AnalyzedCaseExpr) : Object {
+      let branches : LinkedList <- new LinkedList in
+         {
+            let iter : Iterator <- expr.branches().iterator() in
+               while iter.next() loop
+                  let branch : AnalyzedCaseBranch <- case iter.get() of x : AnalyzedCaseBranch => x; esac in
+                     branches.add(new InterpreterCaseBranch.init(getType(branch.checkType()).type(), analyzeExpr(branch.expr())))
+               pool;
+
+            branches.sort(new InterpreterCaseBranchComparator);
+            new InterpreterCaseExpr.init(expr.line(), analyzeExpr(expr.expr()), expr.varIndex(), branches);
+         }
+   };
 
    visitArgumentAssignment(object : AnalyzedArgumentObject, expr : AnalyzedExpr) : Object {
       new InterpreterArgumentAssignmentExpr.init(object.index(), analyzeExpr(expr))
@@ -1174,6 +1202,115 @@ class InterpreterAssignmentExprState inherits InterpreterExprState {
    addValue(value_ : InterpreterValue) : Object {
       value <- value_
    };
+};
+
+class InterpreterCaseBranch {
+   checkType : InterpreterType;
+   checkType() : InterpreterType { checkType };
+
+   expr : InterpreterExpr;
+   expr() : InterpreterExpr { expr };
+
+   init(checkType_ : InterpreterType, expr_ : InterpreterExpr) : SELF_TYPE {{
+      checkType <- checkType_;
+      expr <- expr_;
+      self;
+   }};
+};
+
+class InterpreterCaseBranchComparator inherits Comparator {
+   compare(o1 : Object, o2 : Object) : Int {
+      let inheritsDepth1 : Int <- case o1 of x : InterpreterCaseBranch => x.checkType().inheritsDepth(); esac,
+            inheritsDepth2 : Int <- case o2 of x : InterpreterCaseBranch => x.checkType().inheritsDepth(); esac in
+         if inheritsDepth1 = inheritsDepth2 then
+            0
+         else
+            -- Sort highest entries first.
+            if inheritsDepth1 < inheritsDepth2 then
+               1
+            else
+               ~1
+            fi
+         fi
+   };
+};
+
+class InterpreterCaseExpr inherits InterpreterExpr {
+   line : Int;
+   expr : InterpreterExpr;
+   varIndex : Int;
+   branches : Collection;
+
+   init(line_ : Int, expr_ : InterpreterExpr, varIndex_ : Int, branches_ : Collection) : SELF_TYPE {{
+      line <- line_;
+      expr <- expr_;
+      varIndex <- varIndex_;
+      branches <- branches_;
+      self;
+   }};
+
+   interpret(interpreter : Interpreter) : Bool {{
+      interpreter.pushState(new InterpreterCaseExprState.init(line, varIndex, branches));
+      expr.interpret(interpreter);
+   }};
+};
+
+class InterpreterCaseExprState inherits InterpreterExprState {
+   line : Int;
+   varIndex : Int;
+   branches : Collection;
+   value : InterpreterValue;
+   expr : InterpreterExpr;
+
+   init(line_ : Int, varIndex_ : Int, branches_ : Collection) : SELF_TYPE {{
+      line <- line_;
+      varIndex <- varIndex_;
+      branches <- branches_;
+      self;
+   }};
+
+   addValue(value_ : InterpreterValue) : Object {
+      value <- value_
+   };
+
+   proceed(interpreter : Interpreter) : Bool {
+      if isvoid value then
+         interpreter.proceedError(line, "case on void")
+      else
+         let type : InterpreterType <- value.type(),
+               expr : InterpreterExpr in
+            {
+               let iter : Iterator <- branches.iterator(),
+                     continue : Bool <- true in
+                  {
+                     iter.next();
+                     while continue loop
+                        let branch : InterpreterCaseBranch <- case iter.get() of x : InterpreterCaseBranch => x; esac in
+                           if type.conformsTo(branch.checkType()) then
+                              {
+                                 expr <- branch.expr();
+                                 continue <- false;
+                              }
+                           else
+                              continue <- iter.next()
+                           fi
+                     pool;
+                  };
+
+               if isvoid expr then
+                  interpreter.proceedError(line, "case branch not matched for type '"
+                        .concat(type.name()).concat("'"))
+               else
+                  {
+                     interpreter.initVars().putWithInt(varIndex, value);
+                     interpreter.proceedExpr(expr);
+                  }
+               fi;
+            }
+      fi
+   };
+
+   -- TODO
 };
 
 class InterpreterArgumentAssignmentExpr inherits InterpreterAssignmentExpr {
@@ -1712,10 +1849,12 @@ class Interpreter {
    vars : IntMap;
    vars() : IntMap { vars };
 
-   initVars() : Object {
+   initVars() : IntMap {
       if isvoid vars then
          vars <- new IntTreeMap
-      else false fi
+      else
+         vars
+      fi
    };
 
    setDispatchContext(selfObject_ : InterpreterObjectValue, arguments_ : IntMap, vars_ : IntMap) : Object {{

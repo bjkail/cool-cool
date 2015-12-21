@@ -298,7 +298,7 @@ class AnalyzedSelfObject inherits AnalyzedObject {
    accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitSelf(self) };
 };
 
-class AnalyzedFormalObject inherits AnalyzedObject {
+class AnalyzedArgumentObject inherits AnalyzedObject {
    index : Int;
    index() : Int { index };
 
@@ -308,8 +308,8 @@ class AnalyzedFormalObject inherits AnalyzedObject {
       self;
    }};
 
-   acceptAssignment(visitor : AnalyzedExprVisitor, expr : AnalyzedExpr) : Object { visitor.visitFormalAssignment(self, expr) };
-   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitFormal(self) };
+   acceptAssignment(visitor : AnalyzedExprVisitor, expr : AnalyzedExpr) : Object { visitor.visitArgumentAssignment(self, expr) };
+   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitArgument(self) };
 };
 
 class AnalyzedVarObject inherits AnalyzedObject {
@@ -346,11 +346,11 @@ class AnalyzedExprVisitor {
    visitWhile(expr : AnalyzedWhileExpr) : Object { new ObjectUtil.abortObject(self, "visitWhile: unimplemented") };
    visitLet(expr : AnalyzedLetExpr) : Object { new ObjectUtil.abortObject(self, "visitLet: unimplemented") };
    visitCase(expr : AnalyzedCaseExpr) : Object { new ObjectUtil.abortObject(self, "visitCase: unimplemented") };
-   visitFormalAssignment(object : AnalyzedFormalObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitFormalAssignment: unimplemented") };
+   visitArgumentAssignment(object : AnalyzedArgumentObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitArgumentAssignment: unimplemented") };
    visitVarAssignment(object : AnalyzedVarObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitVarAssignment: unimplemented") };
    visitAttributeAssignment(attribute : AnalyzedAttributeObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitAttributeAssignment: unimplemented") };
    visitSelf(object : AnalyzedSelfObject) : Object { new ObjectUtil.abortObject(self, "visitSelf unimplemented") };
-   visitFormal(object : AnalyzedFormalObject) : Object { new ObjectUtil.abortObject(self, "visitFormal unimplemented") };
+   visitArgument(object : AnalyzedArgumentObject) : Object { new ObjectUtil.abortObject(self, "visitArgument unimplemented") };
    visitVar(object : AnalyzedVarObject) : Object { new ObjectUtil.abortObject(self, "visitVar unimplemented") };
    visitAttribute(object : AnalyzedAttributeObject) : Object { new ObjectUtil.abortObject(self, "visitAttribute unimplemented") };
    visitNew(expr : AnalyzedNewExpr) : Object { new ObjectUtil.abortObject(self, "visitNew: unimplemented") };
@@ -1445,7 +1445,7 @@ class Analyzer {
                            if id = "self" then
                               errorAt(formal, "invalid formal parameter name 'self'")
                            else
-                              env.put(id, new AnalyzedFormalObject.init(formalType, index))
+                              env.put(id, new AnalyzedArgumentObject.init(formalType, index))
                            fi;
 
                            index <- index + 1;

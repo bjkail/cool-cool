@@ -744,7 +744,7 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
    };
 
    visitCase(expr : AnalyzedCaseExpr) : Object { new ObjectUtil.abortObject(self, "visitCase: unimplemented") };
-   visitFormalAssignment(object : AnalyzedFormalObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitFormalAssignment: unimplemented") };
+   visitArgumentAssignment(object : AnalyzedArgumentObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitArgumentAssignment: unimplemented") };
    visitVarAssignment(object : AnalyzedVarObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitVarAssignment: unimplemented") };
 
    visitAttributeAssignment(object : AnalyzedAttributeObject, expr : AnalyzedExpr) : Object {
@@ -758,7 +758,7 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
       new InterpreterSelfExpr
    };
 
-   visitFormal(object : AnalyzedFormalObject) : Object { new ObjectUtil.abortObject(self, "visitFormal unimplemented") };
+   visitArgument(object : AnalyzedArgumentObject) : Object { new ObjectUtil.abortObject(self, "visitArgument unimplemented") };
 
    visitVar(object : AnalyzedVarObject) : Object {
       new InterpreterVarExpr.init(object.index(), getDefaultValue(object.type()))

@@ -483,6 +483,9 @@ class AnalyzedCaseBranchComparator inherits Comparator {
 };
 
 class AnalyzedCaseExpr inherits AnalyzedExpr {
+   line : Int;
+   line() : Int { line };
+
    expr : AnalyzedExpr;
    expr() : AnalyzedExpr { expr };
 
@@ -492,7 +495,8 @@ class AnalyzedCaseExpr inherits AnalyzedExpr {
    branches : Collection;
    branches() : Collection { branches };
 
-   init(type_ : AnalyzedType, expr_ : AnalyzedExpr, varIndex_ : Int, branches_ : Collection) : SELF_TYPE {{
+   init(line_ : Int, type_ : AnalyzedType, expr_ : AnalyzedExpr, varIndex_ : Int, branches_ : Collection) : SELF_TYPE {{
+      line <- line_;
       type <- type_;
       expr <- expr_;
       varIndex <- varIndex_;
@@ -853,7 +857,7 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
                pool;
 
             branches.sort(new AnalyzedCaseBranchComparator);
-            new AnalyzedCaseExpr.init(type, expr, varIndex(), branches);
+            new AnalyzedCaseExpr.init(parsedExpr.line(), type, expr, varIndex(), branches);
          }
    };
 

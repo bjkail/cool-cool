@@ -194,6 +194,9 @@ class Main inherits Test {
             assertIntEquals("attribute value", 1, interpretInt("attribute value",
                   "class Main { a : Int; main() : Object { a <- 1 }; };"));
 
+            assertIntEquals("var", 1, interpretIntExpr("var", "let a : Int in { a <- 1; a; }"));
+            assertIntEquals("var value", 1, interpretIntExpr("var value", "let a : Int in a <- 1"));
+
             assertIntEquals("argument", 1, interpretInt("argument",
                   "class Main { main() : Int { a(0) }; a(a : Int) : Int {{ a <- 1; a; }}; };"));
             assertIntEquals("argument value", 1, interpretInt("argument",

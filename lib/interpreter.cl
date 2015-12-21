@@ -749,7 +749,9 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
       new InterpreterArgumentAssignmentExpr.init(object.index(), analyzeExpr(expr))
    };
 
-   visitVarAssignment(object : AnalyzedVarObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitVarAssignment: unimplemented") };
+   visitVarAssignment(object : AnalyzedVarObject, expr : AnalyzedExpr) : Object {
+      new InterpreterVarAssignmentExpr.init(object.index(), analyzeExpr(expr))
+   };
 
    visitAttributeAssignment(object : AnalyzedAttributeObject, expr : AnalyzedExpr) : Object {
       let attribute : AnalyzedAttribute <- object.attribute() in

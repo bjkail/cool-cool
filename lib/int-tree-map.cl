@@ -47,33 +47,27 @@ class IntTreeMapNode {
       key <- key_;
       self;
    }};
-};
 
-class IntTreeMapIterator inherits IntMapIterator {
-   node : IntTreeMapNode;
-   root : IntTreeMapNode;
+   minimum() : IntTreeMapNode {
+      let x : IntTreeMapNode <- self,
+            lx : IntTreeMapNode <- x.left() in
+         {
+            while not isvoid lx loop
+               {
+                  x <- lx;
+                  lx <- lx.left();
+               }
+            pool;
 
-   init(root_ : IntTreeMapNode) : SELF_TYPE {{
-      root <- root_;
-      self;
-   }};
+            x;
+         }
+   };
 
-   minimum(x : IntTreeMapNode) : IntTreeMapNode {{
-      let lx : IntTreeMapNode <- x.left() in
-         while not isvoid lx loop
-            {
-               x <- lx;
-               lx <- lx.left();
-            }
-         pool;
-
-      x;
-   }};
-
-   successor(x : IntTreeMapNode) : IntTreeMapNode {
-      let rx : IntTreeMapNode <- x.right() in
+   successor() : IntTreeMapNode {
+      let x : IntTreeMapNode <- self,
+            rx : IntTreeMapNode <- x.right() in
          if not isvoid rx then
-            minimum(rx)
+            rx.minimum()
          else
             let px : IntTreeMapNode <- x.parent() in
                {
@@ -91,6 +85,16 @@ class IntTreeMapIterator inherits IntMapIterator {
                }
          fi
    };
+};
+
+class IntTreeMapIterator inherits IntMapIterator {
+   node : IntTreeMapNode;
+   root : IntTreeMapNode;
+
+   init(root_ : IntTreeMapNode) : SELF_TYPE {{
+      root <- root_;
+      self;
+   }};
 
    next() : Bool {
       if isvoid node then
@@ -98,14 +102,14 @@ class IntTreeMapIterator inherits IntMapIterator {
             false
          else
             {
-               node <- minimum(root);
+               node <- root.minimum();
                root <- let void : IntTreeMapNode in void;
                not isvoid node;
             }
          fi
       else
          {
-            node <- successor(node);
+            node <- node.successor();
             not isvoid node;
          }
       fi
@@ -159,6 +163,14 @@ class IntTreeMap inherits IntMap {
          false
       else
          not node.black()
+      fi
+   };
+
+   blackOf(node : IntTreeMapNode) : Bool {
+      if isvoid node then
+         true
+      else
+         node.black()
       fi
    };
 
@@ -226,7 +238,7 @@ class IntTreeMap inherits IntMap {
       else false fi
    };
 
-   insertFixup(z : IntTreeMapNode) : Object {{
+   fixupInsert(z : IntTreeMapNode) : Object {{
       while if not isvoid z then
             if not z = root then
                not z.parent().black()
@@ -308,7 +320,7 @@ class IntTreeMap inherits IntMap {
                                  if isvoid left then
                                     {
                                        x <- x.createLeft(k);
-                                       insertFixup(x);
+                                       fixupInsert(x);
                                        size <- size + 1;
                                        continue <- false;
                                     }
@@ -320,7 +332,7 @@ class IntTreeMap inherits IntMap {
                                  if isvoid right then
                                     {
                                        x <- x.createRight(k);
-                                       insertFixup(x);
+                                       fixupInsert(x);
                                        size <- size + 1;
                                        continue <- false;
                                     }
@@ -334,6 +346,155 @@ class IntTreeMap inherits IntMap {
                   x;
                }
          fi
+   };
+
+   fixupDelete(x : IntTreeMapNode) : Object {{
+      while if not x = root then
+            x.black()
+         else false fi
+      loop
+         let px : IntTreeMapNode <- x.parent() in
+            if x = px.left() then
+               let w : IntTreeMapNode <- x.right() in
+                  {
+                     if redOf(w) then
+                        {
+                           setBlackOf(w);
+                           px.setBlack(false);
+                           rotateLeft(px);
+                           w <- rightOf(parentOf(x));
+
+                        }
+                     else false fi;
+
+                     if if blackOf(leftOf(w)) then
+                           blackOf(rightOf(w))
+                        else false fi
+                     then
+                        {
+                           setRedOf(w);
+                           x <- x.parent();
+                        }
+                     else
+                        {
+                           if blackOf(rightOf(w)) then
+                              {
+                                 setBlackOf(leftOf(w));
+                                 setRedOf(w);
+                                 rotateRight(w);
+                                 w <- rightOf(parentOf(w));
+                              }
+                           else false fi;
+
+                           let px : IntTreeMapNode <- parentOf(x) in
+                              {
+                                 if not isvoid w then
+                                    w.setBlack(blackOf(px))
+                                 else false fi;
+                                 setBlackOf(px);
+                                 setBlackOf(rightOf(w));
+                                 rotateLeft(px);
+                              };
+
+                           x <- root;
+                        }
+                     fi;
+                  }
+            else
+               -- Same as "then" with left/right swapped.
+               let w : IntTreeMapNode <- x.left() in
+                  {
+                     if redOf(w) then
+                        {
+                           setBlackOf(w);
+                           px.setBlack(false);
+                           rotateRight(px);
+                           w <- leftOf(parentOf(x));
+
+                        }
+                     else false fi;
+
+                     if if blackOf(rightOf(w)) then
+                           blackOf(leftOf(w))
+                        else false fi
+                     then
+                        {
+                           setRedOf(w);
+                           x <- x.parent();
+                        }
+                     else
+                        {
+                           if blackOf(leftOf(w)) then
+                              {
+                                 setBlackOf(rightOf(w));
+                                 setRedOf(w);
+                                 rotateLeft(w);
+                                 w <- leftOf(parentOf(w));
+                              }
+                           else false fi;
+
+                           let px : IntTreeMapNode <- parentOf(x) in
+                              {
+                                 if not isvoid w then
+                                    w.setBlack(blackOf(px))
+                                 else false fi;
+                                 setBlackOf(px);
+                                 setBlackOf(leftOf(w));
+                                 rotateRight(px);
+                              };
+
+                           x <- root;
+                        }
+                     fi;
+                  }
+            fi
+      pool;
+
+      x.setBlack(true);
+   }};
+
+   deleteTreeNode(z : IntTreeMapNode) : Object {
+      let y : IntTreeMapNode <-
+               if if isvoid z.left() then
+                     true
+                  else
+                     isvoid z.right()
+                  fi
+               then
+                  z
+               else
+                  z.successor()
+               fi,
+            x : IntTreeMapNode <- if not isvoid y.left() then y.left() else y.right() fi in
+         {
+            if not isvoid x then
+               x.setParent(y.parent())
+            else false fi;
+
+            let py : IntTreeMapNode <- y.parent() in
+               if isvoid py then
+                  root <- x
+               else
+                  if y = py.left() then
+                     py.setLeft(x)
+                  else
+                     py.setRight(x)
+                  fi
+               fi;
+
+            if not x = z then
+               {
+                  z.init(y.key());
+                  z.setValue(y.value());
+               }
+            else false fi;
+
+            if y.black() then
+               if not isvoid x then
+                  fixupDelete(x)
+               else false fi
+            else false fi;
+         }
    };
 
    getTreeNode(k : Int) : IntTreeMapNode {
@@ -378,6 +539,20 @@ class IntTreeMap inherits IntMap {
             node
          else
             node.value()
+         fi
+   };
+
+   removeWithInt(key : Int) : Object {
+      let node : IntTreeMapNode <- getTreeNode(key) in
+         if isvoid node then
+            node
+         else
+            let oldValue : Object <- node.value() in
+               {
+                  deleteTreeNode(node);
+                  size <- size - 1;
+                  oldValue;
+               }
          fi
    };
 };

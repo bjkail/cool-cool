@@ -30,6 +30,7 @@ class IntMap {
    iterator() : IntMapIterator { new IntMapIterator };
    getWithInt(key : Int) : Object { let void : Object in void };
    putWithInt(key : Int, value : Object) : Object { new ObjectUtil.abortObject(self, "putWithInt: unimplemented") };
+   removeWithInt(key : Int) : Object { new ObjectUtil.abortObject(self, "removeWithInt: unimplemented") };
 
    putAll(map : IntMap) : Object {
       let iter : IntMapIterator <- map.iterator() in

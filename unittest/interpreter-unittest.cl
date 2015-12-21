@@ -193,6 +193,11 @@ class Main inherits Test {
                   "class Main { a : Int; main() : Object { a(a <- 1) }; a(x : Object) : Int { a }; };"));
             assertIntEquals("attribute value", 1, interpretInt("attribute value",
                   "class Main { a : Int; main() : Object { a <- 1 }; };"));
+
+            assertIntEquals("argument", 1, interpretInt("argument",
+                  "class Main { main() : Int { a(0) }; a(a : Int) : Int {{ a <- 1; a; }}; };"));
+            assertIntEquals("argument value", 1, interpretInt("argument",
+                  "class Main { main() : Int { a(0) }; a(a : Int) : Int { a <- 1 }; };"));
          }
       else false fi
    };
@@ -281,6 +286,13 @@ class Main inherits Test {
                      .concat("\tat Main.main (line 1)\n"),
                   interpretError("void dispatch",
                      "class Main { a : Main; main() : Int { a() }; a() : Int { a.void() }; void() : Int { 0 }; };"));
+
+            assertIntEquals("dispatch arg", 1, interpretInt("dispatch",
+                  "class Main { main() : Int { a(1) }; a(a : Int) : Int { a }; };"));
+            assertIntEquals("dispatch args", 3, interpretInt("dispatch",
+                  "class Main { main() : Int { a(1, 2) }; a(a : Int, b : Int) : Int { a + b }; };"));
+            assertIntEquals("dispatch nested", 3, interpretInt("dispatch",
+                  "class Main { main() : Int { a(1) }; a(a : Int) : Int { b(2) + a }; b(b : Int) : Int { b }; };"));
          }
       else false fi
    };

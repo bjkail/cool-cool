@@ -744,7 +744,11 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
    };
 
    visitCase(expr : AnalyzedCaseExpr) : Object { new ObjectUtil.abortObject(self, "visitCase: unimplemented") };
-   visitArgumentAssignment(object : AnalyzedArgumentObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitArgumentAssignment: unimplemented") };
+
+   visitArgumentAssignment(object : AnalyzedArgumentObject, expr : AnalyzedExpr) : Object {
+      new InterpreterArgumentAssignmentExpr.init(object.index(), analyzeExpr(expr))
+   };
+
    visitVarAssignment(object : AnalyzedVarObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitVarAssignment: unimplemented") };
 
    visitAttributeAssignment(object : AnalyzedAttributeObject, expr : AnalyzedExpr) : Object {
@@ -758,7 +762,9 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
       new InterpreterSelfExpr
    };
 
-   visitArgument(object : AnalyzedArgumentObject) : Object { new ObjectUtil.abortObject(self, "visitArgument unimplemented") };
+   visitArgument(object : AnalyzedArgumentObject) : Object {
+      new InterpreterArgumentExpr.init(object.index())
+   };
 
    visitVar(object : AnalyzedVarObject) : Object {
       new InterpreterVarExpr.init(object.index(), getDefaultValue(object.type()))
@@ -1168,6 +1174,19 @@ class InterpreterAssignmentExprState inherits InterpreterExprState {
    };
 };
 
+class InterpreterArgumentAssignmentExpr inherits InterpreterAssignmentExpr {
+   newState() : InterpreterAssignmentExprState {
+      new InterpreterArgumentAssignmentExprState
+   };
+};
+
+class InterpreterArgumentAssignmentExprState inherits InterpreterAssignmentExprState {
+   proceed(interpreter : Interpreter) : Bool {{
+      interpreter.arguments().putWithInt(index, value);
+      interpreter.proceedValue(value);
+   }};
+};
+
 class InterpreterVarAssignmentExpr inherits InterpreterAssignmentExpr {
    newState() : InterpreterAssignmentExprState {
       new InterpreterVarAssignmentExprState
@@ -1200,6 +1219,19 @@ class InterpreterSelfExpr inherits InterpreterExpr {
    };
 
    toString() : String { "self" };
+};
+
+class InterpreterArgumentExpr inherits InterpreterExpr {
+   index : Int;
+
+   init(index_ : Int) : SELF_TYPE {{
+      index <- index_;
+      self;
+   }};
+
+   interpret(interpreter : Interpreter) : Bool {
+      interpreter.interpretValue(case interpreter.arguments().getWithInt(index) of x : InterpreterValue => x; esac)
+   };
 };
 
 class InterpreterObjectExpr inherits InterpreterExpr {
@@ -1359,6 +1391,7 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
    result : InterpreterValue;
 
    savedSelfObject : InterpreterObjectValue;
+   savedArgs : IntMap;
    savedVars : IntMap;
 
    init(line_ : Int, argExprs : Collection, targetExpr_ : InterpreterExpr, method_ : InterpreterMethod) : SELF_TYPE {{
@@ -1424,7 +1457,7 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
                      interpreter.debugOut("  result")
                   else false fi;
 
-                  interpreter.setDispatchContext(savedSelfObject, savedVars);
+                  interpreter.setDispatchContext(savedSelfObject, savedArgs, savedVars);
                   interpreter.proceedValue(result);
                }
             fi
@@ -1434,9 +1467,11 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
 
    interpretDispatch(interpreter : Interpreter, expr : InterpreterExpr) : Bool {{
       savedSelfObject <- interpreter.selfObject();
+      savedArgs <- interpreter.arguments();
       savedVars <- interpreter.vars();
       interpreter.setDispatchContext(
          case target of x : InterpreterObjectValue => x; esac,
+         args,
          let void : IntMap in void);
 
       expr.interpret(interpreter);
@@ -1669,6 +1704,9 @@ class Interpreter {
    selfObject() : InterpreterObjectValue { selfObject };
    setSelfObject(selfObject_ : InterpreterObjectValue) : Object { selfObject <- selfObject_ };
 
+   arguments : IntMap;
+   arguments() : IntMap { arguments };
+
    vars : IntMap;
    vars() : IntMap { vars };
 
@@ -1678,8 +1716,9 @@ class Interpreter {
       else false fi
    };
 
-   setDispatchContext(selfObject_ : InterpreterObjectValue, vars_ : IntMap) : Object {{
+   setDispatchContext(selfObject_ : InterpreterObjectValue, arguments_ : IntMap, vars_ : IntMap) : Object {{
       selfObject <- selfObject_;
+      arguments <- arguments_;
       vars <- vars_;
    }};
 

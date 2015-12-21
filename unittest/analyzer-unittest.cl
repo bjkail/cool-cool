@@ -410,14 +410,15 @@ class Main inherits Test {
             let analyzer : TestAnalyzer <- newAnalyzerExpr("let", "let b : Bool in b"),
                   expr : AnalyzedLetExpr <- case assertAnalyzeExpr("let", analyzer) of x : AnalyzedLetExpr => x; esac in
                {
-                  case expr.expr() of x : AnalyzedObjectExpr => x; esac;
+                  assertIntEquals("let expr", 0, case expr.expr() of x : AnalyzedObjectExpr =>
+                        case x.object() of x : AnalyzedVarObject => x.index(); esac; esac);
                   assertSameType("let", analyzer.boolType(), expr.type());
 
                   let varIter : Iterator <- expr.vars().iterator() in
                      {
                         let var : AnalyzedLetVar <- case getIteratorNext(varIter) of x : AnalyzedLetVar => x; esac in
                            {
-                              case var.object() of x : AnalyzedVarObject => x; esac;
+                              assertIntEquals("let var index", 0, var.object().index());
                               assertVoid("let var expr", var.expr());
                            };
 
@@ -428,21 +429,23 @@ class Main inherits Test {
             let analyzer : TestAnalyzer <- newAnalyzerExpr("let 2", "let b : Bool, c : Bool <- b in c"),
                   expr : AnalyzedLetExpr <- case assertAnalyzeExpr("let 2", analyzer) of x : AnalyzedLetExpr => x; esac in
                {
-                  case expr.expr() of x : AnalyzedObjectExpr => x; esac;
+                  assertIntEquals("let 2 expr", 1, case expr.expr() of x : AnalyzedObjectExpr =>
+                        case x.object() of x : AnalyzedVarObject => x.index(); esac; esac);
                   assertSameType("let 2", analyzer.boolType(), expr.type());
 
                   let varIter : Iterator <- expr.vars().iterator() in
                      {
                         let var : AnalyzedLetVar <- case getIteratorNext(varIter) of x : AnalyzedLetVar => x; esac in
                            {
-                              case var.object() of x : AnalyzedVarObject => x; esac;
+                              assertIntEquals("let 2 var 1 index", 0, var.object().index());
                               assertVoid("let 2 var 1 expr", var.expr());
                            };
 
                         let var : AnalyzedLetVar <- case getIteratorNext(varIter) of x : AnalyzedLetVar => x; esac in
                            {
-                              case var.object() of x : AnalyzedVarObject => x; esac;
-                              case var.expr() of x : AnalyzedObjectExpr => x; esac;
+                              assertIntEquals("let 2 var 2 index", 1, var.object().index());
+                              assertIntEquals("let 2 var 2 expr", 0, case var.expr() of x : AnalyzedObjectExpr =>
+                                    case x.object() of x : AnalyzedVarObject => x.index(); esac; esac);
                            };
 
                         assertFalse("let 2 vars", varIter.next());
@@ -452,25 +455,64 @@ class Main inherits Test {
             let analyzer : TestAnalyzer <- newAnalyzerExpr("let same", "let b : Int, b : Bool <- b < 0 in b"),
                   expr : AnalyzedLetExpr <- case assertAnalyzeExpr("let same", analyzer) of x : AnalyzedLetExpr => x; esac in
                {
-                  case expr.expr() of x : AnalyzedObjectExpr => x; esac;
+                  assertIntEquals("let same expr", 1, case expr.expr() of x : AnalyzedObjectExpr =>
+                        case x.object() of x : AnalyzedVarObject => x.index(); esac; esac);
                   assertSameType("let same", analyzer.boolType(), expr.type());
 
                   let varIter : Iterator <- expr.vars().iterator() in
                      {
                         let var : AnalyzedLetVar <- case getIteratorNext(varIter) of x : AnalyzedLetVar => x; esac in
                            {
-                              case var.object() of x : AnalyzedVarObject => x; esac;
+                              assertIntEquals("let same var 1 index", 0, var.object().index());
                               assertVoid("let same var 1 expr", var.expr());
                            };
 
                         let var : AnalyzedLetVar <- case getIteratorNext(varIter) of x : AnalyzedLetVar => x; esac in
                            {
-                              case var.object() of x : AnalyzedVarObject => x; esac;
-                              case var.expr() of x : AnalyzedBinaryExpr => x; esac;
+                              assertIntEquals("let same var 2 index", 1, var.object().index());
+                              assertIntEquals("let 2 var 2 expr", 0, case var.expr() of x : AnalyzedBinaryExpr =>
+                                    case x.left() of x : AnalyzedObjectExpr =>
+                                    case x.object() of x : AnalyzedVarObject => x.index(); esac; esac; esac);
                            };
 
                         assertFalse("let same vars", varIter.next());
                      };
+               };
+
+            let analyzer : TestAnalyzer <- newAnalyzerExpr("let nested", "let b : Bool in let c : Bool in c"),
+                  expr : AnalyzedLetExpr <- case assertAnalyzeExpr("let 2", analyzer) of x : AnalyzedLetExpr => x; esac in
+               {
+                  assertSameType("let nested 1", analyzer.boolType(), expr.type());
+
+                  let varIter : Iterator <- expr.vars().iterator() in
+                     {
+                        let var : AnalyzedLetVar <- case getIteratorNext(varIter) of x : AnalyzedLetVar => x; esac in
+                           {
+                              assertIntEquals("let nested 1 var index", 0, var.object().index());
+                              assertVoid("let nested 1 var expr", var.expr());
+                           };
+
+                        assertFalse("let nested 1 vars", varIter.next());
+                     };
+
+                  case expr.expr() of expr : AnalyzedLetExpr =>
+                     {
+                        assertIntEquals("let same expr", 1, case expr.expr() of x : AnalyzedObjectExpr =>
+                              case x.object() of x : AnalyzedVarObject => x.index(); esac; esac);
+                        assertSameType("let nested 2", analyzer.boolType(), expr.type());
+
+                        let varIter : Iterator <- expr.vars().iterator() in
+                           {
+                              let var : AnalyzedLetVar <- case getIteratorNext(varIter) of x : AnalyzedLetVar => x; esac in
+                                 {
+                                    assertIntEquals("let nested 2 var index", 1, var.object().index());
+                                    assertVoid("let nested 2 var expr", var.expr());
+                                 };
+
+                              assertFalse("let nested 2 vars", varIter.next());
+                           };
+                     };
+                  esac;
                };
 
             let analyzer : TestAnalyzer <- newAnalyzerExpr("let greedy", "let b : Int in b < 0") in

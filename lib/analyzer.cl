@@ -421,13 +421,13 @@ class AnalyzedWhileExpr inherits AnalyzedExpr {
 };
 
 class AnalyzedLetVar {
-   object : AnalyzedObject;
-   object() : AnalyzedObject { object };
+   object : AnalyzedVarObject;
+   object() : AnalyzedVarObject { object };
 
    expr : AnalyzedExpr;
    expr() : AnalyzedExpr { expr };
 
-   init(object_ : AnalyzedObject, expr_ : AnalyzedExpr) : SELF_TYPE {{
+   init(object_ : AnalyzedVarObject, expr_ : AnalyzedExpr) : SELF_TYPE {{
       object <- object_;
       expr <- expr_;
       self;

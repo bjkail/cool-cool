@@ -720,26 +720,28 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
 
    visitLet(expr : AnalyzedLetExpr) : Object { new ObjectUtil.abortObject(self, "visitLet: unimplemented") };
    visitCase(expr : AnalyzedCaseExpr) : Object { new ObjectUtil.abortObject(self, "visitCase: unimplemented") };
-   visitFormalAssignment(index : Int, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitFormalAssignment: unimplemented") };
-   visitVarAssignment(index : Int, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitVarAssignment: unimplemented") };
+   visitFormalAssignment(object : AnalyzedFormalObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitFormalAssignment: unimplemented") };
+   visitVarAssignment(object : AnalyzedVarObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitVarAssignment: unimplemented") };
 
-   visitAttributeAssignment(attribute : AnalyzedAttribute, expr : AnalyzedExpr) : Object {
-      new InterpreterAttributeAssignmentExpr.init(
-            getType(attribute.containingType()).getAttribute(attribute.id()).index(),
-            analyzeExpr(expr))
+   visitAttributeAssignment(object : AnalyzedAttributeObject, expr : AnalyzedExpr) : Object {
+      let attribute : AnalyzedAttribute <- object.attribute() in
+         new InterpreterAttributeAssignmentExpr.init(
+               getType(attribute.containingType()).getAttribute(attribute.id()).index(),
+               analyzeExpr(expr))
    };
 
-   visitSelf() : Object {
+   visitSelf(object : AnalyzedSelfObject) : Object {
       new InterpreterSelfExpr
    };
 
-   visitFormal(index : Int) : Object { new ObjectUtil.abortObject(self, "visitFormal unimplemented") };
-   visitVar(index : Int) : Object { new ObjectUtil.abortObject(self, "visitVar unimplemented") };
+   visitFormal(object : AnalyzedFormalObject) : Object { new ObjectUtil.abortObject(self, "visitFormal unimplemented") };
+   visitVar(object : AnalyzedVarObject) : Object { new ObjectUtil.abortObject(self, "visitVar unimplemented") };
 
-   visitAttribute(attribute : AnalyzedAttribute) : Object {
-      new InterpreterAttributeExpr.init(
-            getType(attribute.containingType()).getAttribute(attribute.id()).index(),
-            getDefaultValue(attribute.type()))
+   visitAttribute(object : AnalyzedAttributeObject) : Object {
+      let attribute : AnalyzedAttribute <- object.attribute() in
+         new InterpreterAttributeExpr.init(
+               getType(attribute.containingType()).getAttribute(attribute.id()).index(),
+               getDefaultValue(attribute.type()))
    };
 
    visitNew(expr : AnalyzedNewExpr) : Object {

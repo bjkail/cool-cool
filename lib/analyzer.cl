@@ -295,7 +295,7 @@ class AnalyzedSelfObject inherits AnalyzedObject {
       self;
    }};
 
-   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitSelf() };
+   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitSelf(self) };
 };
 
 class AnalyzedFormalObject inherits AnalyzedObject {
@@ -308,8 +308,8 @@ class AnalyzedFormalObject inherits AnalyzedObject {
       self;
    }};
 
-   acceptAssignment(visitor : AnalyzedExprVisitor, expr : AnalyzedExpr) : Object { visitor.visitFormalAssignment(index, expr) };
-   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitFormal(index) };
+   acceptAssignment(visitor : AnalyzedExprVisitor, expr : AnalyzedExpr) : Object { visitor.visitFormalAssignment(self, expr) };
+   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitFormal(self) };
 };
 
 class AnalyzedVarObject inherits AnalyzedObject {
@@ -322,8 +322,8 @@ class AnalyzedVarObject inherits AnalyzedObject {
       self;
    }};
 
-   acceptAssignment(visitor : AnalyzedExprVisitor, expr : AnalyzedExpr) : Object { visitor.visitVarAssignment(index, expr) };
-   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitVar(index) };
+   acceptAssignment(visitor : AnalyzedExprVisitor, expr : AnalyzedExpr) : Object { visitor.visitVarAssignment(self, expr) };
+   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitVar(self) };
 };
 
 class AnalyzedAttributeObject inherits AnalyzedObject {
@@ -336,8 +336,8 @@ class AnalyzedAttributeObject inherits AnalyzedObject {
       self;
    }};
 
-   acceptAssignment(visitor : AnalyzedExprVisitor, expr : AnalyzedExpr) : Object { visitor.visitAttributeAssignment(attribute, expr) };
-   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitAttribute(attribute) };
+   acceptAssignment(visitor : AnalyzedExprVisitor, expr : AnalyzedExpr) : Object { visitor.visitAttributeAssignment(self, expr) };
+   accept(visitor : AnalyzedExprVisitor) : Object { visitor.visitAttribute(self) };
 };
 
 class AnalyzedExprVisitor {
@@ -346,13 +346,13 @@ class AnalyzedExprVisitor {
    visitWhile(expr : AnalyzedWhileExpr) : Object { new ObjectUtil.abortObject(self, "visitWhile: unimplemented") };
    visitLet(expr : AnalyzedLetExpr) : Object { new ObjectUtil.abortObject(self, "visitLet: unimplemented") };
    visitCase(expr : AnalyzedCaseExpr) : Object { new ObjectUtil.abortObject(self, "visitCase: unimplemented") };
-   visitFormalAssignment(index : Int, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitFormalAssignment: unimplemented") };
-   visitVarAssignment(index : Int, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitVarAssignment: unimplemented") };
-   visitAttributeAssignment(attribute : AnalyzedAttribute, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitAttributeAssignment: unimplemented") };
-   visitSelf() : Object { new ObjectUtil.abortObject(self, "visitSelf unimplemented") };
-   visitFormal(index : Int) : Object { new ObjectUtil.abortObject(self, "visitFormal unimplemented") };
-   visitVar(index : Int) : Object { new ObjectUtil.abortObject(self, "visitVar unimplemented") };
-   visitAttribute(attribute : AnalyzedAttribute) : Object { new ObjectUtil.abortObject(self, "visitAttribute unimplemented") };
+   visitFormalAssignment(object : AnalyzedFormalObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitFormalAssignment: unimplemented") };
+   visitVarAssignment(object : AnalyzedVarObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitVarAssignment: unimplemented") };
+   visitAttributeAssignment(attribute : AnalyzedAttributeObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitAttributeAssignment: unimplemented") };
+   visitSelf(object : AnalyzedSelfObject) : Object { new ObjectUtil.abortObject(self, "visitSelf unimplemented") };
+   visitFormal(object : AnalyzedFormalObject) : Object { new ObjectUtil.abortObject(self, "visitFormal unimplemented") };
+   visitVar(object : AnalyzedVarObject) : Object { new ObjectUtil.abortObject(self, "visitVar unimplemented") };
+   visitAttribute(object : AnalyzedAttributeObject) : Object { new ObjectUtil.abortObject(self, "visitAttribute unimplemented") };
    visitNew(expr : AnalyzedNewExpr) : Object { new ObjectUtil.abortObject(self, "visitNew: unimplemented") };
    visitDispatch(expr : AnalyzedDispatchExpr) : Object { new ObjectUtil.abortObject(self, "visitDispatch: unimplemented") };
    visitUnary(expr : AnalyzedUnaryExpr) : Object { new ObjectUtil.abortObject(self, "visitUnary: unimplemented") };

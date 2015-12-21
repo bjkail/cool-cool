@@ -465,23 +465,6 @@ class AnalyzedCaseBranch {
    }};
 };
 
-class AnalyzedCaseBranchComparator inherits Comparator {
-   compare(o1 : Object, o2 : Object) : Int {
-      let inheritsDepth1 : Int <- case o1 of x : AnalyzedCaseBranch => x.checkType().inheritsDepth(); esac,
-            inheritsDepth2 : Int <- case o2 of x : AnalyzedCaseBranch => x.checkType().inheritsDepth(); esac in
-         if inheritsDepth1 = inheritsDepth2 then
-            0
-         else
-            -- Sort highest entries first.
-            if inheritsDepth1 < inheritsDepth2 then
-               1
-            else
-               ~1
-            fi
-         fi
-   };
-};
-
 class AnalyzedCaseExpr inherits AnalyzedExpr {
    line : Int;
    line() : Int { line };
@@ -856,7 +839,6 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
                      }
                pool;
 
-            branches.sort(new AnalyzedCaseBranchComparator);
             new AnalyzedCaseExpr.init(parsedExpr.line(), type, expr, varIndex(), branches);
          }
    };

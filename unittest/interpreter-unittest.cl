@@ -370,6 +370,22 @@ class Main inherits Test {
             assertTrue("less equal", interpretBoolExpr("less equal", "0 <= 1"));
             assertTrue("less equal", interpretBoolExpr("less equal", "0 <= 0"));
             assertFalse("less equal", interpretBoolExpr("less equal", "1 <= 0"));
+
+            assertTrue("equal int", interpretBoolExpr("equal int", "0 = 0"));
+            assertTrue("equal int new", interpretBoolExpr("equal int", "0 = new Int"));
+            assertFalse("equal int 2", interpretBoolExpr("equal int", "0 = 1"));
+
+            assertTrue("equal bool", interpretBoolExpr("equal bool", "false = false"));
+            assertTrue("equal bool new", interpretBoolExpr("equal bool", "false = new Bool"));
+            assertFalse("equal bool 2", interpretBoolExpr("equal bool", "false = true"));
+
+            assertTrue("equal string", interpretBoolExpr("equal bool", "\"a\" = \"a\""));
+            assertTrue("equal string new", interpretBoolExpr("equal string new", "\"\" = new String"));
+            assertFalse("equal string 2", interpretBoolExpr("equal string 2", "\"\" = \"a\""));
+
+            assertTrue("equal self", interpretBoolExpr("equal self", "self = self"));
+            assertFalse("equal self new", interpretBoolExpr("equal self new", "self = new Main"));
+            assertFalse("equal self copy", interpretBoolExpr("equal self copy", "self = copy()"));
          }
       else false fi
    };

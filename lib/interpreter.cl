@@ -871,7 +871,11 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
                      else
                         if op = "<=" then
                            new InterpreterLessEqualExpr.init(boolType.type(), left, right)
-                        else new ObjectUtil.abortObject(self, "visitBinary: unimplemented".concat(op)) fi
+                        else
+                           if op = "=" then
+                              new InterpreterEqualExpr.init(boolType.type(), left, right)
+                           else new ObjectUtil.abortObject(self, "visitBinary: unimplemented".concat(op)) fi
+                        fi
                      fi
                   fi
                fi
@@ -896,6 +900,7 @@ class InterpreterValue {
    type : InterpreterType;
    type() : InterpreterType { type };
 
+   equalityValue() : Object { self };
    copyValue() : InterpreterValue { self };
    toString() : String { self.type_name() };
 };
@@ -946,6 +951,8 @@ class InterpreterBoolValue inherits InterpreterValue {
       self;
    }};
 
+   equalityValue() : Object { value };
+
    toString() : String { if value then "true" else "false" fi };
 };
 
@@ -958,6 +965,8 @@ class InterpreterIntValue inherits InterpreterValue {
       value <- value_;
       self;
    }};
+
+   equalityValue() : Object { value };
 
    toString() : String { new StringUtil.fromInt(value) };
 };
@@ -983,6 +992,8 @@ class InterpreterStringValue inherits InterpreterValue {
    isEmpty() : Bool {
       value.length() = 0
    };
+
+   equalityValue() : Object { value };
 
    toString() : String { "string[".concat(value).concat("]") };
 };
@@ -1900,6 +1911,18 @@ class InterpreterLessEqualExprState inherits InterpreterBinaryExprState {
       let left : InterpreterIntValue <- case left of x : InterpreterIntValue => x; esac,
             right : InterpreterIntValue <- case right of x : InterpreterIntValue => x; esac in
          new InterpreterBoolValue.init(type, left.value() <= right.value())
+   };
+};
+
+class InterpreterEqualExpr inherits InterpreterBinaryExpr {
+   newState() : InterpreterBinaryExprState {
+      new InterpreterEqualExprState
+   };
+};
+
+class InterpreterEqualExprState inherits InterpreterBinaryExprState {
+   interpret(right : InterpreterValue) : InterpreterValue {
+      new InterpreterBoolValue.init(type, left.equalityValue() = right.equalityValue())
    };
 };
 

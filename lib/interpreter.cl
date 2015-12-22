@@ -801,13 +801,13 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
    visitNew(expr : AnalyzedNewExpr) : Object {
       let type : InterpreterAnalyzerType <- getType(expr.type()) in
          if type = boolType then
-            new InterpreterConstantBoolExpr.init(boolType.type(), false)
+            new InterpreterValueExpr.init(defaultBoolValue)
          else
             if type = intType then
-               new InterpreterConstantIntExpr.init(intType.type(), 0)
+               new InterpreterValueExpr.init(defaultIntValue)
             else
                if type = stringType then
-                  new InterpreterConstantStringExpr.init(stringType.type(), "", 0)
+                  new InterpreterValueExpr.init(defaultStringValue)
                else
                   let type : InterpreterType <- type.type() in
                      if type.attributeInits().size() = 0 then
@@ -864,15 +864,15 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
    };
 
    visitConstantBool(expr : AnalyzedConstantBoolExpr) : Object {
-      new InterpreterConstantBoolExpr.init(boolType.type(), expr.value())
+      new InterpreterValueExpr.init(new InterpreterBoolValue.init(boolType.type(), expr.value()))
    };
 
    visitConstantInt(expr : AnalyzedConstantIntExpr) : Object {
-      new InterpreterConstantIntExpr.init(intType.type(), expr.value())
+      new InterpreterValueExpr.init(new InterpreterIntValue.init(intType.type(), expr.value()))
    };
 
    visitConstantString(expr : AnalyzedConstantStringExpr) : Object {
-      new InterpreterConstantStringExpr.init(stringType.type(), expr.value(), expr.escapes())
+      new InterpreterValueExpr.init(new InterpreterStringValue.init(stringType.type(), expr.value(), expr.escapes()))
    };
 };
 
@@ -1788,57 +1788,19 @@ class InterpreterLessExprState inherits InterpreterBinaryExprState {
    };
 };
 
-class InterpreterConstantBoolExpr inherits InterpreterExpr {
-   type : InterpreterType;
-   value : Bool;
+class InterpreterValueExpr inherits InterpreterExpr {
+   value : InterpreterValue;
 
-   init(type_ : InterpreterType, value_ : Bool) : SELF_TYPE {{
-      type <- type_;
+   init(value_ : InterpreterValue) : SELF_TYPE {{
       value <- value_;
       self;
    }};
 
    interpret(interpreter : Interpreter) : Bool {
-      interpreter.interpretValue(new InterpreterBoolValue.init(type, value))
+      interpreter.interpretValue(value)
    };
 
-   toString() : String { if value then "true" else "false" fi };
-};
-
-class InterpreterConstantIntExpr inherits InterpreterExpr {
-   type : InterpreterType;
-   value : Int;
-
-   init(type_ : InterpreterType, value_ : Int) : SELF_TYPE {{
-      type <- type_;
-      value <- value_;
-      self;
-   }};
-
-   interpret(interpreter : Interpreter) : Bool {
-      interpreter.interpretValue(new InterpreterIntValue.init(type, value))
-   };
-
-   toString() : String { new StringUtil.fromInt(value) };
-};
-
-class InterpreterConstantStringExpr inherits InterpreterExpr {
-   type : InterpreterType;
-   value : String;
-   escapes : Int;
-
-   init(type_ : InterpreterType, value_ : String, escapes_ : Int) : SELF_TYPE {{
-      type <- type_;
-      value <- value_;
-      escapes <- escapes_;
-      self;
-   }};
-
-   interpret(interpreter : Interpreter) : Bool {
-      interpreter.interpretValue(new InterpreterStringValue.init(type, value, escapes))
-   };
-
-   toString() : String { "string[".concat(value).concat("]") };
+   toString() : String { value.toString() };
 };
 
 class InterpreterExitValueExprState inherits InterpreterExprState {

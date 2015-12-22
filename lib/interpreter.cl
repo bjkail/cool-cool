@@ -842,7 +842,11 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
          else
             if op = "~" then
                new InterpreterComplementExpr.init(intType.type(), analyzeExpr(expr.expr()))
-            else new ObjectUtil.abortObject(self, "visitUnary: unimplemented ".concat(op)) fi
+            else
+               if op = "not" then
+                  new InterpreterNotExpr.init(boolType.type(), analyzeExpr(expr.expr()))
+               else new ObjectUtil.abortObject(self, "visitUnary: unimplemented ".concat(op)) fi
+            fi
          fi
    };
 
@@ -1683,6 +1687,19 @@ class InterpreterComplementExpr inherits InterpreterUnaryExpr {
 class InterpreterComplementExprState inherits InterpreterUnaryExprState {
    proceed(interpreter : Interpreter) : Bool {
       interpreter.proceedValue(new InterpreterIntValue.init(type, case value of x : InterpreterIntValue => ~x.value(); esac))
+   };
+};
+
+class InterpreterNotExpr inherits InterpreterUnaryExpr {
+   interpret(interpreter : Interpreter) : Bool {{
+      interpreter.pushState(new InterpreterNotExprState.init(type));
+      expr.interpret(interpreter);
+   }};
+};
+
+class InterpreterNotExprState inherits InterpreterUnaryExprState {
+   proceed(interpreter : Interpreter) : Bool {
+      interpreter.proceedValue(new InterpreterBoolValue.init(type, case value of x : InterpreterBoolValue => not x.value(); esac))
    };
 };
 

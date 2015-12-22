@@ -339,6 +339,9 @@ class Main inherits Test {
             assertFalse("isvoid object", interpretBoolExpr("isvoid object", "isvoid self"));
 
             assertIntEquals("complement", ~1, interpretIntExpr("complement", "~1"));
+
+            assertTrue("not false", interpretBoolExpr("not false", "not false"));
+            assertFalse("not true", interpretBoolExpr("not true", "not true"));
          }
       else false fi
    };

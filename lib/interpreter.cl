@@ -146,7 +146,7 @@ class InterpreterBasicObjectCopyMethod inherits InterpreterMethod {
                let copy : InterpreterObjectValue <- new InterpreterObjectValue.init(target.type()) in
                   {
                      copy.attributes().putAll(target.attributes());
-                     interpreter.proceedValue(target);
+                     interpreter.proceedValue(copy);
                   };
             target : InterpreterValue => interpreter.proceedValue(target);
          esac

@@ -389,7 +389,11 @@ class Main inherits Test {
             assertStringEquals("string copy", "a", interpretStringExpr("string copy", "\"a\".copy()"));
             -- TODO: test equality
             interpretObjectExpr("object copy", "Object", "new Object.copy()");
-            -- TODO: test attribute
+            assertIntEquals("main copy", 2, interpretInt("main copy",
+                  "class Main {\na : A <- new A; b : Int;\na() : Int { a.a() + b };\n"
+                  .concat("main() : Object { let c : Main <- copy() in { a.a(); b <- 4; c.a(); } }; };\n")
+                  .concat("class A { a : Int; a() : Int { a <- a + 1 }; };")));
+
             interpretObjectExpr("main copy", "Main", "copy()");
 
             let io : TestIO <- new TestIO.init(self, "out_string", new Collection, new LinkedList.add("a")) in

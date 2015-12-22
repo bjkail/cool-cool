@@ -140,16 +140,7 @@ class InterpreterBasicObjectTypeNameMethod inherits InterpreterMethod {
 
 class InterpreterBasicObjectCopyMethod inherits InterpreterMethod {
    interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
-      let target : InterpreterValue <- state.target() in
-         case target of
-            target : InterpreterObjectValue =>
-               let copy : InterpreterObjectValue <- new InterpreterObjectValue.init(target.type()) in
-                  {
-                     copy.attributes().putAll(target.attributes());
-                     interpreter.proceedValue(copy);
-                  };
-            target : InterpreterValue => interpreter.proceedValue(target);
-         esac
+      interpreter.proceedValue(state.target().copyValue())
    };
 };
 
@@ -881,6 +872,7 @@ class InterpreterValue {
    type : InterpreterType;
    type() : InterpreterType { type };
 
+   copyValue() : InterpreterValue { self };
    toString() : String { self.type_name() };
 };
 
@@ -908,6 +900,14 @@ class InterpreterObjectValue inherits InterpreterValue {
       type <- type_;
       self;
    }};
+
+   copyValue() : InterpreterValue {
+      let copy : InterpreterObjectValue <- new InterpreterObjectValue.init(type) in
+         {
+            copy.attributes().putAll(attributes);
+            copy;
+         }
+   };
 
    toString() : String { "object[".concat(type().name()).concat("]") };
 };

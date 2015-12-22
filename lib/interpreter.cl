@@ -837,9 +837,13 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
 
    visitUnary(expr : AnalyzedUnaryExpr) : Object {
       let op : String <- expr.op() in
-         if op = "~" then
-            new InterpreterComplementExpr.init(intType.type(), analyzeExpr(expr.expr()))
-         else new ObjectUtil.abortObject(self, "visitUnary: unimplemented ".concat(op)) fi
+         if op = "isvoid" then
+            new InterpreterIsVoidExpr.init(boolType.type(), analyzeExpr(expr.expr()))
+         else
+            if op = "~" then
+               new InterpreterComplementExpr.init(intType.type(), analyzeExpr(expr.expr()))
+            else new ObjectUtil.abortObject(self, "visitUnary: unimplemented ".concat(op)) fi
+         fi
    };
 
    visitBinary(expr : AnalyzedBinaryExpr) : Object {
@@ -1631,7 +1635,7 @@ class InterpreterStaticDispatchExprState inherits InterpreterDispatchExprState {
    lookupMethod() : InterpreterMethod { method };
 };
 
-class InterpreterComplementExpr inherits InterpreterExpr {
+class InterpreterUnaryExpr inherits InterpreterExpr {
    type : InterpreterType;
    expr : InterpreterExpr;
 
@@ -1640,16 +1644,11 @@ class InterpreterComplementExpr inherits InterpreterExpr {
       expr <- expr_;
       self;
    }};
-
-   interpret(interpreter : Interpreter) : Bool {{
-      interpreter.pushState(new InterpreterComplementExprState.init(type));
-      expr.interpret(interpreter);
-   }};
 };
 
-class InterpreterComplementExprState inherits InterpreterExprState {
+class InterpreterUnaryExprState inherits InterpreterExprState {
    type : InterpreterType;
-   value : InterpreterIntValue;
+   value : InterpreterValue;
 
    init(type_ : InterpreterType) : SELF_TYPE {{
       type <- type_;
@@ -1657,11 +1656,33 @@ class InterpreterComplementExprState inherits InterpreterExprState {
    }};
 
    addValue(value_ : InterpreterValue) : Object {
-      value <- case value_ of x : InterpreterIntValue => x; esac
+      value <- value_
    };
+};
 
+class InterpreterIsVoidExpr inherits InterpreterUnaryExpr {
+   interpret(interpreter : Interpreter) : Bool {{
+      interpreter.pushState(new InterpreterIsVoidExprState.init(type));
+      expr.interpret(interpreter);
+   }};
+};
+
+class InterpreterIsVoidExprState inherits InterpreterUnaryExprState {
    proceed(interpreter : Interpreter) : Bool {
-      interpreter.proceedValue(new InterpreterIntValue.init(type, ~value.value()))
+      interpreter.proceedValue(new InterpreterBoolValue.init(type, isvoid value))
+   };
+};
+
+class InterpreterComplementExpr inherits InterpreterUnaryExpr {
+   interpret(interpreter : Interpreter) : Bool {{
+      interpreter.pushState(new InterpreterComplementExprState.init(type));
+      expr.interpret(interpreter);
+   }};
+};
+
+class InterpreterComplementExprState inherits InterpreterUnaryExprState {
+   proceed(interpreter : Interpreter) : Bool {
+      interpreter.proceedValue(new InterpreterIntValue.init(type, case value of x : InterpreterIntValue => ~x.value(); esac))
    };
 };
 

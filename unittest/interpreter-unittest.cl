@@ -332,6 +332,12 @@ class Main inherits Test {
    testUnary() : Object {
       if begin("unary") then
          {
+            assertTrue("isvoid void", interpretBoolExpr("isvoid void", "isvoid let a : Object in a"));
+            assertFalse("isvoid int", interpretBoolExpr("isvoid int", "isvoid 0"));
+            assertFalse("isvoid bool", interpretBoolExpr("isvoid bool", "isvoid false"));
+            assertFalse("isvoid string", interpretBoolExpr("isvoid string", "isvoid \"\""));
+            assertFalse("isvoid object", interpretBoolExpr("isvoid object", "isvoid self"));
+
             assertIntEquals("complement", ~1, interpretIntExpr("complement", "~1"));
          }
       else false fi

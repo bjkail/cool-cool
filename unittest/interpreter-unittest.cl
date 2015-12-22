@@ -357,6 +357,12 @@ class Main inherits Test {
 
             assertIntEquals("multiply", 6, interpretIntExpr("multiply", "2 * 3"));
 
+            assertIntEquals("divide", 2, interpretIntExpr("multiply", "6 / 3"));
+            assertErrorEquals("divide 0",
+                  "divide by 0",
+                  "\tat Main.main (line 1)\n",
+                  interpretErrorExpr("divide 0", "1 / 0"));
+
             assertTrue("less", interpretBoolExpr("less", "0 < 1"));
             assertFalse("less", interpretBoolExpr("less", "1 < 0"));
          }

@@ -863,9 +863,13 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
                if op = "*" then
                   new InterpreterMultiplyExpr.init(intType.type(), left, right)
                else
-                  if op = "<" then
-                     new InterpreterLessExpr.init(boolType.type(), left, right)
-                  else new ObjectUtil.abortObject(self, "visitBinary: unimplemented".concat(op)) fi
+                  if op = "/" then
+                     new InterpreterDivideExpr.init(expr.line(), intType.type(), left, right)
+                  else
+                     if op = "<" then
+                        new InterpreterLessExpr.init(boolType.type(), left, right)
+                     else new ObjectUtil.abortObject(self, "visitBinary: unimplemented".concat(op)) fi
+                  fi
                fi
             fi
          fi
@@ -1807,6 +1811,63 @@ class InterpreterMultiplyExprState inherits InterpreterBinaryExprState {
       let left : InterpreterIntValue <- case left of x : InterpreterIntValue => x; esac,
             right : InterpreterIntValue <- case right of x : InterpreterIntValue => x; esac in
          new InterpreterIntValue.init(type, left.value() * right.value())
+   };
+};
+
+class InterpreterDivideExpr inherits InterpreterExpr {
+   line : Int;
+   type : InterpreterType;
+   left : InterpreterExpr;
+   right : InterpreterExpr;
+
+   init(line_ : Int, type_ : InterpreterType, left_ : InterpreterExpr, right_ : InterpreterExpr) : SELF_TYPE {{
+      line <- line_;
+      type <- type_;
+      left <- left_;
+      right <- right_;
+      self;
+   }};
+
+   interpret(interpreter : Interpreter) : Bool {{
+      interpreter.pushState(new InterpreterDivideExprState.init(line, type, right));
+      left.interpret(interpreter);
+   }};
+};
+
+class InterpreterDivideExprState inherits InterpreterExprState {
+   line : Int;
+   type : InterpreterType;
+   left : InterpreterValue;
+   rightExpr : InterpreterExpr;
+   right : InterpreterValue;
+
+   init(line_ : Int, type_ : InterpreterType, rightExpr_ : InterpreterExpr) : SELF_TYPE {{
+      line <- line_;
+      type <- type_;
+      rightExpr <- rightExpr_;
+      self;
+   }};
+
+   addValue(value : InterpreterValue) : Object {
+      if isvoid left then
+         left <- value
+      else
+         right <- value
+      fi
+   };
+
+   proceed(interpreter : Interpreter) : Bool {
+      if isvoid right then
+         rightExpr.interpret(interpreter)
+      else
+         let left : Int <- case left of x : InterpreterIntValue => x.value(); esac,
+               right : Int <- case right of x : InterpreterIntValue => x.value(); esac in
+            if right = 0 then
+               interpreter.proceedError(line, "divide by 0")
+            else
+               interpreter.proceedValue(new InterpreterIntValue.init(type, left / right))
+            fi
+      fi
    };
 };
 

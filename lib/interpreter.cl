@@ -799,24 +799,29 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
    };
 
    visitNew(expr : AnalyzedNewExpr) : Object {
-      let type : InterpreterAnalyzerType <- getType(expr.type()) in
-         if type = boolType then
-            new InterpreterValueExpr.init(defaultBoolValue)
+      let type : AnalyzedType <- expr.type() in
+         if type.isSelfType() then
+            new InterpreterNewSelfTypeExpr.init(expr.line())
          else
-            if type = intType then
-               new InterpreterValueExpr.init(defaultIntValue)
-            else
-               if type = stringType then
-                  new InterpreterValueExpr.init(defaultStringValue)
+            let type : InterpreterAnalyzerType <- getType(type) in
+               if type = boolType then
+                  new InterpreterValueExpr.init(defaultBoolValue)
                else
-                  let type : InterpreterType <- type.type() in
-                     if type.attributeInits().size() = 0 then
-                        new InterpreterSimpleNewExpr.init(type)
+                  if type = intType then
+                     new InterpreterValueExpr.init(defaultIntValue)
+                  else
+                     if type = stringType then
+                        new InterpreterValueExpr.init(defaultStringValue)
                      else
-                        new InterpreterNewExpr.init(expr.line(), type)
+                        let type : InterpreterType <- type.type() in
+                           if type.attributeInits().size() = 0 then
+                              new InterpreterSimpleNewExpr.init(type)
+                           else
+                              new InterpreterNewExpr.init(expr.line(), type)
+                           fi
                      fi
+                  fi
                fi
-            fi
          fi
    };
 
@@ -1502,6 +1507,19 @@ class InterpreterNewExprState inherits InterpreterExprState {
    };
 
    toString() : String { "new[".concat(type.name()).concat("]") };
+};
+
+class InterpreterNewSelfTypeExpr inherits InterpreterExpr {
+   line : Int;
+
+   init(line_ : Int) : SELF_TYPE {{
+      line <- line_;
+      self;
+   }};
+
+   interpret(interpreter : Interpreter) : Bool {
+      interpreter.pushState(new InterpreterNewExprState.init(line, interpreter.selfObject().type(), interpreter))
+   };
 };
 
 class InterpreterSimpleNewExpr inherits InterpreterExpr {

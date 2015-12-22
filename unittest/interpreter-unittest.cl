@@ -249,6 +249,11 @@ class Main inherits Test {
             interpretObject("object", "Object", "class Main { main() : Object { new Object }; };");
 
             interpretObject("main", "Main", "class Main { main() : Object { new Main }; };");
+
+            interpretObjectExpr("self", "Main", "new SELF_TYPE");
+            interpretObject("self inherits", "Main",
+                  "class Main inherits A { main() : Object { a() }; };"
+                  .concat("class A { a() : SELF_TYPE { new SELF_TYPE }; };"));
          }
       else false fi
    };

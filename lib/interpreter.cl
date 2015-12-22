@@ -868,7 +868,11 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
                   else
                      if op = "<" then
                         new InterpreterLessExpr.init(boolType.type(), left, right)
-                     else new ObjectUtil.abortObject(self, "visitBinary: unimplemented".concat(op)) fi
+                     else
+                        if op = "<=" then
+                           new InterpreterLessEqualExpr.init(boolType.type(), left, right)
+                        else new ObjectUtil.abortObject(self, "visitBinary: unimplemented".concat(op)) fi
+                     fi
                   fi
                fi
             fi
@@ -1882,6 +1886,20 @@ class InterpreterLessExprState inherits InterpreterBinaryExprState {
       let left : InterpreterIntValue <- case left of x : InterpreterIntValue => x; esac,
             right : InterpreterIntValue <- case right of x : InterpreterIntValue => x; esac in
          new InterpreterBoolValue.init(type, left.value() < right.value())
+   };
+};
+
+class InterpreterLessEqualExpr inherits InterpreterBinaryExpr {
+   newState() : InterpreterBinaryExprState {
+      new InterpreterLessEqualExprState
+   };
+};
+
+class InterpreterLessEqualExprState inherits InterpreterBinaryExprState {
+   interpret(right : InterpreterValue) : InterpreterValue {
+      let left : InterpreterIntValue <- case left of x : InterpreterIntValue => x; esac,
+            right : InterpreterIntValue <- case right of x : InterpreterIntValue => x; esac in
+         new InterpreterBoolValue.init(type, left.value() <= right.value())
    };
 };
 

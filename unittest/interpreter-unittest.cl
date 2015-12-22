@@ -364,7 +364,12 @@ class Main inherits Test {
                   interpretErrorExpr("divide 0", "1 / 0"));
 
             assertTrue("less", interpretBoolExpr("less", "0 < 1"));
+            assertFalse("less", interpretBoolExpr("less", "0 < 0"));
             assertFalse("less", interpretBoolExpr("less", "1 < 0"));
+
+            assertTrue("less equal", interpretBoolExpr("less equal", "0 <= 1"));
+            assertTrue("less equal", interpretBoolExpr("less equal", "0 <= 0"));
+            assertFalse("less equal", interpretBoolExpr("less equal", "1 <= 0"));
          }
       else false fi
    };

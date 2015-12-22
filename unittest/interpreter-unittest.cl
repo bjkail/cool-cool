@@ -352,6 +352,9 @@ class Main inherits Test {
             assertIntEquals("add", 3, interpretIntExpr("add", "1 + 2"));
             assertIntEquals("add overflow", ~2147483647 - 1, interpretIntExpr("add overflow", "2147483647 + 1"));
 
+            assertIntEquals("subtract", 1, interpretIntExpr("subtract", "3 - 2"));
+            assertIntEquals("subtract underflow", 2147483647, interpretIntExpr("subtract overflow", "~2147483647 - 2"));
+
             assertTrue("less", interpretBoolExpr("less", "0 < 1"));
             assertFalse("less", interpretBoolExpr("less", "1 < 0"));
          }

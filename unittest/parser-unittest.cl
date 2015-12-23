@@ -951,16 +951,9 @@ class TestParser inherits Parser {
    errorString : String;
    errorString() : String { errorString };
 
-   error(s : String) : Bool {
-      if error then
-         false
-      else
-         {
-            errorString <- tokenizer.lineMap().lineToString(line()).concat(": ").concat(s);
-            error <- true;
-            token <- new TokenEof;
-            false;
-         }
-      fi
+   reportError(line : Int, s : String) : Object {
+      if not error then
+         errorString <- "line ".concat(new StringUtil.fromInt(line)).concat(": ").concat(s)
+      else false fi
    };
 };

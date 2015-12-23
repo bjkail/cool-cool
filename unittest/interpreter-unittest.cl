@@ -22,7 +22,7 @@ class Main inherits Test {
          {
             assertNotVoid(context.concat(" parse"), program);
             let lineMap : TokenizerLineMap <- tokenizer.lineMap(),
-                  analyzer : Analyzer <- new Analyzer.init(lineMap),
+                  analyzer : Analyzer <- new Analyzer,
                   program : AnalyzedProgram <- analyzer.analyze(program) in
                {
                   assertNotVoid(context.concat(" analyze"), program);

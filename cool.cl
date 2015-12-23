@@ -4,13 +4,13 @@ class Main {
             is : IOInputStream <- new IOInputStream.init(io),
             listener : MainTokenizerListener <- new MainTokenizerListener.init(is),
             tokenizer : Tokenizer <- new Tokenizer.init(is).setListener(listener),
-            parser : Parser <- new Parser.init(tokenizer) in
+            parser : Parser <- new MainParser.initMain(io, tokenizer) in
          {
             parser.peekToken();
 
             let error : String <- listener.optionError() in
                if not error = "" then
-                  new IO.out_string("ERROR: ").out_string(error).out_string("\n")
+                  io.out_string("ERROR: ").out_string(error).out_string("\n")
                else
                   if listener.lex() then
                      while isvoid parser.readToken().asEof() loop
@@ -22,7 +22,8 @@ class Main {
                               not listener.parse()
                            else false fi
                         then
-                           let analyzer : Analyzer <- new Analyzer.init(tokenizer.lineMap()),
+                           let lineMap : TokenizerLineMap <- tokenizer.lineMap(),
+                                 analyzer : Analyzer <- new MainAnalyzer.initMain(io, lineMap),
                                  program : AnalyzedProgram <- analyzer.analyze(program) in
                               if if not isvoid program then
                                     if not listener.analyze() then
@@ -30,12 +31,12 @@ class Main {
                                     else false fi
                                  else false fi
                               then
-                                 let program : InterpreterProgram <- new InterpreterAnalyzer.init(tokenizer.lineMap()).analyze(program),
-                                       value : InterpreterValue <- program.interpret(new IO) in
+                                 let program : InterpreterProgram <- new InterpreterAnalyzer.init(lineMap).analyze(program),
+                                       value : InterpreterValue <- program.interpret(io) in
                                     if not isvoid value then
                                        case value of
                                           x : InterpreterErrorValue =>
-                                             new IO.out_string("ERROR: ").out_string(x.value())
+                                             io.out_string("ERROR: ").out_string(x.value())
                                                    .out_string("\n").out_string(x.stack());
                                           x : Object => false;
                                        esac
@@ -100,4 +101,40 @@ class MainTokenizerListener inherits TokenizerListener {
          fi
       else false fi
    };
+};
+
+class MainParser inherits Parser {
+   io : IO;
+
+   initMain(io_ : IO, tokenizer : Tokenizer) : SELF_TYPE {{
+      io <- io_;
+      init(tokenizer);
+   }};
+
+   reportError(line : Int, s : String) : Object {{
+      io.out_string("ERROR: ");
+      if not line = 0 then
+         io.out_string(tokenizer.lineMap().lineToString(line)).out_string(": ")
+      else false fi;
+      io.out_string(s).out_string("\n");
+   }};
+};
+
+class MainAnalyzer inherits Analyzer {
+   io : IO;
+   lineMap : TokenizerLineMap;
+
+   initMain(io_ : IO, lineMap_ : TokenizerLineMap) : SELF_TYPE {{
+      io <- io_;
+      lineMap <- lineMap_;
+      self;
+   }};
+
+   reportError(line : Int, s : String) : Object {{
+      io.out_string("ERROR: ");
+      if not line = 0 then
+         io.out_string(lineMap.lineToString(line)).out_string(": ")
+      else false fi;
+      io.out_string(s).out_string("\n");
+   }};
 };

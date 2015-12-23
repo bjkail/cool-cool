@@ -16,7 +16,7 @@ class Main inherits Test {
             program : ParsedProgram <- parser.parse() in
          {
             assertNotVoid(context.concat(" program"), program);
-            new TestAnalyzer.initTest(tokenizer.lineMap(), program);
+            new TestAnalyzer.init(program);
          }
    };
 
@@ -122,7 +122,7 @@ class Main inherits Test {
    testMain() : Object {
       if begin("main") then
          {
-            assertAnalyzerErrorImpl("", "expected class 'Main'",
+            assertAnalyzerErrorImpl("", "line 0: expected class 'Main'",
                   "class A { a : Bool; };");
             assertAnalyzerErrorImpl("", "line 1: expected method 'main' in class 'Main'",
                   "class Main { a : Bool; };");
@@ -961,17 +961,14 @@ class TestAnalyzer inherits Analyzer {
 
    program : ParsedProgram;
 
-   initTest(lineMap : TokenizerLineMap, program_ : ParsedProgram) : SELF_TYPE {{
+   init(program_ : ParsedProgram) : SELF_TYPE {{
       program <- program_;
-      init(lineMap);
+      self;
    }};
 
-   error(s : String) : Object {
+   reportError(line : Int, s : String) : Object {
       if not error then
-         {
-            errorString <- s;
-            error <- true;
-         }
+         errorString <- "line ".concat(new StringUtil.fromInt(line)).concat(": ").concat(s)
       else false fi
    };
 

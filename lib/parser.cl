@@ -441,19 +441,11 @@ class Parser {
       line
    };
 
+   reportError(line : Int, s : String) : Object { new ObjectUtil.abortObject(self, "reportError: unimplemented") };
+
    error(s : String) : Bool {{
-      if not error then
-         {
-            new IO.out_string("ERROR: ")
-                  .out_string(tokenizer.lineMap().lineToString(line()))
-                  .out_string(": ")
-                  .out_string(s)
-                  .out_string("\n");
-
-            error <- true;
-         }
-      else false fi;
-
+      reportError(line, s);
+      error <- true;
       token <- new TokenEof;
       false;
    }};

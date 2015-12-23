@@ -2031,7 +2031,7 @@ class Interpreter {
    };
 
    debugOut(s : String) : Object {
-      new IO.out_string("DEBUG: interpreter: [").out_string(exprState.toString())
+      io.out_string("DEBUG: interpreter: [").out_string(exprState.toString())
             .out_string("] ").out_string(s)
             .out_string("\n")
    };

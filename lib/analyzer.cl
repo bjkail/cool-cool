@@ -1168,25 +1168,19 @@ class Analyzer {
          }
    };
 
-   lineMap : TokenizerLineMap;
-
-   init(lineMap_ : TokenizerLineMap) : SELF_TYPE {{
-      lineMap <- lineMap_;
-      self;
-   }};
-
    error : Bool;
 
+   reportError(line : Int, s : String) : Object { new ObjectUtil.abortObject(self, "reportError: unimplemented") };
+
    error(s : String) : Object {{
-      new IO.out_string("ANALYZER ERROR: ")
-            .out_string(s)
-            .out_string("\n");
+      reportError(0, s);
       error <- true;
    }};
 
-   errorAt(node : ParsedNode, s : String) : Object {
-      error(lineMap.lineToString(node.line()).concat(": ").concat(s))
-   };
+   errorAt(node : ParsedNode, s : String) : Object {{
+      reportError(node.line(), s);
+      error <- true;
+   }};
 
    getTypeImpl(node : ParsedNode, where : String, name : String) : AnalyzedType {
       let type : Object <- types.getWithString(name) in

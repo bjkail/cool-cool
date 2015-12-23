@@ -899,7 +899,6 @@ class Tokenizer {
                   token <- readToken(c)
             pool;
 
-            --new IO.out_string("token=").out_string(token.toString()).out_string("\n");
             token;
          }
    };

@@ -3,22 +3,22 @@ class Main inherits Test {
       testIOInputStream();
    }};
 
-   newTestIOInputStream(context : String, lines : Collection) : InputStream {
-      new TestIOInputStream.init(new TestIO.init(self, context, lines, new Collection))
+   newIOInputStream(context : String, lines : Collection) : InputStream {
+      new IOInputStream.init(new TestIO.init(self, context, lines, new Collection))
    };
 
    testIOInputStream() : Object {
       if begin("IOInputStream") then
          {
             let lines : LinkedList <- new LinkedList,
-                  is : InputStream <- newTestIOInputStream("empty", lines) in
+                  is : InputStream <- newIOInputStream("empty", lines) in
                {
                   assertStringEquals("empty [0]", "", is.read());
                   assertStringEquals("empty [1]", "", is.read());
                };
 
             let lines : LinkedList <- new LinkedList.add("a"),
-                  is : InputStream <- newTestIOInputStream("char", lines) in
+                  is : InputStream <- newIOInputStream("char", lines) in
                {
                   assertStringEquals("char [0]", "a", is.read());
                   assertStringEquals("char [1]", "\n", is.read());
@@ -26,7 +26,7 @@ class Main inherits Test {
                };
 
             let lines : LinkedList <- new LinkedList.add("").add("a"),
-                  is : InputStream <- newTestIOInputStream("blank", lines) in
+                  is : InputStream <- newIOInputStream("blank", lines) in
                {
                   assertStringEquals("blank [0]", "\n", is.read());
                   assertStringEquals("blank [1]", "a", is.read());
@@ -35,7 +35,7 @@ class Main inherits Test {
                };
 
             let lines : LinkedList <- new LinkedList.add("abc"),
-                  is : InputStream <- newTestIOInputStream("chars", lines) in
+                  is : InputStream <- newIOInputStream("chars", lines) in
                {
                   assertStringEquals("chars [0]", "a", is.read());
                   assertStringEquals("chars [1]", "b", is.read());
@@ -45,7 +45,7 @@ class Main inherits Test {
                };
 
             let lines : LinkedList <- new LinkedList.add("ab").add("cd").add("").add("ef").add("").add("").add("gh"),
-                  is : InputStream <- newTestIOInputStream("lines", lines) in
+                  is : InputStream <- newIOInputStream("lines", lines) in
                {
                   assertStringEquals("lines [0]", "a", is.read());
                   assertStringEquals("lines [1]", "b", is.read());

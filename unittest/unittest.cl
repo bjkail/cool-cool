@@ -215,11 +215,3 @@ class TestIO inherits IO {
       test.assertFalse(context.concat(" end"), outIter.next())
    };
 };
-
-class TestIOInputStream inherits IOInputStream {
-   init(io_ : IO) : SELF_TYPE {{
-      -- Use a custom IO instance.
-      io <- io_;
-      self;
-   }};
-};

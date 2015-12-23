@@ -10,7 +10,7 @@ class IOInputStream inherits InputStream {
    emptyLineEofCount : Int <- 1024;
    setEmptyLineEofCount(count : Int) : Object { emptyLineEofCount <- count };
 
-   io : IO <- new IO;
+   io : IO;
    -- True if at end of input.
    eof : Bool;
    -- The most recently read line.
@@ -19,6 +19,11 @@ class IOInputStream inherits InputStream {
    pos : Int <- 1;
    -- The number of buffered newlines.
    linefeeds : Int;
+
+   init(io_ : IO) : SELF_TYPE {{
+      io <- io_;
+      self;
+   }};
 
    reset() : Object {{
       eof <- false;

@@ -1,6 +1,7 @@
 class Main {
    main() : Object {
-      let is : IOInputStream <- new IOInputStream,
+      let io : IO <- new IO,
+            is : IOInputStream <- new IOInputStream.init(io),
             listener : MainTokenizerListener <- new MainTokenizerListener.init(is),
             tokenizer : Tokenizer <- new Tokenizer.init(is).setListener(listener),
             parser : Parser <- new Parser.init(tokenizer) in

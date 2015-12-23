@@ -48,10 +48,10 @@ class Main inherits Test {
             tokenError : TokenError <- token.asError() in
          {
             if isvoid tokenError then
-               failContext(context.concat(" void"), "expected=".concat(tokenToString(new TokenError.init(value)))
+               failContext(context.concat(" void"), "expected=".concat(tokenToString(new TokenError.init(0, value)))
                      .concat(", actual=").concat(tokenToString(token)))
             else false fi;
-            assertStringEquals(context, value, tokenError.value());
+            assertStringEquals(context, value, "line ".concat(stringUtil.fromInt(tokenError.line())).concat(": ").concat(tokenError.value()));
          }
    };
 

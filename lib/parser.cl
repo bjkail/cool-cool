@@ -444,7 +444,7 @@ class Parser {
    error(s : String) : Bool {{
       if not error then
          {
-            new IO.out_string("PARSE ERROR: ")
+            new IO.out_string("ERROR: ")
                   .out_string(tokenizer.lineMap().lineToString(line()))
                   .out_string(": ")
                   .out_string(s)

@@ -12,7 +12,9 @@ class Main {
                   new IO.out_string("ERROR: ").out_string(error).out_string("\n")
                else
                   if listener.lex() then
-                     lex(tokenizer)
+                     while isvoid parser.readToken().asEof() loop
+                        false
+                     pool
                   else
                      let program : ParsedProgram <- parser.parse() in
                         if if not isvoid program then
@@ -42,24 +44,6 @@ class Main {
                   fi
                fi;
          }
-   };
-
-   lex(tokenizer : Tokenizer) : Object {
-      let continue : Bool <- true in
-         while continue loop
-            let token : Token <- tokenizer.next() in
-               if not isvoid token.asEof() then
-                  continue <- false
-               else
-                  let tokenError : TokenError <- token.asError() in
-                     if not isvoid tokenError then
-                        {
-                           new IO.out_string("ERROR: ").out_string(tokenError.value()).out_string("\n");
-                           continue <- false;
-                        }
-                     else false fi
-               fi
-         pool
    };
 };
 

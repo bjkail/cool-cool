@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 dir=$(dirname "$0")
 
 run_tests() {
@@ -27,6 +29,6 @@ run_tests() {
   done
 }
 
-for option in interpret; do
+for option in lex interpret; do
   (cd "$dir/$option" && run_tests $option)
 done

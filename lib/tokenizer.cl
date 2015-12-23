@@ -36,8 +36,20 @@ class TokenStringValued inherits Token {
    value() : String { value };
 };
 
-class TokenError inherits TokenStringValued {
-   toString() : String { "ERROR: ".concat(value) };
+class TokenError inherits Token {
+   line : Int;
+   line() : Int { line };
+
+   value : String;
+   value() : String { value };
+
+   init(line_ : Int, value_ : String) : SELF_TYPE {{
+      line <- line_;
+      value <- value_;
+      self;
+   }};
+
+   toString() : String { "ERROR: line ".concat(new StringUtil.fromInt(line)).concat(": ").concat(value) };
    asError() : TokenError { self };
 };
 
@@ -286,7 +298,7 @@ class Tokenizer {
    };
 
    newTokenErrorAt(line : Int, s : String) : TokenError {
-      new TokenError.init(lineMap.lineToString(line).concat(": ").concat(s))
+      new TokenError.init(line, s)
    };
 
    newTokenError(s : String) : TokenError {

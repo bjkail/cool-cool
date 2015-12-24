@@ -1,5 +1,23 @@
 #!/bin/bash
 
+help() {
+  echo "Usage: cool [OPTION]... FILE..."
+  echo "Cool interpreter written in Cool"
+  echo
+  echo "Compilation options:"
+  echo "  --lex            stop after lexical analysis"
+  echo "  --parse          stop after parsing"
+  echo "  --analyze        stop after semantic analysis"
+  echo
+  echo "Diagnostic options:"
+  echo "  --bootstrap      run Cool-in-Cool with itself"
+  echo "  --format-errors  show line numbers for errors in Cool-in-Cool itself"
+  echo "  --help           show this help text"
+  echo "  --stdin          enable standard input (default)"
+  echo "    --no-stdin     disable standard input"
+  exit
+}
+
 dir=$(dirname "$0")
 coolfiles=("$dir"/../cool.cl "$dir"/../lib/*.cl)
 
@@ -15,6 +33,7 @@ for arg in "$@"; do
   --lex | --parse | --analyze | --interpret) options+=($1);;
   --stdin) stdin=true;;
   --no-stdin) stdin=false;;
+  --help | -h | -\?) help;;
   -*) echo "$0: $1: unrecognized option" >&2; exit 1;;
   *) files+=("$1")
   esac

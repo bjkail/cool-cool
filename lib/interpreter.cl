@@ -421,6 +421,7 @@ class InterpreterAnalyzerType {
    setInheritsType(inheritsType_ : InterpreterAnalyzerType) : Object {{
       inheritsType <- inheritsType_;
       nextAttributeIndex <- inheritsType_.nextAttributeIndex();
+      attributeInits <- inheritsType_.attributeInits();
       nextMethodIndex <- inheritsType_.nextMethodIndex();
 
       let inheritsType : InterpreterType <- inheritsType_.type() in

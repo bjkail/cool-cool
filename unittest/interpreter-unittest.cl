@@ -284,6 +284,9 @@ class Main inherits Test {
                   .concat("class Main { a : A <- new A; b : B <- new B; main() : Object { a.a() + b.b() }; };")
                   .concat("class B { b : Int <- 2; b() : Int { b }; };")));
 
+            assertIntEquals("inherits", 1, interpretInt("inherits",
+                  "class Main inherits A { main() : Object { a }; }; class A { a : Int <- 1; };"));
+
             assertIntEquals("self", 0, interpretInt("self",
                   "class Main { a : Int; main() : Object {{ new A; a; }}; }; class A { a : Int <- 1; };"));
 

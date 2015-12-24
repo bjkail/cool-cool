@@ -50,15 +50,15 @@ class InterpreterType {
    methods : IntMap <- new IntTreeMap;
    methods() : IntMap { methods };
 
-   getMethod(index : Int) : InterpreterMethod {
-      let method : Object <- methods.getWithInt(index) in
-         if isvoid method then
+   getMethod(method : InterpreterMethod) : InterpreterMethod {
+      let result : Object <- methods.getWithInt(method.index()) in
+         if isvoid result then
             {
-               new ObjectUtil.abortObject(self, "getMethod: type=".concat(name).concat(", index=").concat(new StringUtil.fromInt(index)));
+               new ObjectUtil.abortObject(self, "getMethod: type=".concat(name).concat(", method=").concat(method.toString()));
                let void : InterpreterMethod in void;
             }
          else
-            case method of x : InterpreterMethod => x; esac
+            case result of x : InterpreterMethod => x; esac
          fi
    };
 
@@ -104,11 +104,6 @@ class InterpreterMethod {
    }};
 
    interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {{
-      if interpreter.debug() then
-         interpreter.debugOut("  method=".concat(toString())
-               .concat(", expr=").concat(expr.toString()))
-      else false fi;
-
       state.interpretDispatch(interpreter, expr);
    }};
 
@@ -1484,7 +1479,14 @@ class InterpreterNewExpr inherits InterpreterExpr {
    }};
 
    interpret(interpreter : Interpreter) : Bool {
-      interpreter.pushState(new InterpreterNewExprState.init(line, type, interpreter))
+      let result : Bool <- interpreter.pushState(new InterpreterNewExprState.init(line, type, interpreter)) in
+         {
+            if interpreter.debugDispatch() then
+               interpreter.debugOut("initializing ".concat(toString()))
+            else false fi;
+
+            result;
+         }
    };
 
    toString() : String { "new[".concat(type.name()).concat("]") };
@@ -1524,6 +1526,10 @@ class InterpreterNewExprState inherits InterpreterExprState {
          }
       else
          {
+            if interpreter.debugDispatch() then
+               interpreter.debugOut("initialized")
+            else false fi;
+
             interpreter.setSelfObject(savedSelfObject);
             interpreter.proceedValue(selfObject);
          }
@@ -1644,7 +1650,7 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
    };
 
    lookupMethod() : InterpreterMethod {
-      target.type().getMethod(method.index())
+      target.type().getMethod(method)
    };
 
    proceed(interpreter : Interpreter) : Bool {
@@ -1660,7 +1666,7 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
          if not hasTarget then
             {
                if interpreter.debug() then
-                  interpreter.debugOut("  target")
+                  interpreter.debugOut("  target ".concat(targetExpr.toString()))
                else false fi;
 
                targetExpr.interpret(interpreter);
@@ -1671,12 +1677,20 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
                   interpreter.proceedError(line, "dispatch on void for method '".concat(method.id())
                         .concat("' in type '").concat(method.containingType().name()).concat("'"))
                else
-                  lookupMethod().interpret(interpreter, self)
+                  let method : InterpreterMethod <- lookupMethod() in
+                     {
+                        if interpreter.debugDispatch() then
+                           interpreter.debugOut("call ".concat(method.toString())
+                                 .concat(" on ").concat(target.type().name()))
+                        else false fi;
+
+                        method.interpret(interpreter, self);
+                     }
                fi
             else
                {
-                  if interpreter.debug() then
-                     interpreter.debugOut("  result")
+                  if interpreter.debugDispatch() then
+                     interpreter.debugOut("return ".concat(if isvoid result then "void" else result.type_name() fi))
                   else false fi;
 
                   interpreter.setDispatchContext(savedSelfObject, savedArgs, savedVars);
@@ -1705,7 +1719,7 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
       else "" fi
    };
 
-   toString() : String { "dispatch" };
+   toString() : String { "dispatch ".concat(method.toString()) };
 };
 
 class InterpreterStaticDispatchExpr inherits InterpreterDispatchExpr {
@@ -2014,6 +2028,9 @@ class Interpreter {
    debug : Bool;
    debug() : Bool { debug };
 
+   debugDispatch : Bool <- debug;
+   debugDispatch() : Bool { debugDispatch };
+
    lineMap : TokenizerLineMap;
 
    io : ExtendedIO;
@@ -2066,11 +2083,15 @@ class Interpreter {
       fi
    };
 
-   debugOut(s : String) : Object {
-      io.out_string("DEBUG: interpreter: [").out_string(exprState.toString())
+   debugOutIndex : Int;
+
+   debugOut(s : String) : Object {{
+      io.out_string("DEBUG: interpreter: ").out_int(debugOutIndex)
+            .out_string(" [").out_string(exprState.toString())
             .out_string("] ").out_string(s)
-            .out_string("\n")
-   };
+            .out_string("\n");
+      debugOutIndex <- debugOutIndex + 1;
+   }};
 
    interpretValue(value_ : InterpreterValue) : Bool {{
       if debug then

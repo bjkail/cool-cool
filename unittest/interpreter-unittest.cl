@@ -398,6 +398,24 @@ class Main inherits Test {
             assertTrue("equal self", interpretBoolExpr("equal self", "self = self"));
             assertFalse("equal self new", interpretBoolExpr("equal self new", "self = new Main"));
             assertFalse("equal self copy", interpretBoolExpr("equal self copy", "self = copy()"));
+
+            assertTrue("equal void", interpretBoolExpr("equal void", "let void : Object in void = void"));
+            assertFalse("equal void int", interpretBoolExpr("equal void int",
+                  "let left : Object, right : Object <- 0 in left = right"));
+            assertFalse("equal int void", interpretBoolExpr("equal int void",
+                  "let left : Object <- 0, right : Object in left = right"));
+            assertFalse("equal void bool", interpretBoolExpr("equal void bool",
+                  "let left : Object, right : Object <- false in left = right"));
+            assertFalse("equal bool void", interpretBoolExpr("equal bool void",
+                  "let left : Object <- false, right : Object in left = right"));
+            assertFalse("equal void string", interpretBoolExpr("equal void string",
+                  "let left : Object, right : Object <- \"\" in left = right"));
+            assertFalse("equal string void", interpretBoolExpr("equal string void",
+                  "let left : Object <- \"\", right : Object in left = right"));
+            assertFalse("equal void new", interpretBoolExpr("equal void new",
+                  "let left : Object, right : Object <- new Object in left = right"));
+            assertFalse("equal new void", interpretBoolExpr("equal new void",
+                  "let left : Object <- new Object, right : Object in left = right"));
          }
       else false fi
    };

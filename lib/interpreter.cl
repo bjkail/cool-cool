@@ -1986,8 +1986,26 @@ class InterpreterEqualExpr inherits InterpreterBinaryExpr {
 };
 
 class InterpreterEqualExprState inherits InterpreterBinaryExprState {
-   interpret(right : InterpreterValue) : InterpreterValue {
-      new InterpreterBoolValue.init(type, left.equalityValue() = right.equalityValue())
+   hasLeft : Bool;
+
+   addValue(value : InterpreterValue) : Object {
+      if hasLeft then
+         result <- new InterpreterBoolValue.init(type,
+               if isvoid left then
+                  isvoid value
+               else
+                  if isvoid value then
+                     false
+                  else
+                     left.equalityValue() = value.equalityValue()
+                  fi
+               fi)
+      else
+         {
+            left <- value;
+            hasLeft <- true;
+         }
+      fi
    };
 };
 

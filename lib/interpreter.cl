@@ -2154,14 +2154,7 @@ class Interpreter {
       false;
    }};
 
-   steps : Int;
-
    proceed() : Bool {{
-      steps <- steps + 1;
-      if 100 <= steps then
-         new ObjectUtil.abortObject(self, "maximum steps exceeded")
-      else false fi;
-
       if debug then
          debugOut("proceed")
       else false fi;

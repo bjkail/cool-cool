@@ -215,3 +215,33 @@ class TestIO inherits ExtendedIO {
       test.assertFalse(context.concat(" end"), outIter.next())
    };
 };
+
+class TestFailErrorParser inherits Parser {
+   test : Test;
+   context : String;
+
+   initTest(test_ : Test, context_ : String) : SELF_TYPE {{
+      test <- test_;
+      context <- context_;
+      self;
+   }};
+
+   reportError(line : Int, s : String) : Object {
+      test.failContext(context.concat(" parse"), "ERROR: line ".concat(new StringUtil.fromInt(line)).concat(": ").concat(s))
+   };
+};
+
+class TestFailErrorAnalyzer inherits Analyzer {
+   test : Test;
+   context : String;
+
+   initTest(test_ : Test, context_ : String) : SELF_TYPE {{
+      test <- test_;
+      context <- context_;
+      self;
+   }};
+
+   reportError(line : Int, s : String) : Object {
+      test.failContext(context.concat(" analyze"), "ERROR: line ".concat(new StringUtil.fromInt(line)).concat(": ").concat(s))
+   };
+};

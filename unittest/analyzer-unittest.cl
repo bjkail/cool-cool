@@ -12,12 +12,9 @@ class Main inherits Test {
 
    newAnalyzer(context : String, program : String) : TestAnalyzer {
       let tokenizer : Tokenizer <- new Tokenizer.init(new TestStringInputStream.init(program)),
-            parser : Parser <- new Parser.init(tokenizer),
+            parser : Parser <- new TestFailErrorParser.init(tokenizer).initTest(self, context),
             program : ParsedProgram <- parser.parse() in
-         {
-            assertNotVoid(context.concat(" program"), program);
-            new TestAnalyzer.init(program);
-         }
+         new TestAnalyzer.init(program)
    };
 
    newAnalyzerDefaultMain(context : String, program : String) : TestAnalyzer {

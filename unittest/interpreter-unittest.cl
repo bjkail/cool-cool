@@ -17,21 +17,15 @@ class Main inherits Test {
 
    interpretIO(context : String, io : TestIO, program : String) : InterpreterValue {
       let tokenizer : Tokenizer <- new Tokenizer.init(new TestStringInputStream.init(program)),
-            parser : Parser <- new Parser.init(tokenizer),
-            program : ParsedProgram <- parser.parse() in
+            parser : TestFailErrorParser <- new TestFailErrorParser.init(tokenizer).initTest(self, context),
+            program : ParsedProgram <- parser.parse(),
+            lineMap : TokenizerLineMap <- tokenizer.lineMap(),
+            analyzer : Analyzer <- new TestFailErrorAnalyzer.initTest(self, context),
+            program : AnalyzedProgram <- analyzer.analyze(program),
+            value : InterpreterValue <- new InterpreterAnalyzer.init(lineMap).analyze(program).interpret(io, true) in
          {
-            assertNotVoid(context.concat(" parse"), program);
-            let lineMap : TokenizerLineMap <- tokenizer.lineMap(),
-                  analyzer : Analyzer <- new Analyzer,
-                  program : AnalyzedProgram <- analyzer.analyze(program) in
-               {
-                  assertNotVoid(context.concat(" analyze"), program);
-                  let value : InterpreterValue <- new InterpreterAnalyzer.init(lineMap).analyze(program).interpret(io, true) in
-                     {
-                        io.assert();
-                        value;
-                     };
-               };
+            io.assert();
+            value;
          }
    };
 

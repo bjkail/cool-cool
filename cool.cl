@@ -2,9 +2,9 @@ class Main {
    main() : Object {
       let rawIo : IO <- new IO,
             line : String <- rawIo.in_string(),
-            stdin : Bool <- line = "--cool:stdin",
+            stdio : Bool <- line = "--cool:stdio",
             io : ExtendedIO <-
-               if stdin then
+               if stdio then
                   new MainStdinIO.init(rawIo)
                else
                   new MainBufferedLineIO.init(rawIo, line)
@@ -38,14 +38,14 @@ class Main {
                                  else false fi
                               then
                                  {
-                                    if stdin then
+                                    if listener.stdin() then
                                        while io.in_string() = "" loop
                                           false
                                        pool
                                     else false fi;
 
                                     let program : InterpreterProgram <- new InterpreterAnalyzer.init(lineMap).analyze(program),
-                                          value : InterpreterValue <- program.interpret(io, stdin) in
+                                          value : InterpreterValue <- program.interpret(io, listener.stdin()) in
                                        if not isvoid value then
                                           case value of
                                              x : InterpreterErrorValue =>
@@ -180,6 +180,9 @@ class MainTokenizerListener inherits TokenizerListener {
    analyze : Bool;
    analyze() : Bool { analyze };
 
+   stdin : Bool;
+   stdin() : Bool { stdin };
+
    init(is_ : IOInputStream) : SELF_TYPE {{
       is <- is_;
       self;
@@ -204,7 +207,11 @@ class MainTokenizerListener inherits TokenizerListener {
                if option = "--analyze" then
                   analyze <- true
                else
-                  optionError <- option.concat(": unrecognized option")
+                  if option = "--stdin" then
+                     stdin <- true
+                  else
+                     optionError <- option.concat(": unrecognized option")
+                  fi
                fi
             fi
          fi

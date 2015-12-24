@@ -24,11 +24,12 @@ coolfiles=("$dir"/../cool.cl "$dir"/../lib/*.cl)
 interpreteroptions=()
 options=()
 files=()
+bootstrap=false
 stdin=true
 for arg in "$@"; do
   case $1 in
   --) shift; files+=("$@"); break;;
-  --bootstrap) files=("${coolfiles[@]}");;
+  --bootstrap) bootstrap=true;;
   --format-errors) interpreteroptions+=(--format-errors);;
   --lex | --parse | --analyze) options+=($1);;
   --stdin) stdin=true;;
@@ -40,93 +41,103 @@ for arg in "$@"; do
   shift
 done
 
-write_init() {
-  printf -- '--cool:escape:\\b=\b:\\t=\t:\\v=\v:\\f=\f:\\r=\r:\n'
+if ((${#files[@]} == 0)); then
+  echo "cool: no input files" >&2
+  exit 1
+fi
 
-  for option in "${options[@]}"; do
-    echo "--cool:option=$option"
+write_files() {
+  local stdin=$1
+  shift
+
+  printf -- '--cool:escape:\\b=\b:\\t=\t:\\v=\v:\\f=\f:\\r=\r:\n'
+  if $stdin; then
+    echo "--cool:option=--stdin"
+  fi
+  echo "--cool:eof=$eoflen"
+  echo "--cool:files=$#"
+
+  for file in "$@"; do
+    echo "--cool:file=$file"
+    cat < "$file" || exit 1
+    # This will print N+1 newlines, which is what we want since the last line
+    # of the file might not have ended in a newline
+    echo "$eof"
   done
+
+  if $stdin; then
+    echo .
+  fi
 }
 
 run_interpreter_wrapper() {
   "$dir"/interpreter-wrapper "${interpreteroptions[@]}" "${coolfiles[@]}"
 }
 
-if ((${#files[@]} == 0)); then
-  { write_init; cat; } | run_interpreter_wrapper
-else
-  # Use a temporary file rather than a pipeline so that errors reading the input
-  # files are not written in parallel with errors from the interpreter.
-  tmpdir=$(mktemp -d -t coolXXXXXXXXXX) || exit 1
-  trap 'rm -r "$tmpdir"' EXIT
-  inputfile=$tmpdir/input.cl
-  stdiofifo=$tmpdir/stdio
-  mkfifo "$stdiofifo" || exit 1
+# Use a temporary file rather than a pipeline so that errors reading the input
+# files are not written in parallel with errors from the interpreter.
+tmpdir=$(mktemp -d -t coolXXXXXXXXXX) || exit 1
+trap 'rm -r "$tmpdir"' EXIT
+inputfile=$tmpdir/input.cl
+stdiofifo=$tmpdir/stdio
+mkfifo "$stdiofifo" || exit 1
 
+eoflen=1024
+eof=$(printf '%*s' $eoflen)
+eof=${eof// /$'\n'}
+
+{
+  if $bootstrap; then
+    echo "--cool:option=--stdin"
+    write_files true "${coolfiles[@]}"
+  fi
+
+  for option in "${options[@]}"; do
+    echo "--cool:option=$option"
+  done
+
+  write_files $stdin "${files[@]}"
+} > "$inputfile"
+
+if $stdin; then
+  exec 3< "$inputfile"
   {
-    write_init
+    echo "--cool:stdio"
 
-    eoflen=1024
-    echo "--cool:eof=$eoflen"
-
-    eof=$(printf '%*s' $eoflen)
-    eof=${eof// /$'\n'}
-    echo "--cool:files=${#files[@]}"
-
-    for file in "${files[@]}"; do
-      echo "--cool:file=$file"
-      cat < "$file" || exit 1
-      # This will print N+1 newlines, which is what we want since the last line
-      # of the file might not have ended in a newline
-      echo "$eof"
+    while read cmd < "$stdiofifo" && test -z "$cmd"; do
+      IFS= read -r line <&3 || break
+      echo "$line"
     done
 
-    # Delimiter for stdin
-    if $stdin; then
-      echo .
-    fi
-  } > "$inputfile"
+    while test -z "$cmd"; do
+      IFS= read -r line || break
+      echo "$line"
+      read cmd < "$stdiofifo" || break
+    done
+  } | run_interpreter_wrapper | {
+    while IFS= read -r line; do
+      case $line in
+      '>S:'*)
+        IFS= read -r -N"${line:3}" output
+        echo -n "$output"
+        ;;
 
-  if $stdin; then
-    exec 3< "$inputfile"
-    {
-      echo "--cool:stdin"
+      '>I:'*)
+        echo -n "${line:3}"
+        ;;
 
-      while read cmd < "$stdiofifo" && test -z "$cmd"; do
-        IFS= read -r line <&3 || break
+      '<'*)
+        echo > "$stdiofifo"
+        ;;
+
+      *)
+        # Fallback in case new IO is used directly (e.g., ObjectUtil).
         echo "$line"
-      done
+      esac
+    done
 
-      while test -z "$cmd"; do
-        IFS= read -r line || break
-        echo "$line"
-        read cmd < "$stdiofifo" || break
-      done
-    } | run_interpreter_wrapper | {
-      while IFS= read -r line; do
-        case $line in
-        '>S:'*)
-          IFS= read -r -N"${line:3}" output
-          echo -n "$output"
-          ;;
-
-        '>I:'*)
-          echo -n "${line:3}"
-          ;;
-
-        '<'*)
-          echo > "$stdiofifo"
-          ;;
-
-        *)
-          # Fallback in case new IO is used directly (e.g., ObjectUtil).
-          echo "$line"
-        esac
-      done
-
-      echo "exit" > "$stdiofifo"
-    }
-  else
-    run_interpreter_wrapper < "$inputfile"
-  fi
+    echo "exit" > "$stdiofifo"
+  }
+else
+  run_interpreter_wrapper < "$inputfile"
 fi

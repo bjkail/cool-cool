@@ -1422,7 +1422,12 @@ class InterpreterArgumentExpr inherits InterpreterExpr {
    }};
 
    interpret(interpreter : Interpreter) : Bool {
-      interpreter.interpretValue(case interpreter.arguments().getWithInt(index) of x : InterpreterValue => x; esac)
+      let value : Object <- interpreter.arguments().getWithInt(index) in
+         if isvoid value then
+            interpreter.interpretValue(let void : InterpreterValue in void)
+         else
+            interpreter.interpretValue(case value of x : InterpreterValue => x; esac)
+         fi
    };
 };
 

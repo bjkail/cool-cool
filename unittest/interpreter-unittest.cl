@@ -326,6 +326,8 @@ class Main inherits Test {
 
             assertIntEquals("dispatch arg", 1, interpretInt("dispatch",
                   "class Main { main() : Int { a(1) }; a(a : Int) : Int { a }; };"));
+            assertVoid("dispatch arg void", interpret("dispatch arg void",
+                  "class Main { a : Object; main() : Object { a(a) }; a(a : Object) : Object { a }; };"));
             assertIntEquals("dispatch args", 3, interpretInt("dispatch",
                   "class Main { main() : Int { a(1, 2) }; a(a : Int, b : Int) : Int { a + b }; };"));
             assertIntEquals("dispatch nested", 3, interpretInt("dispatch",

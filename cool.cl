@@ -44,8 +44,9 @@ class Main {
                                        pool
                                     else false fi;
 
-                                    let program : InterpreterProgram <- new InterpreterAnalyzer.init(lineMap).analyze(program),
-                                          value : InterpreterValue <- program.interpret(io, listener.stdin()) in
+                                    let program : InterpreterProgram <- new InterpreterAnalyzer.analyze(program),
+                                          interpreter : Interpreter <- new Interpreter.init(lineMap, io, listener.stdin()),
+                                          value : InterpreterValue <- interpreter.interpret(program) in
                                        if not isvoid value then
                                           case value of
                                              x : InterpreterErrorValue =>

@@ -1,20 +1,11 @@
 class InterpreterProgram {
-   lineMap : TokenizerLineMap;
    expr : InterpreterExpr;
+   expr() : InterpreterExpr { expr };
 
-   init(lineMap_ : TokenizerLineMap, expr_ : InterpreterExpr) : SELF_TYPE {{
-      lineMap <- lineMap_;
+   init(expr_ : InterpreterExpr) : SELF_TYPE {{
       expr <- expr_;
       self;
    }};
-
-   interpret(io : ExtendedIO, hasInput : Bool) : InterpreterValue {
-      let interpreter : Interpreter <- new Interpreter.init(lineMap, io, hasInput) in
-         {
-            expr.interpret(interpreter);
-            interpreter.interpret();
-         }
-   };
 };
 
 class InterpreterAttributeInit {
@@ -546,13 +537,6 @@ class InterpreterAnalyzerType {
 };
 
 class InterpreterAnalyzer inherits AnalyzedExprVisitor {
-   lineMap : TokenizerLineMap;
-
-   init(lineMap_ : TokenizerLineMap) : SELF_TYPE {{
-      lineMap <- lineMap_;
-      self;
-   }};
-
    boolType : InterpreterAnalyzerType <- new InterpreterAnalyzerType.initBasic("Bool", 1);
    defaultBoolValue : InterpreterBoolValue <- new InterpreterBoolValue.init(boolType.type(), false);
 
@@ -727,7 +711,7 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
                   -- to use as the program entry point.
                   newExpr : AnalyzedExpr <- new AnalyzedNewExpr.init(0, mainType),
                   dispatchExpr : AnalyzedExpr <- new AnalyzedDispatchExpr.init(0, mainMethod.returnType(), newExpr, mainMethod, true, new Collection) in
-               new InterpreterProgram.init(lineMap, analyzeExpr(dispatchExpr));
+               new InterpreterProgram.init(analyzeExpr(dispatchExpr));
          };
    }};
 
@@ -2219,7 +2203,9 @@ class Interpreter {
       exprState.proceed(self);
    }};
 
-   interpret() : InterpreterValue {{
+   interpret(program : InterpreterProgram) : InterpreterValue {{
+      program.expr().interpret(self);
+
       while continue loop
          {
             while proceed() loop

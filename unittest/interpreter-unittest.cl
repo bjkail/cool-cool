@@ -22,7 +22,8 @@ class Main inherits Test {
             lineMap : TokenizerLineMap <- tokenizer.lineMap(),
             analyzer : Analyzer <- new TestFailErrorAnalyzer.initTest(self, context),
             program : AnalyzedProgram <- analyzer.analyze(program),
-            value : InterpreterValue <- new InterpreterAnalyzer.init(lineMap).analyze(program).interpret(io, true) in
+            interpreter : Interpreter <- new Interpreter.init(lineMap, io, true),
+            value : InterpreterValue <- interpreter.interpret(new InterpreterAnalyzer.analyze(program)) in
          {
             io.assert();
             value;

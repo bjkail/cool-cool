@@ -2034,6 +2034,12 @@ class Interpreter {
    debugDispatch : Bool <- debug;
    debugDispatch() : Bool { debugDispatch };
 
+   initDebug(debug_ : StringMap) : SELF_TYPE {{
+      debug <- not isvoid debug_.getWithString("interpreter");
+      debugDispatch <- not isvoid debug_.getWithString("interpreter:dispatch");
+      self;
+   }};
+
    lineMap : TokenizerLineMap;
 
    io : ExtendedIO;

@@ -45,7 +45,9 @@ class Main {
                                     else false fi;
 
                                     let program : InterpreterProgram <- new InterpreterAnalyzer.analyze(program),
-                                          interpreter : Interpreter <- new Interpreter.init(lineMap, io, listener.stdin()),
+                                          interpreter : Interpreter <- new Interpreter
+                                             .init(lineMap, io, listener.stdin())
+                                             .initDebug(listener.debug()),
                                           value : InterpreterValue <- interpreter.interpret(program) in
                                        if not isvoid value then
                                           case value of
@@ -184,6 +186,9 @@ class MainTokenizerListener inherits TokenizerListener {
    stdin : Bool;
    stdin() : Bool { stdin };
 
+   debug : StringMap <- new StringListMap;
+   debug() : StringMap { debug };
+
    init(is_ : IOInputStream) : SELF_TYPE {{
       is <- is_;
       self;
@@ -195,6 +200,33 @@ class MainTokenizerListener inherits TokenizerListener {
 
    eof() : Object {
       is.reset()
+   };
+
+   error(s : String) : Object {
+      if optionError = "" then
+         optionError <- s
+      else false fi
+   };
+
+   handleDebugOption(s : String) : Object {
+      let i : Int,
+            begin : Int in
+         {
+            while i < s.length() loop
+               {
+                  if s.substr(i, 1) = "," then
+                     {
+                        debug.putWithString(s.substr(begin, i - begin), true);
+                        begin <- i + 1;
+                     }
+                  else false fi;
+
+                  i <- i + 1;
+               }
+            pool;
+
+            debug.putWithString(s.substr(begin, i - begin), true);
+         }
    };
 
    handleOption(option : String) : Object {
@@ -211,7 +243,31 @@ class MainTokenizerListener inherits TokenizerListener {
                   if option = "--stdin" then
                      stdin <- true
                   else
-                     optionError <- option.concat(": unrecognized option")
+                     let value : String in
+                        {
+                           let i : Int,
+                                 continue : Bool <- i < option.length() in
+                              while continue loop
+                                 if option.substr(i, 1) = "=" then
+                                    {
+                                       value <- option.substr(i + 1, option.length() - i - 1);
+                                       option <- option.substr(0, i);
+                                       continue <- false;
+                                    }
+                                 else
+                                    {
+                                       i <- i + 1;
+                                       continue <- i < option.length();
+                                    }
+                                 fi
+                              pool;
+
+                           if option = "--debug" then
+                              handleDebugOption(value)
+                           else
+                              error(option.concat(": unrecognized option"))
+                           fi;
+                        }
                   fi
                fi
             fi

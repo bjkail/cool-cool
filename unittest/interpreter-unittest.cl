@@ -285,6 +285,11 @@ class Main inherits Test {
             interpretObject("object default", "Object",
                   "class Main { a : Object <- new Object; main() : Object { a }; };");
 
+            assertIntEquals("indirect", 3, interpretInt("int",
+                  "class A { a : Int <- 1; a() : Int { a }; };"
+                  .concat("class Main { a : A <- new A; b : B <- new B; main() : Object { a.a() + b.b() }; };")
+                  .concat("class B { b : Int <- 2; b() : Int { b }; };")));
+
             assertErrorEquals("dispatch void",
                   "dispatch on void for method 'void' in type 'Main'",
                   "\tat Main.b (line 1)\n"

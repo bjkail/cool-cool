@@ -449,6 +449,9 @@ class InterpreterAnalyzerType {
    definedAttributes : Collection <- new LinkedList;
    definedAttributes() : Collection { definedAttributes };
 
+   attributeInits : Bool;
+   attributeInits() : Bool { attributeInits };
+
    nextAttributeIndex : Int;
    nextAttributeIndex() : Int { nextAttributeIndex };
 
@@ -463,6 +466,10 @@ class InterpreterAnalyzerType {
          {
             attributes.putWithString(attr.id(), attr);
             definedAttributes.add(attr);
+
+            if not isvoid analyzedAttr.expr() then
+               attributeInits <- true
+            else false fi;
          }
    };
 
@@ -828,12 +835,11 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
                      if type = stringType then
                         new InterpreterValueExpr.init(defaultStringValue)
                      else
-                        let type : InterpreterType <- type.type() in
-                           if type.attributeInits().size() = 0 then
-                              new InterpreterSimpleNewExpr.init(type)
-                           else
-                              new InterpreterNewExpr.init(expr.line(), type)
-                           fi
+                        if type.attributeInits() then
+                           new InterpreterNewExpr.init(expr.line(), type.type())
+                        else
+                           new InterpreterSimpleNewExpr.init(type.type())
+                        fi
                      fi
                   fi
                fi

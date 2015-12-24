@@ -30,7 +30,7 @@ for arg in "$@"; do
   --) shift; files+=("$@"); break;;
   --bootstrap) files=("${coolfiles[@]}");;
   --format-errors) interpreteroptions+=(--format-errors);;
-  --lex | --parse | --analyze | --interpret) options+=($1);;
+  --lex | --parse | --analyze) options+=($1);;
   --stdin) stdin=true;;
   --no-stdin) stdin=false;;
   --help | -h | -\?) help;;

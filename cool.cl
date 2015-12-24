@@ -34,9 +34,7 @@ class Main {
                                  analyzer : Analyzer <- new MainAnalyzer.initMain(io, lineMap),
                                  program : AnalyzedProgram <- analyzer.analyze(program) in
                               if if not isvoid program then
-                                    if not listener.analyze() then
-                                       listener.interpret()
-                                    else false fi
+                                    not listener.analyze()
                                  else false fi
                               then
                                  {
@@ -182,9 +180,6 @@ class MainTokenizerListener inherits TokenizerListener {
    analyze : Bool;
    analyze() : Bool { analyze };
 
-   interpret : Bool;
-   interpret() : Bool { interpret };
-
    init(is_ : IOInputStream) : SELF_TYPE {{
       is <- is_;
       self;
@@ -209,11 +204,7 @@ class MainTokenizerListener inherits TokenizerListener {
                if option = "--analyze" then
                   analyze <- true
                else
-                  if option = "--interpret" then
-                     interpret <- true
-                  else
-                     optionError <- option.concat(": unrecognized option")
-                  fi
+                  optionError <- option.concat(": unrecognized option")
                fi
             fi
          fi

@@ -28,16 +28,16 @@ run_tests() {
 
     for opts in "${optslist[@]}"; do
       opts=($opts)
-      echo -n "cool" "$mode" "${opts[@]}" "$dir/$file"
+      echo -n "cool" $mode "${opts[@]}" "$dir/$file"
 
       redir=${file%.cl}.in
       if test -f "$redir"; then
         echo -n " < $redir: "
-        actual=$(../../bin/cool "$mode" "${opts[@]}" "$file" < "$redir")
+        actual=$(../../bin/cool $mode "${opts[@]}" "$file" < "$redir")
       else
         echo -n ": "
         redir=
-        actual=$(../../bin/cool "$mode" "${opts[@]}" "$file")
+        actual=$(../../bin/cool $mode "${opts[@]}" "$file")
       fi
 
       if test "$OSTYPE" = "cygwin"; then
@@ -60,4 +60,4 @@ run_tests() {
 }
 
 (run_tests "$dir"/lex --lex)
-(run_tests "$dir"/interpret --interpret '' '--no-stdin')
+(run_tests "$dir"/interpret '' '' '--no-stdin')

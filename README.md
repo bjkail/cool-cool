@@ -10,4 +10,5 @@ Interpreter, and another script is provided to pass all requisite files for the
 interpreter itself to the Cool Interpreter:
 
     $ export COOL_INTERPRETER=path/to/interpreter/cool
-    $ bin/cool path/to/hello-world.cl
+    $ bin/cool test/interpret/hello-world.cl
+    Hello, World!

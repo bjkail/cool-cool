@@ -290,6 +290,9 @@ class Main inherits Test {
                   .concat("class Main { a : A <- new A; b : B <- new B; main() : Object { a.a() + b.b() }; };")
                   .concat("class B { b : Int <- 2; b() : Int { b }; };")));
 
+            assertIntEquals("self", 0, interpretInt("int",
+                  "class Main { a : Int; main() : Object {{ new A; a; }}; }; class A { a : Int <- 1; };"));
+
             assertErrorEquals("dispatch void",
                   "dispatch on void for method 'void' in type 'Main'",
                   "\tat Main.b (line 1)\n"

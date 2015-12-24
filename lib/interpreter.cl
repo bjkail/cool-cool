@@ -1497,6 +1497,7 @@ class InterpreterNewExprState inherits InterpreterExprState {
    type : InterpreterType;
    attrInitIter : Iterator;
 
+   savedSelfObject : InterpreterObjectValue;
    selfObject : InterpreterObjectValue;
    selfObjectAttributes : IntMap;
    attrInit : InterpreterAttributeInit;
@@ -1508,6 +1509,8 @@ class InterpreterNewExprState inherits InterpreterExprState {
 
       selfObject <- new InterpreterObjectValue.init(type_);
       selfObjectAttributes <- selfObject.attributes();
+
+      savedSelfObject <- interpreter.selfObject();
       interpreter.setSelfObject(selfObject);
 
       self;
@@ -1520,7 +1523,10 @@ class InterpreterNewExprState inherits InterpreterExprState {
             attrInit.expr().interpret(interpreter);
          }
       else
-         interpreter.proceedValue(selfObject)
+         {
+            interpreter.setSelfObject(savedSelfObject);
+            interpreter.proceedValue(selfObject);
+         }
       fi
    };
 

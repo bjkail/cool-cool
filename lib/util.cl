@@ -1,6 +1,6 @@
 class ObjectUtil {
    abortObject(so : Object, s : String) : Object {{
-      new IO.out_string("ERROR: ").out_string(so.type_name()).out_string(".").out_string(s).out_string("\n");
+      new IO.out_string("\nERROR: ").out_string(so.type_name()).out_string(".").out_string(s).out_string("\n");
       new Object.abort();
    }};
 

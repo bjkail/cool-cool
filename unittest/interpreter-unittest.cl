@@ -26,7 +26,7 @@ class Main inherits Test {
                   program : AnalyzedProgram <- analyzer.analyze(program) in
                {
                   assertNotVoid(context.concat(" analyze"), program);
-                  let value : InterpreterValue <- new InterpreterAnalyzer.init(lineMap).analyze(program).interpret(io) in
+                  let value : InterpreterValue <- new InterpreterAnalyzer.init(lineMap).analyze(program).interpret(io, true) in
                      {
                         io.assert();
                         value;

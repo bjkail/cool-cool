@@ -1,0 +1,2 @@
+ERROR: IO.in_int requires --stdin
+	at Main.main (in-int-error.cl: line 4)

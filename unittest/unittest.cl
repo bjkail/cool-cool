@@ -150,7 +150,7 @@ class TestStringInputStream inherits InputStream {
 };
 
 -- Custom IO instance that uses a LinkedList
-class TestIO inherits IO {
+class TestIO inherits ExtendedIO {
    test : Test;
    context : String;
    inIter : Iterator;

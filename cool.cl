@@ -1,6 +1,14 @@
 class Main {
    main() : Object {
-      let io : IO <- new IO,
+      let rawIo : IO <- new IO,
+            line : String <- rawIo.in_string(),
+            stdin : Bool <- line = "--cool:stdin",
+            io : ExtendedIO <-
+               if stdin then
+                  new MainStdinIO.init(rawIo)
+               else
+                  new MainBufferedLineIO.init(rawIo, line)
+               fi,
             is : IOInputStream <- new IOInputStream.init(io),
             listener : MainTokenizerListener <- new MainTokenizerListener.init(is),
             tokenizer : Tokenizer <- new Tokenizer.init(is).setListener(listener),
@@ -31,22 +39,132 @@ class Main {
                                     else false fi
                                  else false fi
                               then
-                                 let program : InterpreterProgram <- new InterpreterAnalyzer.init(lineMap).analyze(program),
-                                       value : InterpreterValue <- program.interpret(io) in
-                                    if not isvoid value then
-                                       case value of
-                                          x : InterpreterErrorValue =>
-                                             io.out_string("ERROR: ").out_string(x.value())
-                                                   .out_string("\n").out_string(x.stack());
-                                          x : Object => false;
-                                       esac
-                                    else false fi
+                                 {
+                                    if stdin then
+                                       while io.in_string() = "" loop
+                                          false
+                                       pool
+                                    else false fi;
+
+                                    let program : InterpreterProgram <- new InterpreterAnalyzer.init(lineMap).analyze(program),
+                                          value : InterpreterValue <- program.interpret(io, stdin) in
+                                       if not isvoid value then
+                                          case value of
+                                             x : InterpreterErrorValue =>
+                                                io.out_string("ERROR: ").out_string(x.value())
+                                                      .out_string("\n").out_string(x.stack());
+                                             x : Object => false;
+                                          esac
+                                       else false fi;
+                                 }
                               else false fi
                         else false fi
                   fi
                fi;
          }
    };
+};
+
+class MainBufferedLineIO inherits ExtendedIO {
+   io : IO <- new IO;
+   line : String;
+   usedLine : Bool;
+
+   init(io_ : IO, line_ : String) : SELF_TYPE {{
+      io <- io_;
+      line <- line_;
+      self;
+   }};
+
+   in_string() : String {
+      if usedLine then
+         self@ExtendedIO.in_string()
+      else
+         {
+            usedLine <- true;
+            line;
+         }
+      fi
+   };
+};
+
+class MainStdinIO inherits ExtendedIO {
+   backslash : String <- new StringUtil.backslash();
+   literalEscape : Bool <- "\\".length() = 2;
+   io : IO;
+
+   init(io_ : IO) : SELF_TYPE {{
+      io <- io_;
+      self;
+   }};
+
+   out_string(s : String) : SELF_TYPE {
+      if literalEscape then
+         let i : Int,
+               begin : Int,
+               escapes : Int in
+            {
+               while i < s.length() loop
+                  if s.substr(i, 1) = backslash then
+                     let c : String <- s.substr(i + 1, 1) in
+                        if c = backslash then
+                           {
+                              let length : Int <- i + 1 - begin in
+                                 outString(s.substr(begin, length), length - escapes);
+                              begin <- i + 2;
+                              escapes <- 0;
+                              i <- begin;
+                           }
+                        else
+                           {
+                              if if c = "n" then
+                                    true
+                                 else
+                                    c = "t"
+                                 fi
+                              then
+                                 escapes <- escapes + 1
+                              else false fi;
+
+                              i <- i + 2;
+                           }
+                        fi
+                  else
+                     i <- i + 1
+                  fi
+               pool;
+
+               if begin < s.length() then
+                  let length : Int <- s.length() - begin in
+                     outString(s.substr(begin, length), length - escapes)
+               else false fi;
+
+               self;
+            }
+      else
+         outString(s, s.length())
+      fi
+   };
+
+   outString(s : String, length : Int) : SELF_TYPE {{
+      io.out_string(">S:").out_int(length).out_string("\n").out_string(s);
+      self;
+   }};
+
+   out_int(i : Int) : SELF_TYPE {{
+      io.out_string(">I:").out_int(i).out_string("\n");
+      self;
+   }};
+
+   in_string() : String {{
+      io.out_string("<\n");
+      io.in_string();
+   }};
+
+   in_int() : Int {{
+      io.out_string("<\n");
+      io.in_int();
+   }};
 };
 
 class MainTokenizerListener inherits TokenizerListener {

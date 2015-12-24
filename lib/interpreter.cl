@@ -8,8 +8,8 @@ class InterpreterProgram {
       self;
    }};
 
-   interpret(io : IO) : InterpreterValue {
-      let interpreter : Interpreter <- new Interpreter.init(lineMap, io) in
+   interpret(io : ExtendedIO, hasInput : Bool) : InterpreterValue {
+      let interpreter : Interpreter <- new Interpreter.init(lineMap, io, hasInput) in
          {
             expr.interpret(interpreter);
             interpreter.interpret();
@@ -153,21 +153,27 @@ class InterpreterBasicIOOutStringMethod inherits InterpreterMethod {
          {
             let escapes : Int <- arg.escapes() in
                if escapes = 0 then
-                  interpreter.io().out_string(s)
+                  interpreter.io().outString(s, s.length())
                else
                   let i : Int,
-                        begin : Int in
+                        begin : Int,
+                        escapes : Int in
                      {
                         while i < s.length() loop
                            if s.substr(i, 1) = backslash then
                               if s.substr(i + 1, 1) = backslash then
                                  {
-                                    interpreter.io().out_string(s.substr(begin, i + 1 - begin));
+                                    let length : Int <- i + 1 - begin in
+                                       interpreter.io().outString(s.substr(begin, length), length - escapes);
                                     begin <- i + 2;
+                                    escapes <- 0;
                                     i <- begin;
                                  }
                               else
-                                 i <- i + 2
+                                 {
+                                    i <- i + 2;
+                                    escapes <- escapes + 1;
+                                 }
                               fi
                            else
                               i <- i + 1
@@ -175,7 +181,8 @@ class InterpreterBasicIOOutStringMethod inherits InterpreterMethod {
                         pool;
 
                         if begin < s.length() then
-                           interpreter.io().out_string(s.substr(begin, s.length() - begin))
+                           let length : Int <- s.length() - begin in
+                              interpreter.io().outString(s.substr(begin, length), length - escapes)
                         else false fi;
                      }
                fi;
@@ -204,7 +211,11 @@ class InterpreterBasicIOInStringMethod inherits InterpreterMethod {
    }};
 
    interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
-      interpreter.proceedValue(new InterpreterStringValue.init(stringType, interpreter.io().in_string(), 0))
+      if interpreter.hasInput() then
+         interpreter.proceedValue(new InterpreterStringValue.init(stringType, interpreter.io().in_string(), 0))
+      else
+         interpreter.proceedError(0, "IO.in_string requires --stdin")
+      fi
    };
 };
 
@@ -217,7 +228,11 @@ class InterpreterBasicIOInIntMethod inherits InterpreterMethod {
    }};
 
    interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
-      interpreter.proceedValue(new InterpreterIntValue.init(intType, interpreter.io().in_int()))
+      if interpreter.hasInput() then
+         interpreter.proceedValue(new InterpreterIntValue.init(intType, interpreter.io().in_int()))
+      else
+         interpreter.proceedError(0, "IO.in_int requires --stdin")
+      fi
    };
 };
 
@@ -1984,12 +1999,16 @@ class Interpreter {
 
    lineMap : TokenizerLineMap;
 
-   io : IO;
-   io() : IO { io };
+   io : ExtendedIO;
+   io() : ExtendedIO { io };
 
-   init(lineMap_ : TokenizerLineMap, io_ : IO) : SELF_TYPE {{
+   hasInput : Bool;
+   hasInput() : Bool { hasInput };
+
+   init(lineMap_ : TokenizerLineMap, io_ : ExtendedIO, hasInput_ : Bool) : SELF_TYPE {{
       lineMap <- lineMap_;
       io <- io_;
+      hasInput <- hasInput_;
       self;
    }};
 

@@ -1,3 +1,9 @@
+class ExtendedIO inherits IO {
+   outString(s : String, length : Int) : SELF_TYPE {
+      out_string(s)
+   };
+};
+
 class InputStream {
    -- Returns the next byte as a single length string, or the empty string if
    -- there are no remaining bytes.

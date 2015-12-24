@@ -1,0 +1,2 @@
+ERROR: IO.in_string requires --stdin
+	at Main.main (in-string-error.cl: line 4)

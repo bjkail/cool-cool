@@ -1,4 +1,10 @@
+c [\c] [c]
 backslash [\\] [\]
+backspace [\b] []
 tab [\t] [	]
-linefeed [\n] [
+newline [\n] [
+]
+formfeed [\f] []
+newline [\
+] [
 ]

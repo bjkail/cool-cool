@@ -52,7 +52,6 @@ write_files() {
   local stdin=$1
   shift
 
-  printf -- '--cool:escape:\\b=\b:\\t=\t:\\v=\v:\\f=\f:\\r=\r:\n'
   if $stdin; then
     echo "--cool:option=--stdin"
   fi
@@ -89,6 +88,8 @@ eof=$(printf '%*s' $eoflen)
 eof=${eof// /$'\n'}
 
 {
+  printf -- '--cool:escape:\\b=\b:\\t=\t:\\v=\v:\\f=\f:\\r=\r:\n'
+
   if $bootstrap; then
     echo "--cool:option=--stdin"
     write_files true "${coolfiles[@]}"

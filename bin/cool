@@ -119,6 +119,10 @@ if $stdin; then
   } | run_interpreter_wrapper | {
     while IFS= read -r line; do
       case $line in
+      '>S:0')
+        # Should not happen, but ignore if it does.
+        ;;
+
       '>S:'*)
         IFS= read -r -N"${line:3}" output
         printf "%s" "$output"

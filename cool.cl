@@ -148,7 +148,9 @@ class MainStdinIO inherits ExtendedIO {
    };
 
    outString(s : String, length : Int) : SELF_TYPE {{
-      io.out_string(">S:").out_int(length).out_string("\n").out_string(s);
+      if not length = 0 then
+         io.out_string(">S:").out_int(length).out_string("\n").out_string(s)
+      else false fi;
       self;
    }};
 

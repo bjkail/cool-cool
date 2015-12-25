@@ -459,7 +459,6 @@ class Main inherits Test {
             assertTrue("true copy", interpretBoolExpr("bool copy", "true.copy()"));
             assertIntEquals("int copy", 1, interpretIntExpr("int copy", "1.copy()"));
             assertStringEquals("string copy", "a", interpretStringExpr("string copy", "\"a\".copy()"));
-            -- TODO: test equality
             interpretObjectExpr("object copy", "Object", "new Object.copy()");
             assertIntEquals("main copy", 2, interpretInt("main copy",
                   "class Main {\na : A <- new A; b : Int;\na() : Int { a.a() + b };\n"

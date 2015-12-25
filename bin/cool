@@ -132,7 +132,7 @@ if $stdin; then
         printf "%s" "${line:3}"
         ;;
 
-      '<'*)
+      '<')
         echo > "$stdiofifo"
         ;;
 

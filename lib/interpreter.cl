@@ -189,6 +189,9 @@ class InterpreterBasicIOOutIntMethod inherits InterpreterMethod {
 };
 
 class InterpreterBasicIOInStringMethod inherits InterpreterMethod {
+   escapes : Bool <- "\\".length() = 2;
+   backslash : String <- new StringUtil.backslash();
+
    stringType : InterpreterType;
 
    initStringType(stringType_ : InterpreterType) : SELF_TYPE {{
@@ -198,7 +201,33 @@ class InterpreterBasicIOInStringMethod inherits InterpreterMethod {
 
    interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
       if interpreter.hasInput() then
-         interpreter.proceedValue(new InterpreterStringValue.init(stringType, interpreter.io().in_string(), 0))
+         let s : String <- interpreter.io().in_string() in
+            if escapes then
+               let result : String,
+                     i : Int,
+                     begin : Int,
+                     escapes : Int in
+                  {
+                     while i < s.length() loop
+                        {
+                           if s.substr(i, 1) = backslash then
+                              {
+                                 result <- result.concat(s.substr(begin, i + 1 - begin));
+                                 begin <- i;
+                                 escapes <- escapes + 1;
+                              }
+                           else false fi;
+
+                           i <- i + 1;
+                        }
+                     pool;
+
+                     result <- result.concat(s.substr(begin, i - begin));
+                     interpreter.proceedValue(new InterpreterStringValue.init(stringType, result, escapes));
+                  }
+            else
+               interpreter.proceedValue(new InterpreterStringValue.init(stringType, s, 0))
+            fi
       else
          interpreter.proceedError(0, "IO.in_string requires --stdin")
       fi

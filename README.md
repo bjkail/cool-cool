@@ -12,3 +12,8 @@ interpreter itself to the Cool Interpreter:
     $ export COOL_INTERPRETER=path/to/interpreter/cool
     $ bin/cool test/interpret/hello-world.cl
     Hello, World!
+
+The interpreter can also run itself:
+
+    $ bin/cool --bootstrap test/interpret/hello-world.cl
+    Hello, World!

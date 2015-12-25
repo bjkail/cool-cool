@@ -72,7 +72,7 @@ if $formaterrors; then
 
       echo "ERROR: $errorfile:$errorline: $error"
     else
-      echo "$line"
+      printf '%s\n' "$line"
     fi
   done
 else

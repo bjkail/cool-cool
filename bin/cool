@@ -108,12 +108,12 @@ if $stdin; then
 
     while read cmd < "$stdiofifo" && test -z "$cmd"; do
       IFS= read -r line <&3 || break
-      echo "$line"
+      printf '%s\n' "$line"
     done
 
     while test -z "$cmd"; do
       IFS= read -r line || break
-      echo "$line"
+      printf '%s\n' "$line"
       read cmd < "$stdiofifo" || break
     done
   } | run_interpreter_wrapper | {
@@ -121,11 +121,11 @@ if $stdin; then
       case $line in
       '>S:'*)
         IFS= read -r -N"${line:3}" output
-        echo -n "$output"
+        printf "%s" "$output"
         ;;
 
       '>I:'*)
-        echo -n "${line:3}"
+        printf "%s" "${line:3}"
         ;;
 
       '<'*)
@@ -134,7 +134,7 @@ if $stdin; then
 
       *)
         # Fallback in case new IO is used directly (e.g., ObjectUtil).
-        echo "$line"
+        printf '%s\n' "$line"
       esac
     done
 

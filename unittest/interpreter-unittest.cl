@@ -323,6 +323,11 @@ class Main inherits Test {
                   "class Main inherits A { main() : Int { a() }; b() : Int { 2 }; };"
                   .concat("class A { a() : Int { b() }; b() : Int { 1 }; };")));
 
+            let io : TestIO <- new TestIO.init(self, "dispatch order", new Collection, new LinkedList.add(1).add(2).add(3).add(4).add(5)) in
+                  interpretIO("dispatch order", io,
+                        "class Main inherits IO { main() : Object { out_int(3).a(out_int(2)).b(out_int(1)) };"
+                        .concat("a(o : Object) : SELF_TYPE { out_int(4) }; b(o : Object) : SELF_TYPE { out_int(5) }; };"));
+
             assertErrorEquals("dispatch void",
                   "dispatch on void for method 'void' in type 'Main'",
                   "\tat Main.a (line 1)\n"

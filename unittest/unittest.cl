@@ -78,7 +78,9 @@ class Test {
    assertStringEquals(context : String, expected : String, actual : String) : Object {
       if not actual = expected then
          failContext(context, "expected=".concat(expected)
-               .concat(", actual=").concat(actual))
+               .concat(" (length=").concat(stringUtil.fromInt(expected.length())).concat(")")
+               .concat(", actual=").concat(actual)
+               .concat(" (length=").concat(stringUtil.fromInt(actual.length())).concat(")"))
       else false fi
    };
 

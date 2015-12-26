@@ -58,6 +58,19 @@ class Main inherits Test {
       assertAnalyzerErrorImpl(context, error, "class Main { main() : Object { 0 }; assertAnalyzerExprError : Object <- ".concat(program).concat("; };"))
    };
 
+   assertAnalyzerUvaErrorImpl(context : String, error : String, program : String) : Object {
+      let analyzer : TestAnalyzer <- newAnalyzer(context, program).setUva(true),
+            program : AnalyzedProgram <- analyzer.analyzeTest() in
+         {
+            assertStringEquals(context, error, analyzer.errorString());
+            assertVoid(context, program);
+         }
+   };
+
+   assertAnalyzerUvaExprError(context : String, error : String, program : String) : Object {
+      assertAnalyzerUvaErrorImpl(context, error, "class Main { main() : Object { 0 }; assertAnalyzerExprError : Object <- ".concat(program).concat("; };"))
+   };
+
    assertStringMapIteratorNext(context : String, key : String, iter : StringMapIterator) : Object {{
       assertTrue(context.concat(" next"), iter.next());
       assertStringEquals(context.concat(" key"), key, iter.key());
@@ -652,6 +665,67 @@ class Main inherits Test {
                   case expr.right() of x : AnalyzedDispatchExpr => x; esac;
                };
 
+            assertAnalyzerUvaExprError("uva", "line 1: left expression type 'Int' is not the same as right expression type 'String' in '<' expression",
+                  "0 < \"\"");
+            assertAnalyzerUvaExprError("uva", "line 1: left expression type 'String' is not the same as right expression type 'Int' in '<' expression",
+                  "\"\" < 0");
+            assertAnalyzerUvaExprError("uva", "line 1: left expression type 'Int' is not the same as right expression type 'Bool' in '<' expression",
+                  "0 < false");
+            assertAnalyzerUvaExprError("uva", "line 1: left expression type 'Bool' is not the same as right expression type 'Int' in '<' expression",
+                  "false < 0");
+            assertAnalyzerUvaExprError("uva", "line 1: left expression type 'String' is not the same as right expression type 'Bool' in '<' expression",
+                  "\"\" < false");
+            assertAnalyzerUvaExprError("uva", "line 1: left expression type 'Bool' is not the same as right expression type 'String' in '<' expression",
+                  "false < \"\"");
+
+            let analyzer : TestAnalyzer <- newAnalyzerExpr("less", "0 < \"\".length()").setUva(true),
+                  expr : AnalyzedBinaryExpr <- case assertAnalyzeExpr("less", analyzer) of x : AnalyzedBinaryExpr => x; esac in
+               {
+                  assertStringEquals("less", "<", expr.op());
+                  assertSameType("less", analyzer.boolType(), expr.type());
+                  case expr.left() of x : AnalyzedConstantIntExpr => x; esac;
+                  case expr.right() of x : AnalyzedDispatchExpr => x; esac;
+               };
+
+            let analyzer : TestAnalyzer <- newAnalyzerExpr("less", "\"\" < 0.type_name()").setUva(true),
+                  expr : AnalyzedBinaryExpr <- case assertAnalyzeExpr("less", analyzer) of x : AnalyzedBinaryExpr => x; esac in
+               {
+                  assertStringEquals("less", "<", expr.op());
+                  assertSameType("less", analyzer.boolType(), expr.type());
+                  case expr.left() of x : AnalyzedConstantStringExpr => x; esac;
+                  case expr.right() of x : AnalyzedDispatchExpr => x; esac;
+               };
+
+            let analyzer : TestAnalyzer <- newAnalyzerExpr("less", "false < not false").setUva(true),
+                  expr : AnalyzedBinaryExpr <- case assertAnalyzeExpr("less", analyzer) of x : AnalyzedBinaryExpr => x; esac in
+               {
+                  assertStringEquals("less", "<", expr.op());
+                  assertSameType("less", analyzer.boolType(), expr.type());
+                  case expr.left() of x : AnalyzedConstantBoolExpr => x; esac;
+                  case expr.right() of x : AnalyzedUnaryExpr => x; esac;
+               };
+
+            let analyzer : TestAnalyzer <- newAnalyzerExpr("less", "new Object < new Object").setUva(true),
+                  expr : AnalyzedBinaryExpr <- case assertAnalyzeExpr("less", analyzer) of x : AnalyzedBinaryExpr => x; esac in
+               {
+                  assertStringEquals("less", "<", expr.op());
+                  assertSameType("less", analyzer.boolType(), expr.type());
+                  case expr.left() of x : AnalyzedNewExpr => x; esac;
+                  case expr.right() of x : AnalyzedNewExpr => x; esac;
+               };
+
+            let analyzer : TestAnalyzer <- newAnalyzer("less",
+                     "class Main { main() : Object { new A < new B }; };"
+                     .concat("class A { a : Bool; }; class B { b : Bool; };")).setUva(true),
+                  program : AnalyzedProgram <- assertAnalyze("less", analyzer),
+                  expr : AnalyzedBinaryExpr <- case program.mainMethod().expr() of x : AnalyzedBinaryExpr => x; esac in
+               {
+                  assertStringEquals("less", "<", expr.op());
+                  assertSameType("less", analyzer.boolType(), expr.type());
+                  case expr.left() of x : AnalyzedNewExpr => x; esac;
+                  case expr.right() of x : AnalyzedNewExpr => x; esac;
+               };
+
             assertAnalyzerExprError("", "line 1: left expression type 'Bool' is not type 'Int' for '<=' expression",
                   "false <= 0");
             assertAnalyzerExprError("", "line 1: right expression type 'Bool' is not type 'Int' for '<=' expression",
@@ -664,6 +738,67 @@ class Main inherits Test {
                   assertSameType("lessEqual", analyzer.boolType(), expr.type());
                   case expr.left() of x : AnalyzedConstantIntExpr => x; esac;
                   case expr.right() of x : AnalyzedDispatchExpr => x; esac;
+               };
+
+            assertAnalyzerUvaExprError("uva", "line 1: left expression type 'Int' is not the same as right expression type 'String' in '<=' expression",
+                  "0 <= \"\"");
+            assertAnalyzerUvaExprError("uva", "line 1: left expression type 'String' is not the same as right expression type 'Int' in '<=' expression",
+                  "\"\" <= 0");
+            assertAnalyzerUvaExprError("uva", "line 1: left expression type 'Int' is not the same as right expression type 'Bool' in '<=' expression",
+                  "0 <= false");
+            assertAnalyzerUvaExprError("uva", "line 1: left expression type 'Bool' is not the same as right expression type 'Int' in '<=' expression",
+                  "false <= 0");
+            assertAnalyzerUvaExprError("uva", "line 1: left expression type 'String' is not the same as right expression type 'Bool' in '<=' expression",
+                  "\"\" <= false");
+            assertAnalyzerUvaExprError("uva", "line 1: left expression type 'Bool' is not the same as right expression type 'String' in '<=' expression",
+                  "false <= \"\"");
+
+            let analyzer : TestAnalyzer <- newAnalyzerExpr("less equal", "0 <= \"\".length()").setUva(true),
+                  expr : AnalyzedBinaryExpr <- case assertAnalyzeExpr("less equal", analyzer) of x : AnalyzedBinaryExpr => x; esac in
+               {
+                  assertStringEquals("less equal", "<=", expr.op());
+                  assertSameType("less equal", analyzer.boolType(), expr.type());
+                  case expr.left() of x : AnalyzedConstantIntExpr => x; esac;
+                  case expr.right() of x : AnalyzedDispatchExpr => x; esac;
+               };
+
+            let analyzer : TestAnalyzer <- newAnalyzerExpr("less equal", "\"\" <= 0.type_name()").setUva(true),
+                  expr : AnalyzedBinaryExpr <- case assertAnalyzeExpr("less equal", analyzer) of x : AnalyzedBinaryExpr => x; esac in
+               {
+                  assertStringEquals("less equal", "<=", expr.op());
+                  assertSameType("less equal", analyzer.boolType(), expr.type());
+                  case expr.left() of x : AnalyzedConstantStringExpr => x; esac;
+                  case expr.right() of x : AnalyzedDispatchExpr => x; esac;
+               };
+
+            let analyzer : TestAnalyzer <- newAnalyzerExpr("less equal", "false <= not false").setUva(true),
+                  expr : AnalyzedBinaryExpr <- case assertAnalyzeExpr("less equal", analyzer) of x : AnalyzedBinaryExpr => x; esac in
+               {
+                  assertStringEquals("less equal", "<=", expr.op());
+                  assertSameType("less equal", analyzer.boolType(), expr.type());
+                  case expr.left() of x : AnalyzedConstantBoolExpr => x; esac;
+                  case expr.right() of x : AnalyzedUnaryExpr => x; esac;
+               };
+
+            let analyzer : TestAnalyzer <- newAnalyzerExpr("less equal", "new Object <= new Object").setUva(true),
+                  expr : AnalyzedBinaryExpr <- case assertAnalyzeExpr("less equal", analyzer) of x : AnalyzedBinaryExpr => x; esac in
+               {
+                  assertStringEquals("less equal", "<=", expr.op());
+                  assertSameType("less equal", analyzer.boolType(), expr.type());
+                  case expr.left() of x : AnalyzedNewExpr => x; esac;
+                  case expr.right() of x : AnalyzedNewExpr => x; esac;
+               };
+
+            let analyzer : TestAnalyzer <- newAnalyzer("less equal",
+                     "class Main { main() : Object { new A <= new B }; };"
+                     .concat("class A { a : Bool; }; class B { b : Bool; };")).setUva(true),
+                  program : AnalyzedProgram <- assertAnalyze("less equal", analyzer),
+                  expr : AnalyzedBinaryExpr <- case program.mainMethod().expr() of x : AnalyzedBinaryExpr => x; esac in
+               {
+                  assertStringEquals("less equal", "<=", expr.op());
+                  assertSameType("less equal", analyzer.boolType(), expr.type());
+                  case expr.left() of x : AnalyzedNewExpr => x; esac;
+                  case expr.right() of x : AnalyzedNewExpr => x; esac;
                };
 
             assertAnalyzerExprError("", "line 1: expression type 'Bool' is not type 'Int' for '~' expression",

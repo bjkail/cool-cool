@@ -1032,13 +1032,29 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
          }
    };
 
+   isObjectComparisonOp(op : String) : Bool {
+      if op = "=" then
+         true
+      else
+         if analyzer.uva() then
+            if op = "<" then
+               true
+            else
+               op = "<="
+            fi
+         else
+            false
+         fi
+      fi
+   };
+
    visitBinary(parsedExpr : ParsedBinaryExpr) : Object {
       let left : AnalyzedExpr <- analyze(parsedExpr.left()),
             right : AnalyzedExpr <- analyze(parsedExpr.right()),
             op : String <- parsedExpr.op(),
             type : AnalyzedType in
          {
-            if op = "=" then
+            if isObjectComparisonOp(op) then
                {
                   if if left.type() = analyzer.intType() then
                         true
@@ -1113,6 +1129,14 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
 class Analyzer {
    stringUtil : StringUtil <- new StringUtil;
    stringUtil() : StringUtil { stringUtil };
+
+   uva : Bool;
+   uva() : Bool { uva };
+
+   setUva(uva_ : Bool) : SELF_TYPE {{
+      uva <- uva_;
+      self;
+   }};
 
    objectType : AnalyzedType <- new AnalyzedType.initBuiltinObject();
    objectType() : AnalyzedType { objectType };

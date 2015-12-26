@@ -577,36 +577,59 @@ class Main inherits Test {
          {
             let t : Tokenizer <- newTokenizer("\"\"") in
                assertTokenString("empty", "", t);
+            let t : Tokenizer <- newTokenizer("\"\"").setUva(true) in
+               assertTokenString("uva empty", "", t);
 
             let t : Tokenizer <- newTokenizer("\"a\"") in
                assertTokenString("single", "a", t);
+            let t : Tokenizer <- newTokenizer("\"a\"").setUva(true) in
+               assertTokenString("uva single", "a", t);
 
             let t : Tokenizer <- newTokenizer("\"\\c\"") in
                assertTokenString("escape ignored", "c", t);
+            let t : Tokenizer <- newTokenizer("\"\\c\"").setUva(true) in
+               assertTokenString("uva escape ignored", stringUtil.backslash().concat("c"), t);
 
             let t : Tokenizer <- newTokenizer("\"\\b\"") in
                assertTokenStringEscapes("backspace", "\b", "\b".length() - 1, t);
+            let t : Tokenizer <- newTokenizer("\"\\b\"").setUva(true) in
+               assertTokenString("uva backspace", stringUtil.backslash().concat("b"), t);
 
             let t : Tokenizer <- newTokenizer("\"\\t\"") in
                assertTokenStringEscapes("tab", "\t", "\t".length() - 1, t);
+            let t : Tokenizer <- newTokenizer("\"\\t\"").setUva(true) in
+               assertTokenString("uva tab", stringUtil.backslash().concat("t"), t);
 
             let t : Tokenizer <- newTokenizer("\"\\n\"") in
                assertTokenStringEscapes("linefeed", "\n", "\n".length() - 1, t);
+            let t : Tokenizer <- newTokenizer("\"\\n\"").setUva(true) in
+               assertTokenString("uva linefeed", stringUtil.backslash().concat("n"), t);
 
             let t : Tokenizer <- newTokenizer("\"\\f\"") in
                assertTokenStringEscapes("formfeed", "\f", "\f".length() - 1, t);
+            let t : Tokenizer <- newTokenizer("\"\\f\"").setUva(true) in
+               assertTokenString("uva formfeed", stringUtil.backslash().concat("f"), t);
 
             let t : Tokenizer <- newTokenizer("\"\\\\\"") in
                assertTokenStringEscapes("backslash", "\\", "\\".length() - 1, t);
+            let t : Tokenizer <- newTokenizer("\"\\\\\"").setUva(true) in
+               assertTokenString("uva backslash", stringUtil.backslash().concat(stringUtil.backslash()), t);
 
             let t : Tokenizer <- newTokenizer("\"\\\"\"") in
                assertTokenString("double quote", stringUtil.doubleQuote(), t);
+            let t : Tokenizer <- newTokenizer("\"\\\"\"").setUva(true) in
+               assertTokenString("uva double quote", stringUtil.backslash().concat(stringUtil.doubleQuote()), t);
 
             let t : Tokenizer <- newTokenizer("\"\\\n\"") in
                assertTokenStringEscapes("escaped linefeed", "\n", "\n".length() - 1, t);
+            let t : Tokenizer <- newTokenizer("\"\\\n\"").setUva(true) in
+               assertTokenError("uva escaped linefeed", "line 1: unexpected newline in string", t);
 
             let t : Tokenizer <- newTokenizer("\"\\n\\n\"") in
                assertTokenStringEscapes("linefeed linefeed", "\n\n", "\n\n".length() - 2, t);
+            let t : Tokenizer <- newTokenizer("\"\\n\\n\"").setUva(true) in
+               assertTokenString("uva linefeed linefeed",
+                     stringUtil.backslash().concat("n").concat(stringUtil.backslash()).concat("n"), t);
 
             let s8 : String <- "01234567",
                   s64 : String <- s8.concat(s8).concat(s8).concat(s8).concat(s8).concat(s8).concat(s8).concat(s8),
@@ -631,6 +654,13 @@ class Main inherits Test {
                   assertTokenStringEscapes("escape length", s2048, 1024, newTokenizer("\"".concat(s4096).concat("\"")));
                   assertTokenError("escape length", "line 1: maximum string constant length exceeded",
                         newTokenizer("\"x".concat(s4096).concat("\"")));
+
+                  -- 2048 TestStringInputStream backslashes = 1024 "input"
+                  -- backslashes = 1024 UVA string characters
+                  assertTokenString("uva escape length", s1024,
+                        newTokenizer("\"".concat(s2048).concat("\"")).setUva(true));
+                  assertTokenError("uva escape error length", "line 1: maximum string constant length exceeded",
+                        newTokenizer("\"x".concat(s2048).concat("\"")).setUva(true));
                };
 
             assertTokenError("", "line 1: unexpected EOF in string", newTokenizer("\""));

@@ -211,6 +211,12 @@ class Tokenizer {
       self;
    }};
 
+   uva : Bool;
+   setUva(uva_ : Bool) : SELF_TYPE {{
+      uva <- uva_;
+      self;
+   }};
+
    init(is_ : InputStream) : SELF_TYPE {{
       is <- is_;
       self;
@@ -717,35 +723,46 @@ class Tokenizer {
                         else
                            {
                               if c = stringUtil.backslash() then
-                                 {
-                                    c <- readChar();
-                                    if c = "b" then
-                                       c <- if bsChar = "" then "\b" else bsChar fi
-                                    else
-                                       if c = "t" then
-                                          c <- if tabChar = "" then "\t" else tabChar fi
+                                 if uva then
+                                    let c2 : String <- readChar() in
+                                       if c2 = "\n" then
+                                          if isvoid token then
+                                             token <- newTokenErrorAt(line_, "unexpected newline in string")
+                                          else false fi
                                        else
-                                          if c = "n" then
-                                             c <- "\n"
+                                          c <- c.concat(c2)
+                                       fi
+                                 else
+                                    {
+                                       c <- readChar();
+                                       if c = "b" then
+                                          c <- if bsChar = "" then "\b" else bsChar fi
+                                       else
+                                          if c = "t" then
+                                             c <- if tabChar = "" then "\t" else tabChar fi
                                           else
-                                             if c = "f" then
-                                                c <- if ffChar = "" then "\f" else ffChar fi
+                                             if c = "n" then
+                                                c <- "\n"
                                              else
-                                                if c = stringUtil.backslash() then
-                                                   -- Support UVA Cool dialect.
-                                                   if "\\".length() = 2 then
-                                                      c <- "\\"
+                                                if c = "f" then
+                                                   c <- if ffChar = "" then "\f" else ffChar fi
+                                                else
+                                                   if c = stringUtil.backslash() then
+                                                      -- Support UVA Cool dialect.
+                                                      if "\\".length() = 2 then
+                                                         c <- "\\"
+                                                      else false fi
                                                    else false fi
-                                                else false fi
+                                                fi
                                              fi
                                           fi
-                                       fi
-                                    fi;
+                                       fi;
 
-                                    if c.length() = 2 then
-                                       escapes <- escapes + 1
-                                    else false fi;
-                                 }
+                                       if c.length() = 2 then
+                                          escapes <- escapes + 1
+                                       else false fi;
+                                    }
+                                 fi
                               else
                                  -- XXX: No way to represent NUL.
                                  false

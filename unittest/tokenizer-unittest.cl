@@ -48,7 +48,7 @@ class Main inherits Test {
             tokenError : TokenError <- token.asError() in
          {
             if isvoid tokenError then
-               failContext(context.concat(" void"), "expected=".concat(tokenToString(new TokenError.init(0, value)))
+               failContext(context.concat(" error"), "expected=".concat(tokenToString(new TokenError.init(0, value)))
                      .concat(", actual=").concat(tokenToString(token)))
             else false fi;
             assertStringEquals(context, value, "line ".concat(stringUtil.fromInt(tokenError.line())).concat(": ").concat(tokenError.value()));
@@ -613,9 +613,24 @@ class Main inherits Test {
                   s512 : String <- s64.concat(s64).concat(s64).concat(s64).concat(s64).concat(s64).concat(s64).concat(s64),
                   s1024 : String <- s512.concat(s512) in
                {
-                  assertTokenString("", s1024, newTokenizer("\"".concat(s1024).concat("\"")));
-                  assertTokenError("", "line 1: maximum string constant length exceeded",
+                  assertTokenString("length", s1024, newTokenizer("\"".concat(s1024).concat("\"")));
+                  assertTokenError("length", "line 1: maximum string constant length exceeded",
                         newTokenizer("\"x".concat(s1024).concat("\"")));
+               };
+
+            let s1 : String <- stringUtil.backslash(),
+                  s8 : String <- s1.concat(s1).concat(s1).concat(s1).concat(s1).concat(s1).concat(s1).concat(s1),
+                  s64 : String <- s8.concat(s8).concat(s8).concat(s8).concat(s8).concat(s8).concat(s8).concat(s8),
+                  s512 : String <- s64.concat(s64).concat(s64).concat(s64).concat(s64).concat(s64).concat(s64).concat(s64),
+                  s1024 : String <- s512.concat(s512),
+                  s2048 : String <- s1024.concat(s1024),
+                  s4096 : String <- s2048.concat(s2048) in
+               {
+                  -- 4096 TestStringInputStream backslashes = 2048 "input"
+                  -- backslashes = 1024 string characters
+                  assertTokenStringEscapes("escape length", s2048, 1024, newTokenizer("\"".concat(s4096).concat("\"")));
+                  assertTokenError("escape length", "line 1: maximum string constant length exceeded",
+                        newTokenizer("\"x".concat(s4096).concat("\"")));
                };
 
             assertTokenError("", "line 1: unexpected EOF in string", newTokenizer("\""));

@@ -751,13 +751,12 @@ class Tokenizer {
                                  false
                               fi;
 
-                              if s.length() < 1024 then
-                                 s <- s.concat(c)
-                              else
+                              s <- s.concat(c);
+                              if not s.length() - escapes <= 1024 then
                                  if isvoid token then
                                     token <- newTokenErrorAt(line_, "maximum string constant length exceeded")
                                  else false fi
-                              fi;
+                              else false fi;
 
                               c <- readChar();
                            }

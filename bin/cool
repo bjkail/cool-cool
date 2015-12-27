@@ -133,7 +133,9 @@ if $stdin; then
         ;;
 
       '>S:'*)
-        IFS= read -r -N"${line:3}" output
+        # Use read -d '' -n to support BASH without read -N.  This works
+        # because the interpreter will never print NUL.
+        IFS= read -r -d '' -n"${line:3}" output
         printf "%s" "$output"
         ;;
 

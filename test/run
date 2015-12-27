@@ -36,7 +36,6 @@ run_tests() {
         actual=$(../../bin/cool $mode "${opts[@]}" "$file" < "$redir")
       else
         echo -n ": "
-        redir=
         actual=$(../../bin/cool $mode "${opts[@]}" "$file")
       fi
 

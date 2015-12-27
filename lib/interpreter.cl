@@ -935,7 +935,7 @@ class InterpreterValue {
    type : InterpreterType;
    type() : InterpreterType { type };
 
-   equalityValue() : Object { self };
+   comparisonValue() : Object { self };
    copyValue() : InterpreterValue { self };
    toString() : String { self.type_name() };
 };
@@ -986,7 +986,7 @@ class InterpreterBoolValue inherits InterpreterValue {
       self;
    }};
 
-   equalityValue() : Object { value };
+   comparisonValue() : Object { value };
 
    toString() : String { if value then "true" else "false" fi };
 };
@@ -1001,7 +1001,7 @@ class InterpreterIntValue inherits InterpreterValue {
       self;
    }};
 
-   equalityValue() : Object { value };
+   comparisonValue() : Object { value };
 
    toString() : String { new StringUtil.fromInt(value) };
 };
@@ -1028,7 +1028,7 @@ class InterpreterStringValue inherits InterpreterValue {
       value.length() = 0
    };
 
-   equalityValue() : Object { value };
+   comparisonValue() : Object { value };
 
    toString() : String { "string[".concat(value).concat("]") };
 };
@@ -2010,7 +2010,7 @@ class InterpreterEqualExprState inherits InterpreterBinaryExprState {
                   if isvoid value then
                      false
                   else
-                     left.equalityValue() = value.equalityValue()
+                     left.comparisonValue() = value.comparisonValue()
                   fi
                fi)
       else

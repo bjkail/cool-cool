@@ -76,7 +76,14 @@ write_files() {
 }
 
 run_interpreter_wrapper() {
-  "$dir"/interpreter-wrapper "${interpreteroptions[@]}" "${coolfiles[@]}"
+  interpretercoolfiles=("${coolfiles[@]}")
+  for i in ${!interpretercoolfiles[@]}; do
+    case ${interpretercoolfiles[$i]} in
+    */interpreter-support.cl) unset interpretercoolfiles[$i]
+    esac
+  done
+
+  "$dir"/interpreter-wrapper "${interpreteroptions[@]}" "${interpretercoolfiles[@]}"
 }
 
 # Use a temporary file rather than a pipeline so that errors reading the input
@@ -100,7 +107,14 @@ eof=${eof// /$'\n'}
       echo "--cool:option=--${option#--bootstrap-}"
     done
 
-    write_files true "${coolfiles[@]}"
+    bootstrapcoolfiles=("${coolfiles[@]}")
+    for i in ${!bootstrapcoolfiles[@]}; do
+      case ${bootstrapcoolfiles[$i]} in
+      */interpreter-support-uva.cl) unset bootstrapcoolfiles[$i]
+      esac
+    done
+
+    write_files true "${bootstrapcoolfiles[@]}"
   fi
 
   for option in "${options[@]}"; do

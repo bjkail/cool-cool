@@ -1970,13 +1970,7 @@ class InterpreterLessExpr inherits InterpreterBinaryExpr {
    };
 };
 
-class InterpreterLessExprState inherits InterpreterBinaryExprState {
-   interpret(right : InterpreterValue) : InterpreterValue {
-      let left : InterpreterIntValue <- case left of x : InterpreterIntValue => x; esac,
-            right : InterpreterIntValue <- case right of x : InterpreterIntValue => x; esac in
-         new InterpreterBoolValue.init(type, left.value() < right.value())
-   };
-};
+-- class InterpreterLessExprState is in interpreter-support*.cl
 
 class InterpreterLessEqualExpr inherits InterpreterBinaryExpr {
    newState() : InterpreterBinaryExprState {
@@ -1984,13 +1978,7 @@ class InterpreterLessEqualExpr inherits InterpreterBinaryExpr {
    };
 };
 
-class InterpreterLessEqualExprState inherits InterpreterBinaryExprState {
-   interpret(right : InterpreterValue) : InterpreterValue {
-      let left : InterpreterIntValue <- case left of x : InterpreterIntValue => x; esac,
-            right : InterpreterIntValue <- case right of x : InterpreterIntValue => x; esac in
-         new InterpreterBoolValue.init(type, left.value() <= right.value())
-   };
-};
+-- class InterpreterLessEqualExprState is in interpreter-support*.cl
 
 class InterpreterEqualExpr inherits InterpreterBinaryExpr {
    newState() : InterpreterBinaryExprState {

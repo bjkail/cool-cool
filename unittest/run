@@ -10,12 +10,19 @@ run_test() {
   shift
 
   if test -z "$test" -o "$test" = "$name"; then
+    coolfiles=("$dir"/../lib/*)
+    for i in ${!coolfiles[@]}; do
+      case "${coolfiles[$i]}" in
+      */interpreter-support.cl) unset coolfiles[$i]
+      esac
+    done
+
     echo -n "$name: "
     echo \
       | "$dir"/../bin/interpreter-wrapper \
         --format-errors \
         "$dir"/unittest.cl \
-        "$dir"/../lib/* \
+        "${coolfiles[@]}" \
         "$dir"/"$name"-unittest.cl "$@" \
       | {
         success=false

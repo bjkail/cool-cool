@@ -15,12 +15,12 @@ class Main inherits Test {
       testBasicClasses();
    }};
 
-   interpretIO(context : String, io : TestIO, program : String) : InterpreterValue {
-      let tokenizer : Tokenizer <- new Tokenizer.init(new TestStringInputStream.init(program)),
+   interpretIOImpl(context : String, io : TestIO, program : String, uva : Bool) : InterpreterValue {
+      let tokenizer : Tokenizer <- new Tokenizer.init(new TestStringInputStream.init(program)).setUva(uva),
             parser : TestFailErrorParser <- new TestFailErrorParser.init(tokenizer).initTest(self, context),
             program : ParsedProgram <- parser.parse(),
             lineMap : TokenizerLineMap <- tokenizer.lineMap(),
-            analyzer : Analyzer <- new TestFailErrorAnalyzer.initTest(self, context),
+            analyzer : Analyzer <- new TestFailErrorAnalyzer.initTest(self, context).setUva(uva),
             program : AnalyzedProgram <- analyzer.analyze(program),
             interpreter : Interpreter <- new Interpreter.init(lineMap, io, true),
             value : InterpreterValue <- interpreter.interpret(new InterpreterAnalyzer.analyze(program)) in
@@ -30,14 +30,26 @@ class Main inherits Test {
          }
    };
 
-   interpret(context : String, program : String) : InterpreterValue {
+   interpretIO(context : String, io : TestIO, program : String) : InterpreterValue {
+      interpretIOImpl(context, io, program, false)
+   };
+
+   interpretImpl(context : String, program : String, uva : Bool) : InterpreterValue {
       let empty : Collection <- new Collection,
             io : TestIO <- new TestIO.init(self, context, empty, empty) in
-         interpretIO(context, io, program)
+         interpretIOImpl(context, io, program, uva)
+   };
+
+   interpret(context : String, program : String) : InterpreterValue {
+      interpretImpl(context, program, false)
    };
 
    interpretExpr(context : String, program : String) : InterpreterValue {
       interpret(context, "class Main { main() : Object { ".concat(program).concat(" }; };"))
+   };
+
+   interpretUvaExpr(context : String, program : String) : InterpreterValue {
+      interpretImpl(context, "class Main { main() : Object { ".concat(program).concat(" }; };"), true)
    };
 
    getError(context : String, value : InterpreterValue) : InterpreterErrorValue {{
@@ -69,6 +81,10 @@ class Main inherits Test {
 
    interpretBoolExpr(context : String, program : String) : Bool {
       getBool(context, interpretExpr(context, program))
+   };
+
+   interpretBoolUvaExpr(context : String, program : String) : Bool {
+      getBool(context, interpretUvaExpr(context, program))
    };
 
    getInt(context : String, value : InterpreterValue) : Int {{
@@ -385,9 +401,77 @@ class Main inherits Test {
             assertFalse("less", interpretBoolExpr("less", "0 < 0"));
             assertFalse("less", interpretBoolExpr("less", "1 < 0"));
 
+            assertTrue("uva less int", interpretBoolUvaExpr("equal int", "0 < 1"));
+            assertFalse("uva less int 2", interpretBoolUvaExpr("equal int", "0 < 0"));
+            assertFalse("uva less int 3", interpretBoolUvaExpr("equal int", "1 < 0"));
+
+            assertFalse("uva less bool", interpretBoolUvaExpr("uva less bool", "false < false"));
+            assertTrue("uva less bool 2", interpretBoolUvaExpr("uva less bool", "false < true"));
+            assertFalse("uva less bool 3", interpretBoolUvaExpr("uva less bool", "true < false"));
+
+            assertFalse("uva less string", interpretBoolUvaExpr("uva less bool", "\"a\" < \"a\""));
+            assertTrue("uva less string 2", interpretBoolUvaExpr("uva less string 2", "\"\" < \"a\""));
+            assertFalse("uva less string 3", interpretBoolUvaExpr("uva less string 2", "\"a\" < \"\""));
+
+            assertFalse("uva less self", interpretBoolUvaExpr("uva less self", "self < self"));
+            assertFalse("uva less self new", interpretBoolUvaExpr("uva less self new", "self < new Main"));
+            assertFalse("uva less self copy", interpretBoolUvaExpr("uva less self copy", "self < copy()"));
+
+            assertFalse("uva less void", interpretBoolUvaExpr("uva less void", "let void : Object in void < void"));
+            assertFalse("uva less void int", interpretBoolUvaExpr("uva less void int",
+                  "let left : Object, right : Object <- 0 in left < right"));
+            assertFalse("uva less int void", interpretBoolUvaExpr("uva less int void",
+                  "let left : Object <- 0, right : Object in left < right"));
+            assertFalse("uva less void bool", interpretBoolUvaExpr("uva less void bool",
+                  "let left : Object, right : Object <- false in left < right"));
+            assertFalse("uva less bool void", interpretBoolUvaExpr("uva less bool void",
+                  "let left : Object <- false, right : Object in left < right"));
+            assertFalse("uva less void string", interpretBoolUvaExpr("uva less void string",
+                  "let left : Object, right : Object <- \"\" in left < right"));
+            assertFalse("uva less string void", interpretBoolUvaExpr("uva less string void",
+                  "let left : Object <- \"\", right : Object in left < right"));
+            assertFalse("uva less void new", interpretBoolUvaExpr("uva less void new",
+                  "let left : Object, right : Object <- new Object in left < right"));
+            assertFalse("uva less new void", interpretBoolUvaExpr("uva less new void",
+                  "let left : Object <- new Object, right : Object in left < right"));
+
             assertTrue("less equal", interpretBoolExpr("less equal", "0 <= 1"));
             assertTrue("less equal", interpretBoolExpr("less equal", "0 <= 0"));
             assertFalse("less equal", interpretBoolExpr("less equal", "1 <= 0"));
+
+            assertTrue("uva less equal int", interpretBoolUvaExpr("equal int", "0 <= 1"));
+            assertTrue("uva less equal int 2", interpretBoolUvaExpr("equal int", "0 <= 0"));
+            assertFalse("uva less equal int 3", interpretBoolUvaExpr("equal int", "1 <= 0"));
+
+            assertTrue("uva less equal bool", interpretBoolUvaExpr("uva less bool", "false <= false"));
+            assertTrue("uva less equal bool 2", interpretBoolUvaExpr("uva less bool", "false <= true"));
+            assertFalse("uva less equal bool 3", interpretBoolUvaExpr("uva less bool", "true <= false"));
+
+            assertTrue("uva less equal string", interpretBoolUvaExpr("uva less bool", "\"a\" <= \"a\""));
+            assertTrue("uva less equal string 2", interpretBoolUvaExpr("uva less string 2", "\"\" <= \"a\""));
+            assertFalse("uva less equal string 3", interpretBoolUvaExpr("uva less string 2", "\"a\" <= \"\""));
+
+            assertTrue("uva less equal self", interpretBoolUvaExpr("uva less self", "self <= self"));
+            assertFalse("uva less equal self new", interpretBoolUvaExpr("uva less self new", "self <= new Main"));
+            assertFalse("uva less equal self copy", interpretBoolUvaExpr("uva less self copy", "self <= copy()"));
+
+            assertTrue("uva less equal void", interpretBoolUvaExpr("uva less void", "let void : Object in void <= void"));
+            assertFalse("uva less equal void int", interpretBoolUvaExpr("uva less void int",
+                  "let left : Object, right : Object <- 0 in left < right"));
+            assertFalse("uva less equal int void", interpretBoolUvaExpr("uva less int void",
+                  "let left : Object <- 0, right : Object in left < right"));
+            assertFalse("uva less equal void bool", interpretBoolUvaExpr("uva less void bool",
+                  "let left : Object, right : Object <- false in left < right"));
+            assertFalse("uva less equal bool void", interpretBoolUvaExpr("uva less bool void",
+                  "let left : Object <- false, right : Object in left < right"));
+            assertFalse("uva less equal void string", interpretBoolUvaExpr("uva less void string",
+                  "let left : Object, right : Object <- \"\" in left < right"));
+            assertFalse("uva less equal string void", interpretBoolUvaExpr("uva less string void",
+                  "let left : Object <- \"\", right : Object in left < right"));
+            assertFalse("uva less equal void new", interpretBoolUvaExpr("uva less void new",
+                  "let left : Object, right : Object <- new Object in left < right"));
+            assertFalse("uva less equal new void", interpretBoolUvaExpr("uva less new void",
+                  "let left : Object <- new Object, right : Object in left < right"));
 
             assertTrue("equal int", interpretBoolExpr("equal int", "0 = 0"));
             assertTrue("equal int new", interpretBoolExpr("equal int", "0 = new Int"));

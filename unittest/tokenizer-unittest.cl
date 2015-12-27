@@ -10,6 +10,7 @@ class Main inherits Test {
       testFileDirective();
       testFilesDirective();
       testOptionDirective();
+      testUvaDirective();
 
       testPunct();
       testBinaryOp();
@@ -337,6 +338,19 @@ class Main inherits Test {
                         assertStringEquals("option bcd", "bcd", case iter.get() of x : String => x; esac);
                         assertFalse("options", iter.next());
                      };
+               };
+         }
+      else false fi
+   };
+
+   testUvaDirective() : Object {
+      if begin("uvaDirective") then
+         {
+            let listener : TestUvaTokenizerListener <- new TestUvaTokenizerListener,
+                  t : Tokenizer <- newTokenizer("--cool:uva\n\"\\c\"").setListener(listener) in
+               {
+                  assertTokenString("string", stringUtil.backslash().concat("c"), t);
+                  assertTrue("uva", listener.uva());
                };
          }
       else false fi
@@ -694,4 +708,10 @@ class TestOptionTokenizerListener inherits TokenizerListener {
    handleOption(s : String) : Object {
       options.add(s)
    };
+};
+
+class TestUvaTokenizerListener inherits TokenizerListener {
+   uva : Bool;
+   uva() : Bool { uva };
+   setUva(uva_ : Bool) : Object { uva <- uva_ };
 };

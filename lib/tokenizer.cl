@@ -126,6 +126,7 @@ class TokenString inherits Token {
 class TokenizerListener {
    setEmptyLineEofCount(n : Int) : Object { false };
    eof() : Object { false };
+   setUva(uva : Bool) : Object { false };
    handleOption(option : String) : Object { false };
 };
 
@@ -485,6 +486,13 @@ class Tokenizer {
          else false fi
    };
 
+   readUvaDirective() : Object {{
+      uva <- true;
+      if not isvoid listener then
+         listener.setUva(true)
+      else false fi;
+   }};
+
    readDirective() : Object {
       if matchChar("e") then
          if matchChar("o") then
@@ -538,7 +546,20 @@ class Tokenizer {
                      else false fi
                   else false fi
                else false fi
-            else false fi
+            else
+               if matchChar("u") then
+                  if matchChar("v") then
+                     if matchChar("a") then
+                        if matchChar("\n") then
+                           {
+                              unreadChar("\n");
+                              readUvaDirective();
+                           }
+                        else false fi
+                     else false fi
+                  else false fi
+               else false fi
+            fi
          fi
       fi
    };

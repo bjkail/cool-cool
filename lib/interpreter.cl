@@ -250,6 +250,50 @@ class InterpreterBasicIOInStringMethod inherits InterpreterMethod {
    };
 };
 
+class InterpreterUvaBasicIOInStringMethod inherits InterpreterMethod {
+   backslash : String <- new StringUtil.backslash();
+
+   stringType : InterpreterType;
+
+   initStringType(stringType_ : InterpreterType) : SELF_TYPE {{
+      stringType <- stringType_;
+      self;
+   }};
+
+   interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
+      if interpreter.hasInput() then
+         let s : String <- interpreter.io().in_string(),
+               escapes : Int in
+            {
+               let i : Int in
+                  while i < s.length() loop
+                     {
+                        if if s.substr(i, 1) = backslash then
+                              if i + 1 < s.length() then
+                                 let c : String <- s.substr(i + 1, 1) in
+                                    if c = "n" then
+                                       true
+                                    else
+                                       c = "t"
+                                    fi
+                              else false fi
+                           else false fi
+                        then
+                           escapes <- escapes + 1
+                        else false fi;
+
+                        i <- i + 1;
+                     }
+                  pool;
+
+               interpreter.proceedValue(new InterpreterStringValue.init(stringType, s, escapes));
+            }
+      else
+         interpreter.proceedError(0, "IO.in_string requires --stdin")
+      fi
+   };
+};
+
 class InterpreterBasicIOInIntMethod inherits InterpreterMethod {
    intType : InterpreterType;
 
@@ -803,7 +847,12 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
                      new InterpreterBasicIOOutStringMethod
                   fi);
             ioType.addBasicMethod("out_int", new InterpreterBasicIOOutIntMethod);
-            ioType.addBasicMethod("in_string", new InterpreterBasicIOInStringMethod.initStringType(stringType.type()));
+            ioType.addBasicMethod("in_string",
+                  if uva then
+                     new InterpreterUvaBasicIOInStringMethod.initStringType(stringType.type())
+                  else
+                     new InterpreterBasicIOInStringMethod.initStringType(stringType.type())
+                  fi);
             ioType.addBasicMethod("in_int", new InterpreterBasicIOInIntMethod.initIntType(intType.type()));
 
             types.putWithString(intType.name(), intType);

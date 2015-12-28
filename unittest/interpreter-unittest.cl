@@ -713,8 +713,12 @@ class Main inherits Test {
                assertStringEquals("in_string", "a", getString("in_string",
                      interpretIO("in_string", io, "class Main { main() : Object { new IO.in_string() }; };")));
             let io : TestIO <- new TestIO.init(self, "in_string escape", new LinkedList.add(stringUtil.backslash()), new Collection) in
-               assertTrue("in_string", getBool("in_string",
-                     interpretIO("in_string", io, "class Main { main() : Object { new IO.in_string() = \"\\\\\" }; };")));
+               assertTrue("in_string escape", getBool("in_string escape",
+                     interpretIO("in_string escape", io, "class Main { main() : Object { new IO.in_string() = \"\\\\\" }; };")));
+            let s : String <- stringUtil.backslash().concat(stringUtil.backslash()).concat("\n"),
+                  io : TestIO <- new TestIO.init(self, "in_string escape", new LinkedList.add(s), new LinkedList.add(s)) in
+               getObject("uva in_string escape", "Main",
+                     interpretIOImpl("uva in_string escape", io, "class Main inherits IO { main() : Object { out_string(in_string()) }; };", true));
             let io : TestIO <- new TestIO.init(self, "in_string override", new Collection, new Collection) in
                assertStringEquals("in_string override", "", getString("in_string override", interpretIO("in_string override", io,
                      "class Main { main() : Object { in_string() }; in_string() : String { \"\" }; };")));

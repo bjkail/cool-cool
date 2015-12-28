@@ -399,16 +399,16 @@ class Tokenizer {
    };
 
    readParenComment() : Token {
-      let continue : Bool <- true,
+      let nested : Int <- 1,
             line_ : Int <- line,
             token : Token in
          {
-            while continue loop
+            while 0 < nested loop
                let c : String <- readChar() in
                   if c = "" then
                      {
                         token <- newTokenErrorAt(line_, "unexpected EOF in enclosing comment");
-                        continue <- false;
+                        nested <- 0;
                      }
                   else
                      if c = "*" then
@@ -418,10 +418,22 @@ class Tokenizer {
                            pool;
 
                            if c = ")" then
-                              continue <- false
+                              nested <- nested - 1
                            else false fi;
                         }
-                     else false fi
+                     else
+                        if c = "(" then
+                           {
+                              while c = "(" loop
+                                 c <- readChar()
+                              pool;
+
+                              if c = "*" then
+                                 nested <- nested + 1
+                              else false fi;
+                           }
+                        else false fi
+                     fi
                   fi
             pool;
 

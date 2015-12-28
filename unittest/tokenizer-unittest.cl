@@ -170,7 +170,8 @@ class Main inherits Test {
             assertTokenPunct("newline", ".", newTokenizer("(*\n*)."));
             assertTokenPunct("asterisk", ".", newTokenizer("(***)."));
             assertTokenPunct("chars", ".", newTokenizer("(* x \n * \n x *)."));
-            assertTokenBinaryOp("nested", "*", newTokenizer("(*(**)*)"));
+            assertTokenEof("nested", newTokenizer("(*(**)*)"));
+            assertTokenEof("nested 2", newTokenizer("(*((***)*)"));
             assertTokenError("eof", "line 1: unexpected EOF in enclosing comment", newTokenizer("(*"));
          }
       else false fi

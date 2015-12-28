@@ -643,7 +643,8 @@ class AnalyzedConstantStringExpr inherits AnalyzedExpr {
    value() : String { value };
 
    -- The number of literal two-character escape sequences used in this string
-   -- (e.g., "\n" actually stored as "\\n").
+   -- (e.g., "\n" actually stored as "\\n").  In UVA mode, the number of "\t"
+   -- and "\n" escape sequences (the sequences handled by IO.out_string).
    escapes : Int;
    escapes() : Int { escapes };
 

@@ -104,7 +104,8 @@ class TokenString inherits Token {
    value() : String { value };
 
    -- The number of literal two-character escape sequences used in this string
-   -- (e.g., "\n" actually stored as "\\n").
+   -- (e.g., "\n" actually stored as "\\n").  In UVA mode, the number of "\t"
+   -- and "\n" escape sequences (the sequences handled by IO.out_string).
    escapes : Int;
    escapes() : Int { escapes };
 
@@ -751,7 +752,18 @@ class Tokenizer {
                                              token <- newTokenErrorAt(line_, "unexpected newline in string")
                                           else false fi
                                        else
-                                          c <- c.concat(c2)
+                                          {
+                                             if if c2 = "n" then
+                                                   true
+                                                else
+                                                   c2 = "t"
+                                                fi
+                                             then
+                                                escapes <- escapes + 1
+                                             else false fi;
+
+                                             c <- c.concat(c2);
+                                          }
                                        fi
                                  else
                                     {

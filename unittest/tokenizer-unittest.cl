@@ -612,12 +612,12 @@ class Main inherits Test {
             let t : Tokenizer <- newTokenizer("\"\\t\"") in
                assertTokenStringEscapes("tab", "\t", "\t".length() - 1, t);
             let t : Tokenizer <- newTokenizer("\"\\t\"").setUva(true) in
-               assertTokenString("uva tab", stringUtil.backslash().concat("t"), t);
+               assertTokenStringEscapes("uva tab", stringUtil.backslash().concat("t"), 1, t);
 
             let t : Tokenizer <- newTokenizer("\"\\n\"") in
                assertTokenStringEscapes("linefeed", "\n", "\n".length() - 1, t);
             let t : Tokenizer <- newTokenizer("\"\\n\"").setUva(true) in
-               assertTokenString("uva linefeed", stringUtil.backslash().concat("n"), t);
+               assertTokenStringEscapes("uva linefeed", stringUtil.backslash().concat("n"), 1, t);
 
             let t : Tokenizer <- newTokenizer("\"\\f\"") in
                assertTokenStringEscapes("formfeed", "\f", "\f".length() - 1, t);
@@ -642,8 +642,8 @@ class Main inherits Test {
             let t : Tokenizer <- newTokenizer("\"\\n\\n\"") in
                assertTokenStringEscapes("linefeed linefeed", "\n\n", "\n\n".length() - 2, t);
             let t : Tokenizer <- newTokenizer("\"\\n\\n\"").setUva(true) in
-               assertTokenString("uva linefeed linefeed",
-                     stringUtil.backslash().concat("n").concat(stringUtil.backslash()).concat("n"), t);
+               assertTokenStringEscapes("uva linefeed linefeed",
+                     stringUtil.backslash().concat("n").concat(stringUtil.backslash()).concat("n"), 2, t);
 
             let s8 : String <- "01234567",
                   s64 : String <- s8.concat(s8).concat(s8).concat(s8).concat(s8).concat(s8).concat(s8).concat(s8),

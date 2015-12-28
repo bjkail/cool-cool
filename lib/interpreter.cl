@@ -506,11 +506,11 @@ class InterpreterUvaBasicStringSubstrMethod inherits InterpreterMethod {
                         if not value.escapes() = 0 then
                            let i : Int in
                               while i < argLength loop
-                                 if if result.substr(i, 1) = backslash then
-                                       not i + 1 = argLength
-                                    else false fi
-                                 then
-                                    {
+                                 {
+                                    if if result.substr(i, 1) = backslash then
+                                          not i + 1 = argLength
+                                       else false fi
+                                    then
                                        let c : String <- result.substr(i + 1, 1) in
                                           if if c = "n" then
                                                 true
@@ -519,13 +519,11 @@ class InterpreterUvaBasicStringSubstrMethod inherits InterpreterMethod {
                                              fi
                                           then
                                              escapes <- escapes + 1
-                                          else false fi;
+                                          else false fi
+                                    else false fi;
 
-                                       i <- i + 2;
-                                    }
-                                 else
-                                    i <- i + 1
-                                 fi
+                                    i <- i + 1;
+                                 }
                               pool
                         else false fi;
 

@@ -1,8 +1,12 @@
 class InterpreterProgram {
+   uva : Bool;
+   uva() : Bool { uva };
+
    expr : InterpreterExpr;
    expr() : InterpreterExpr { expr };
 
-   init(expr_ : InterpreterExpr) : SELF_TYPE {{
+   init(uva_ : Bool, expr_ : InterpreterExpr) : SELF_TYPE {{
+      uva <- uva_;
       expr <- expr_;
       self;
    }};
@@ -107,7 +111,7 @@ class InterpreterMethod {
 
 class InterpreterBasicObjectAbortMethod inherits InterpreterMethod {
    interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
-      interpreter.proceedError(0, "abort")
+      interpreter.proceedError(~1, "abort")
    };
 };
 
@@ -867,7 +871,7 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
                   -- to use as the program entry point.
                   newExpr : AnalyzedExpr <- new AnalyzedNewExpr.init(0, mainType),
                   dispatchExpr : AnalyzedExpr <- new AnalyzedDispatchExpr.init(0, mainMethod.returnType(), newExpr, mainMethod, true, new Collection) in
-               new InterpreterProgram.init(analyzeExpr(dispatchExpr));
+               new InterpreterProgram.init(uva, analyzeExpr(dispatchExpr));
          };
    }};
 
@@ -2199,6 +2203,8 @@ class Interpreter {
       self;
    }};
 
+   uva : Bool;
+
    selfObject : InterpreterObjectValue;
    selfObject() : InterpreterObjectValue { selfObject };
    setSelfObject(selfObject_ : InterpreterObjectValue) : Object { selfObject <- selfObject_ };
@@ -2281,31 +2287,37 @@ class Interpreter {
                debugOut("proceedError: [".concat(value_).concat("]"))
             else false fi;
 
-            let exprState : InterpreterExprState <- exprState in
-               while not isvoid exprState loop
-                  {
-                     case exprState of
-                        x : InterpreterNewExprState =>
-                           {
-                              stack <- stack.concat(formatStackEntry(x.stackEntry(), line));
-                              line <- x.line();
-                           };
-                        x : InterpreterDispatchExprState =>
-                           {
-                              if not line = 0 then
-                                 let stackEntry : String <- x.stackEntry() in
-                                    if not stackEntry = "" then
-                                       stack <- stack.concat(formatStackEntry(stackEntry, line))
-                                    else false fi
-                              else false fi;
-                              line <- x.line();
-                           };
-                        x : Object => false;
-                     esac;
+            if uva then
+               if 0 <= line then
+                  stack <- new StringUtil.fromInt(line)
+               else false fi
+            else
+               let exprState : InterpreterExprState <- exprState in
+                  while not isvoid exprState loop
+                     {
+                        case exprState of
+                           x : InterpreterNewExprState =>
+                              {
+                                 stack <- stack.concat(formatStackEntry(x.stackEntry(), line));
+                                 line <- x.line();
+                              };
+                           x : InterpreterDispatchExprState =>
+                              {
+                                 if 0 < line then
+                                    let stackEntry : String <- x.stackEntry() in
+                                       if not stackEntry = "" then
+                                          stack <- stack.concat(formatStackEntry(stackEntry, line))
+                                       else false fi
+                                 else false fi;
+                                 line <- x.line();
+                              };
+                           x : Object => false;
+                        esac;
 
-                     exprState <- exprState.prev();
-                  }
-               pool;
+                        exprState <- exprState.prev();
+                     }
+                  pool
+            fi;
 
             exprState <- new InterpreterExitValueExprState.init(self);
             value <- new InterpreterErrorValue.init(value_, stack);
@@ -2354,6 +2366,7 @@ class Interpreter {
    }};
 
    interpret(program : InterpreterProgram) : InterpreterValue {{
+      uva <- program.uva();
       program.expr().interpret(self);
 
       while continue loop

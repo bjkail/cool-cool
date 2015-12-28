@@ -62,6 +62,10 @@ class Main inherits Test {
       getError(context, interpret(context, program))
    };
 
+   interpretErrorUva(context : String, program : String) : InterpreterErrorValue {
+      getError(context, interpretImpl(context, program, true))
+   };
+
    interpretErrorExpr(context : String, program : String) : InterpreterErrorValue {
       getError(context, interpretExpr(context, program))
    };
@@ -230,10 +234,17 @@ class Main inherits Test {
                   "case on void",
                   "\tat Main.main (line 1)\n",
                   interpretErrorExpr("void", "case let a : Object in a of x : Int => 0; esac"));
+            assertErrorEquals("uva void",
+                  "case on void", "1",
+                  interpretErrorUvaExpr("void", "case let a : Object in a of x : Int => 0; esac"));
+
             assertErrorEquals("unmatched",
                   "case branch not matched for type 'Int'",
                   "\tat Main.main (line 1)\n",
                   interpretErrorExpr("unmatched", "case 0 of x : Bool => x; esac"));
+            assertErrorEquals("uva unmatched",
+                  "case branch not matched for type 'Int'", "1",
+                  interpretErrorUvaExpr("unmatched", "case 0 of x : Bool => x; esac"));
 
             assertIntEquals("single", 3, interpretIntExpr("single", "case 1 of x : Int => x + 2; esac"));
             assertIntEquals("unrelated", 1, interpretIntExpr("unrelated 2",
@@ -373,6 +384,11 @@ class Main inherits Test {
                   interpretError("void dispatch",
                      "class Main { a : Main; main() : Int { a() }; a() : Int { a.void() }; void() : Int { 0 }; };"));
 
+            assertErrorEquals("uva dispatch void",
+                  "dispatch on void for method 'void' in type 'Main'", "1",
+                  interpretErrorUva("void dispatch",
+                     "class Main { a : Main; main() : Int { a() }; a() : Int { a.void() }; void() : Int { 0 }; };"));
+
             assertIntEquals("dispatch arg", 1, interpretInt("dispatch",
                   "class Main { main() : Int { a(1) }; a(a : Int) : Int { a }; };"));
             assertVoid("dispatch arg void", interpret("dispatch arg void",
@@ -414,10 +430,14 @@ class Main inherits Test {
             assertIntEquals("multiply", 6, interpretIntExpr("multiply", "2 * 3"));
 
             assertIntEquals("divide", 2, interpretIntExpr("multiply", "6 / 3"));
+
             assertErrorEquals("divide 0",
                   "divide by 0",
                   "\tat Main.main (line 1)\n",
                   interpretErrorExpr("divide 0", "1 / 0"));
+            assertErrorEquals("uva divide 0",
+                  "divide by 0", "1",
+                  interpretErrorUvaExpr("divide 0", "1 / 0"));
 
             assertTrue("less", interpretBoolExpr("less", "0 < 1"));
             assertFalse("less", interpretBoolExpr("less", "0 < 0"));
@@ -539,6 +559,10 @@ class Main inherits Test {
                   "abort",
                   "\tat Main.main (line 1)\n",
                   interpretErrorExpr("self abort", "abort()"));
+
+            assertErrorEquals("uva self abort",
+                  "abort", "",
+                  interpretErrorUvaExpr("uva self abort", "abort()"));
 
             assertErrorEquals("bool abort",
                   "abort",
@@ -687,28 +711,22 @@ class Main inherits Test {
                   interpretIntExpr("substr escapes 2 2 length", "\"\\b\\t\\n\\f\".substr(2, 2).length()"));
 
             assertErrorEquals("uva substr begin low",
-                  "substr(-1, 0) is out of range for string of length 0",
-                  "\tat Main.main (line 1)\n",
+                  "substr(-1, 0) is out of range for string of length 0", "0",
                   interpretErrorUvaExpr("uva substr begin low", "\"\".substr(~1, 0)"));
             assertErrorEquals("uva substr begin high",
-                  "substr(1, 0) is out of range for string of length 0",
-                  "\tat Main.main (line 1)\n",
+                  "substr(1, 0) is out of range for string of length 0", "0",
                   interpretErrorUvaExpr("uva substr begin high", "\"\".substr(1, 0)"));
             assertErrorEquals("uva substr length low",
-                  "substr(0, -1) is out of range for string of length 0",
-                  "\tat Main.main (line 1)\n",
+                  "substr(0, -1) is out of range for string of length 0", "0",
                   interpretErrorUvaExpr("uva substr length low", "\"\".substr(0, ~1)"));
             assertErrorEquals("uva substr length high",
-                  "substr(0, 1) is out of range for string of length 0",
-                  "\tat Main.main (line 1)\n",
+                  "substr(0, 1) is out of range for string of length 0", "0",
                   interpretErrorUvaExpr("uva substr length high", "\"\".substr(0, 1)"));
             assertErrorEquals("uva substr escapes begin high",
-                  "substr(3, 0) is out of range for string of length 2",
-                  "\tat Main.main (line 1)\n",
+                  "substr(3, 0) is out of range for string of length 2", "0",
                   interpretErrorUvaExpr("uva substr escapes begin high", "\"\\n\".substr(3, 0)"));
             assertErrorEquals("uva substr escapes length high",
-                  "substr(0, 3) is out of range for string of length 2",
-                  "\tat Main.main (line 1)\n",
+                  "substr(0, 3) is out of range for string of length 2", "0",
                   interpretErrorUvaExpr("uva substr escapes begin high", "\"\\n\".substr(0, 3)"));
 
             assertStringEquals("uva substr 0 0 0", "", interpretStringUvaExpr("uva substr 0 0 0", "\"\".substr(0, 0)"));

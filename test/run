@@ -24,7 +24,6 @@ run_tests() {
       for mode in '' uva; do
         expectedfile="${file%.cl}${mode:+.$mode}.txt"
 
-#echo "$file $mode=$expectedfile"; continue
         if test -f "$expectedfile"; then
           expected=$(cat "$expectedfile")
 
@@ -46,7 +45,7 @@ run_tests() {
               echo -n "cool" "${args[@]}" "< $redir: "
               actual=$(../../bin/cool "${args[@]}" < "$redir")
             else
-              echo -n "cool" "${args[@]}" "< $redir: "
+              echo -n "cool" "${args[@]}: "
               actual=$(../../bin/cool "${args[@]}")
             fi
 

@@ -70,6 +70,6 @@ run_tests() {
   done
 }
 
-for i in lex interpret; do
+for i in lex parse analyze interpret; do
   (run_tests $i)
 done

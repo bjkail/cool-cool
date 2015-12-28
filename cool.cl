@@ -12,7 +12,7 @@ class Main {
             is : IOInputStream <- new IOInputStream.init(io),
             listener : MainTokenizerListener <- new MainTokenizerListener.init(is),
             tokenizer : Tokenizer <- new Tokenizer.init(is).setListener(listener),
-            parser : Parser <- new MainParser.initMain(io, tokenizer) in
+            parser : Parser <- new MainParser.initMain(io, listener, tokenizer) in
          {
             parser.peekToken();
 
@@ -299,17 +299,23 @@ class MainTokenizerListener inherits TokenizerListener {
 
 class MainParser inherits Parser {
    io : IO;
+   listener : MainTokenizerListener;
 
-   initMain(io_ : IO, tokenizer : Tokenizer) : SELF_TYPE {{
+   initMain(io_ : IO, listener_ : MainTokenizerListener, tokenizer : Tokenizer) : SELF_TYPE {{
       io <- io_;
+      listener <- listener_;
       init(tokenizer);
    }};
 
    reportError(line : Int, s : String) : Object {{
       io.out_string("ERROR: ");
-      if not line = 0 then
-         io.out_string(tokenizer.lineMap().lineToString(line)).out_string(": ")
-      else false fi;
+      if listener.uva() then
+         io.out_int(line).out_string(": ")
+      else
+         if not line = 0 then
+            io.out_string(tokenizer.lineMap().lineToString(line)).out_string(": ")
+         else false fi
+      fi;
       io.out_string(s).out_string("\n");
    }};
 };
@@ -326,9 +332,13 @@ class MainAnalyzer inherits Analyzer {
 
    reportError(line : Int, s : String) : Object {{
       io.out_string("ERROR: ");
-      if not line = 0 then
-         io.out_string(lineMap.lineToString(line)).out_string(": ")
-      else false fi;
+      if uva then
+         io.out_int(line).out_string(": ")
+      else
+         if not line = 0 then
+            io.out_string(lineMap.lineToString(line)).out_string(": ")
+         else false fi
+      fi;
       io.out_string(s).out_string("\n");
    }};
 };

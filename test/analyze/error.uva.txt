@@ -1,0 +1,1 @@
+ERROR: 2: expression type 'Int' does not conform to return type 'Bool' of method 'main'

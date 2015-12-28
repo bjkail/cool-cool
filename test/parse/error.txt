@@ -1,0 +1,1 @@
+ERROR: error.cl: line 2: expected 'class' for program

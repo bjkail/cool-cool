@@ -2,61 +2,75 @@
 
 set -e
 
+test=$1
 dir=$(dirname "$0")
 
 run_tests() {
-  dir=$1
-  mode=$2
-  shift 2
+  stage=$1
+  shift
 
-  defaultoptslist=("$@")
-  if ((${#defaultoptslist[@]} == 0)); then
-    defaultoptslist=('')
-  fi
-
-  cd "$dir"
+  cd "$dir/$stage"
   for file in *.cl; do
-    optslist=()
-    #IFS=$'\n' for i in "$(sed -ne 's/^--cool:test=(.*)/\1/p')"; do
-    while IFS= read -r opts; do
-      optslist+=("$opts")
-    done < <(sed -ne 's/^--test=//p' "$file")
+    if test -z "$test" -o "$test.cl" = "$stage/$file"; then
+      optslist=()
+      while IFS= read -r opts; do
+        optslist+=("$opts")
+      done < <(sed -ne 's/^--test=//p' "$file")
 
-    if ((${#optslist[@]} == 0)); then
-      optslist=("${defaultoptslist[@]}")
+      if ((${#optslist[@]} == 0)); then
+        optslist=('')
+      fi
+
+      for mode in '' uva; do
+        expectedfile="${file%.cl}${mode:+.$mode}.txt"
+
+#echo "$file $mode=$expectedfile"; continue
+        if test -f "$expectedfile"; then
+          expected=$(cat "$expectedfile")
+
+          for opts in "${optslist[@]}"; do
+            args=()
+
+            if test $stage != interpret; then
+              args+=(--$stage)
+            fi
+
+            if test -n "$mode"; then
+              args+=(--$mode)
+            fi
+
+            args+=($opts "$file")
+
+            redir=${file%.cl}.in
+            if test -f "$redir"; then
+              echo -n "cool" "${args[@]}" "< $redir: "
+              actual=$(../../bin/cool "${args[@]}" < "$redir")
+            else
+              echo -n "cool" "${args[@]}" "< $redir: "
+              actual=$(../../bin/cool "${args[@]}")
+            fi
+
+            if test "$OSTYPE" = "cygwin"; then
+              actual=$(echo "$actual" | tr -d '\r')
+            fi
+
+            if test "$actual" != "$expected"; then
+              echo "TEST FAILED" >&2
+              echo "-- ACTUAL:" >&2
+              echo "$actual" | cat -v >&2
+              echo "-- EXPECTED:" >&2
+              echo "$expected" | cat -v >&2
+              exit 1
+            else
+              echo "TEST PASSED"
+            fi
+          done
+        fi
+      done
     fi
-
-    for opts in "${optslist[@]}"; do
-      opts=($opts)
-      echo -n "cool" $mode "${opts[@]}" "$dir/$file"
-
-      redir=${file%.cl}.in
-      if test -f "$redir"; then
-        echo -n " < $redir: "
-        actual=$(../../bin/cool $mode "${opts[@]}" "$file" < "$redir")
-      else
-        echo -n ": "
-        actual=$(../../bin/cool $mode "${opts[@]}" "$file")
-      fi
-
-      if test "$OSTYPE" = "cygwin"; then
-        actual=$(echo "$actual" | tr -d '\r')
-      fi
-      expected=$(cat "${file%.cl}.txt")
-
-      if test "$actual" != "$expected"; then
-        echo "TEST FAILED" >&2
-        echo "-- ACTUAL:" >&2
-        echo "$actual" | cat -v >&2
-        echo "-- EXPECTED:" >&2
-        echo "$expected" | cat -v >&2
-        exit 1
-      else
-        echo "TEST PASSED"
-      fi
-    done
   done
 }
 
-(run_tests "$dir"/lex --lex)
-(run_tests "$dir"/interpret '' '' '--no-stdin')
+for i in lex interpret; do
+  (run_tests $i)
+done

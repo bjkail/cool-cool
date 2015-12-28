@@ -1,0 +1,2 @@
+ERROR: abort
+	at Main.main (abort.cl: line 3)

@@ -1,0 +1,8 @@
+c [\\c] [c]
+backslash [\\\\] [\\]
+backspace [\\b] [\b]
+tab [\	] [	]
+newline [\
+] [
+]
+formfeed [\\f] [\f]

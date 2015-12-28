@@ -31,7 +31,8 @@ class Main {
                            else false fi
                         then
                            let lineMap : TokenizerLineMap <- tokenizer.lineMap(),
-                                 analyzer : Analyzer <- new MainAnalyzer.initMain(io, lineMap),
+                                 uva : Bool <- listener.uva(),
+                                 analyzer : Analyzer <- new MainAnalyzer.initMain(io, lineMap).setUva(uva),
                                  program : AnalyzedProgram <- analyzer.analyze(program) in
                               if if not isvoid program then
                                     not listener.analyze()
@@ -44,7 +45,7 @@ class Main {
                                        pool
                                     else false fi;
 
-                                    let program : InterpreterProgram <- new InterpreterAnalyzer.analyze(program),
+                                    let program : InterpreterProgram <- new InterpreterAnalyzer.setUva(uva).analyze(program),
                                           interpreter : Interpreter <- new Interpreter
                                              .init(lineMap, io, listener.stdin())
                                              .initDebug(listener.debug()),
@@ -52,8 +53,19 @@ class Main {
                                        if not isvoid value then
                                           case value of
                                              x : InterpreterErrorValue =>
-                                                io.out_string("ERROR: ").out_string(x.value())
-                                                      .out_string("\n").out_string(x.stack());
+                                                if uva then
+                                                   let stack : String <- x.stack() in
+                                                      if stack = "" then
+                                                         io.out_string(x.value()).out_string("\n")
+                                                      else
+                                                         io.out_string("ERROR: ").out_string(stack)
+                                                               .out_string(": Exception: ").out_string(x.value())
+                                                               .out_string("\n")
+                                                      fi
+                                                else
+                                                   io.out_string("ERROR: ").out_string(x.value())
+                                                         .out_string("\n").out_string(x.stack())
+                                                fi;
                                              x : Object => false;
                                           esac
                                        else false fi;
@@ -185,6 +197,9 @@ class MainTokenizerListener inherits TokenizerListener {
    analyze : Bool;
    analyze() : Bool { analyze };
 
+   uva : Bool;
+   uva() : Bool { uva };
+
    stdin : Bool;
    stdin() : Bool { stdin };
 
@@ -202,6 +217,10 @@ class MainTokenizerListener inherits TokenizerListener {
 
    eof() : Object {
       is.reset()
+   };
+
+   setUva(uva_ : Bool) : Object {
+      uva <- uva_
    };
 
    error(s : String) : Object {

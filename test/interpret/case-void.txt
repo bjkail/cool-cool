@@ -1,0 +1,2 @@
+ERROR: case on void
+	at Main.main (case-void.cl: line 3)

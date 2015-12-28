@@ -1,0 +1,2 @@
+ERROR: case branch not matched for type 'Int'
+	at Main.main (case-unmatched.cl: line 3)

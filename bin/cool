@@ -8,6 +8,7 @@ help() {
   echo "  --lex            stop after lexical analysis"
   echo "  --parse          stop after parsing"
   echo "  --analyze        stop after semantic analysis"
+  echo "  --uva            use UVA Cool dialect"
   echo
   echo "Diagnostic options:"
   echo "  --bootstrap      run Cool-in-Cool with itself"
@@ -29,6 +30,7 @@ bootstrapoptions=()
 options=()
 files=()
 bootstrap=false
+uva=false
 stdin=true
 for arg in "$@"; do
   case $1 in
@@ -38,6 +40,7 @@ for arg in "$@"; do
   --debug=*) options+=("$1");;
   --format-errors) interpreteroptions+=(--format-errors);;
   --lex | --parse | --analyze) options+=($1);;
+  --uva) uva=true;;
   --stdin) stdin=true;;
   --no-stdin) stdin=false;;
   --help | -h | -\?) help;;
@@ -102,6 +105,10 @@ eof=${eof// /$'\n'}
   printf -- '--cool:escape:\\b=\b:\\t=\t:\\v=\v:\\f=\f:\\r=\r:\n'
 
   if $bootstrap; then
+    if $uva; then
+      echo "--cool:uva"
+    fi
+
     echo "--cool:option=--stdin"
     for option in "${bootstrapoptions[@]}"; do
       echo "--cool:option=--${option#--bootstrap-}"
@@ -110,11 +117,16 @@ eof=${eof// /$'\n'}
     bootstrapcoolfiles=("${coolfiles[@]}")
     for i in ${!bootstrapcoolfiles[@]}; do
       case ${bootstrapcoolfiles[$i]} in
-      */interpreter-support-uva.cl) unset bootstrapcoolfiles[$i]
+      */interpreter-support.cl) $uva && unset bootstrapcoolfiles[$i];;
+      */interpreter-support-uva.cl) ! $uva && unset bootstrapcoolfiles[$i]
       esac
     done
 
     write_files true "${bootstrapcoolfiles[@]}"
+  fi
+
+  if $uva; then
+    echo "--cool:uva"
   fi
 
   for option in "${options[@]}"; do

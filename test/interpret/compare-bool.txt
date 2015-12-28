@@ -1,0 +1,2 @@
+ERROR: compare-bool.cl: line 3: left expression type 'Bool' is not type 'Int' for '<' expression
+ERROR: compare-bool.cl: line 3: right expression type 'Bool' is not type 'Int' for '<' expression

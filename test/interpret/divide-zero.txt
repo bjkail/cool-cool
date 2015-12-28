@@ -1,0 +1,2 @@
+ERROR: divide by 0
+	at Main.main (divide-zero.cl: line 3)

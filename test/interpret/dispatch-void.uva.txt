@@ -1,0 +1,1 @@
+ERROR: 10: Exception: dispatch on void for method 'void' in type 'Main'

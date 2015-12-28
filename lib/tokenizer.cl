@@ -772,7 +772,23 @@ class Tokenizer {
                                                 fi
                                              then
                                                 escapes <- escapes + 1
-                                             else false fi;
+                                             else
+                                                if c2 = stringUtil.backslash() then
+                                                   let c3 : String <- readChar() in
+                                                      {
+                                                         if if c3 = "n" then
+                                                               true
+                                                            else
+                                                               c3 = "t"
+                                                            fi
+                                                         then
+                                                            escapes <- escapes + 1
+                                                         else false fi;
+
+                                                         unreadChar(c3);
+                                                      }
+                                                else false fi
+                                             fi;
 
                                              c <- c.concat(c2);
                                           }

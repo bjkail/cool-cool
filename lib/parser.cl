@@ -902,9 +902,22 @@ class Parser {
          {
             let tokenBinaryOp : TokenBinaryOp <- peekToken().asBinaryOp() in
                while if not isvoid tokenBinaryOp then
-                     minPrec <= tokenBinaryOp.prec()
-                  else false
-               fi loop
+                     if minPrec <= tokenBinaryOp.prec() then
+                        if tokenBinaryOp.prec() = 3 then
+                           let tokenBinaryOp0 : TokenBinaryOp <- case stack.get(1) of x : TokenBinaryOp => x; esac in
+                              if tokenBinaryOp0.prec() = 3 then
+                                 errorToken(tokenBinaryOp, "operation '".concat(tokenBinaryOp0.value())
+                                       .concat("' does not associate with operation '").concat(tokenBinaryOp.value())
+                                       .concat("'"))
+                              else
+                                 true
+                              fi
+                        else
+                           true
+                        fi
+                     else false fi
+                  else false fi
+               loop
                   {
                      skipToken();
                      let line : Int <- line(),

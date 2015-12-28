@@ -902,6 +902,10 @@ class Main inherits Test {
 
             -- "<="
 
+            assertExprError("lessEquals lessEquals", "line 1: operation '<=' does not associate with operation '<='", "a <= b <= c");
+            assertExprError("lessEquals less", "line 1: operation '<=' does not associate with operation '<'", "a <= b < c");
+            assertExprError("lessEquals equals", "line 1: operation '<=' does not associate with operation '='", "a <= b = c");
+
             case assertExpr("not lessEquals", "not a <= b") of
                x : ParsedUnaryExpr => false;
                x : Object => fail("not lessEquals type=".concat(x.type_name()));
@@ -914,6 +918,10 @@ class Main inherits Test {
 
             -- "<"
 
+            assertExprError("less lessEquals", "line 1: operation '<' does not associate with operation '<='", "a < b <= c");
+            assertExprError("less less", "line 1: operation '<' does not associate with operation '<'", "a < b < c");
+            assertExprError("less equals", "line 1: operation '<' does not associate with operation '='", "a < b = c");
+
             case assertExpr("not less", "not a < b") of
                x : ParsedUnaryExpr => false;
                x : Object => fail("not less type=".concat(x.type_name()));
@@ -925,6 +933,10 @@ class Main inherits Test {
             esac;
 
             -- "="
+
+            assertExprError("equals lessEquals", "line 1: operation '=' does not associate with operation '<='", "a = b <= c");
+            assertExprError("equals less", "line 1: operation '=' does not associate with operation '<'", "a = b < c");
+            assertExprError("equals equals", "line 1: operation '=' does not associate with operation '='", "a = b = c");
 
             case assertExpr("not equals", "not a = b") of
                x : ParsedUnaryExpr => false;
@@ -942,6 +954,10 @@ class Main inherits Test {
                x : ParsedUnaryExpr => false;
                x : Object => fail("not assignment type=".concat(x.type_name()));
             esac;
+
+            -- "<-"
+
+            assertExpr("assignment assignment", "a <- b <- c");
          }
       else false fi
    };

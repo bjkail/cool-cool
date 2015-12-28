@@ -12,7 +12,7 @@ help() {
   echo "Diagnostic options:"
   echo "  --bootstrap      run Cool-in-Cool with itself"
   echo "  --bootstrap-debug=OPTIONS"
-  echo "                     enable debug for the bootstrap interpreter"
+  echo "                     set debug options for the bootstrap interpreter"
   echo "  --debug=OPTIONS  set debug options"
   echo "  --format-errors  show line numbers for errors in Cool-in-Cool itself"
   echo "  --help           show this help text"

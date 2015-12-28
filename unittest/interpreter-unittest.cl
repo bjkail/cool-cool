@@ -440,20 +440,20 @@ class Main inherits Test {
                   interpretErrorUvaExpr("divide 0", "1 / 0"));
 
             assertTrue("less", interpretBoolExpr("less", "0 < 1"));
-            assertFalse("less", interpretBoolExpr("less", "0 < 0"));
-            assertFalse("less", interpretBoolExpr("less", "1 < 0"));
+            assertFalse("less 2", interpretBoolExpr("less 2", "0 < 0"));
+            assertFalse("less 3", interpretBoolExpr("less 3", "1 < 0"));
 
-            assertTrue("uva less int", interpretBoolUvaExpr("equal int", "0 < 1"));
-            assertFalse("uva less int 2", interpretBoolUvaExpr("equal int", "0 < 0"));
-            assertFalse("uva less int 3", interpretBoolUvaExpr("equal int", "1 < 0"));
+            assertTrue("uva less int", interpretBoolUvaExpr("uva less int", "0 < 1"));
+            assertFalse("uva less int 2", interpretBoolUvaExpr("uva less int 2", "0 < 0"));
+            assertFalse("uva less int 3", interpretBoolUvaExpr("uva less int 3", "1 < 0"));
 
             assertFalse("uva less bool", interpretBoolUvaExpr("uva less bool", "false < false"));
-            assertTrue("uva less bool 2", interpretBoolUvaExpr("uva less bool", "false < true"));
-            assertFalse("uva less bool 3", interpretBoolUvaExpr("uva less bool", "true < false"));
+            assertTrue("uva less bool 2", interpretBoolUvaExpr("uva less bool 2", "false < true"));
+            assertFalse("uva less bool 3", interpretBoolUvaExpr("uva less bool 3", "true < false"));
 
             assertFalse("uva less string", interpretBoolUvaExpr("uva less bool", "\"a\" < \"a\""));
             assertTrue("uva less string 2", interpretBoolUvaExpr("uva less string 2", "\"\" < \"a\""));
-            assertFalse("uva less string 3", interpretBoolUvaExpr("uva less string 2", "\"a\" < \"\""));
+            assertFalse("uva less string 3", interpretBoolUvaExpr("uva less string 3", "\"a\" < \"\""));
 
             assertFalse("uva less self", interpretBoolUvaExpr("uva less self", "self < self"));
             assertFalse("uva less self new", interpretBoolUvaExpr("uva less self new", "self < new Main"));
@@ -481,17 +481,17 @@ class Main inherits Test {
             assertTrue("less equal", interpretBoolExpr("less equal", "0 <= 0"));
             assertFalse("less equal", interpretBoolExpr("less equal", "1 <= 0"));
 
-            assertTrue("uva less equal int", interpretBoolUvaExpr("equal int", "0 <= 1"));
-            assertTrue("uva less equal int 2", interpretBoolUvaExpr("equal int", "0 <= 0"));
-            assertFalse("uva less equal int 3", interpretBoolUvaExpr("equal int", "1 <= 0"));
+            assertTrue("uva less equal int", interpretBoolUvaExpr("uva less equal int", "0 <= 1"));
+            assertTrue("uva less equal int 2", interpretBoolUvaExpr("uva less equal int 2", "0 <= 0"));
+            assertFalse("uva less equal int 3", interpretBoolUvaExpr("uva less equal int 3", "1 <= 0"));
 
             assertTrue("uva less equal bool", interpretBoolUvaExpr("uva less bool", "false <= false"));
-            assertTrue("uva less equal bool 2", interpretBoolUvaExpr("uva less bool", "false <= true"));
-            assertFalse("uva less equal bool 3", interpretBoolUvaExpr("uva less bool", "true <= false"));
+            assertTrue("uva less equal bool 2", interpretBoolUvaExpr("uva less bool 2", "false <= true"));
+            assertFalse("uva less equal bool 3", interpretBoolUvaExpr("uva less bool 3", "true <= false"));
 
             assertTrue("uva less equal string", interpretBoolUvaExpr("uva less bool", "\"a\" <= \"a\""));
             assertTrue("uva less equal string 2", interpretBoolUvaExpr("uva less string 2", "\"\" <= \"a\""));
-            assertFalse("uva less equal string 3", interpretBoolUvaExpr("uva less string 2", "\"a\" <= \"\""));
+            assertFalse("uva less equal string 3", interpretBoolUvaExpr("uva less string 3", "\"a\" <= \"\""));
 
             assertTrue("uva less equal self", interpretBoolUvaExpr("uva less self", "self <= self"));
             assertFalse("uva less equal self new", interpretBoolUvaExpr("uva less self new", "self <= new Main"));
@@ -516,12 +516,12 @@ class Main inherits Test {
                   "let left : Object <- new Object, right : Object in left < right"));
 
             assertTrue("equal int", interpretBoolExpr("equal int", "0 = 0"));
-            assertTrue("equal int new", interpretBoolExpr("equal int", "0 = new Int"));
-            assertFalse("equal int 2", interpretBoolExpr("equal int", "0 = 1"));
+            assertTrue("equal int new", interpretBoolExpr("equal int new", "0 = new Int"));
+            assertFalse("equal int 2", interpretBoolExpr("equal int 2", "0 = 1"));
 
             assertTrue("equal bool", interpretBoolExpr("equal bool", "false = false"));
-            assertTrue("equal bool new", interpretBoolExpr("equal bool", "false = new Bool"));
-            assertFalse("equal bool 2", interpretBoolExpr("equal bool", "false = true"));
+            assertTrue("equal bool new", interpretBoolExpr("equal bool new", "false = new Bool"));
+            assertFalse("equal bool 2", interpretBoolExpr("equal bool 2", "false = true"));
 
             assertTrue("equal string", interpretBoolExpr("equal bool", "\"a\" = \"a\""));
             assertTrue("equal string new", interpretBoolExpr("equal string new", "\"\" = new String"));

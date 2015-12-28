@@ -158,7 +158,7 @@ class Main inherits Test {
 
    testError() : Object {
       if begin("error") then
-         assertTokenError("", "line 1: invalid character: [%]", newTokenizer("%"))
+         assertTokenError("", "line 2: invalid character: [%]", newTokenizer("\n%"))
       else false fi
    };
 

@@ -394,6 +394,7 @@ class Parser {
          {
             while not isvoid tokenError loop
                {
+                  line <- tokenizer.line();
                   error(tokenError.value());
                   token <- tokenizer.next();
                   tokenError <- token.asError();

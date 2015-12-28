@@ -26,6 +26,8 @@ class Main inherits Test {
       if begin("program") then
          {
             assertParserError("empty", "line 1: expected 'class' for program", "");
+            assertParserError("token error", "line 2: invalid character: [!]", "\n!");
+            assertParserError("token", "line 2: expected 'class' for program", "\nerror");
             assertParserError("class semi", "line 1: expected ';' after class definition",
                   "class A { a : A; }");
             assertParserError("trailing", "line 1: expected 'class' for program",

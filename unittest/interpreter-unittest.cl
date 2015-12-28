@@ -71,8 +71,17 @@ class Main inherits Test {
       assertStringEquals(context.concat(" stack"), stack, error.stack());
    }};
 
+   assertType(context : String, name : String, value : InterpreterValue) : Object {
+      let type : InterpreterType <- value.type() in
+         if isvoid type then
+            failContext(context.concat(" error"), case value of x : InterpreterErrorValue => x.value(); esac)
+         else
+            assertStringEquals(context.concat(" type"), name, type.name())
+         fi
+   };
+
    getBool(context : String, value : InterpreterValue) : Bool {{
-      assertStringEquals(context.concat(" type"), "Bool", value.type().name());
+      assertType(context, "Bool", value);
       case value of x : InterpreterBoolValue => x.value(); esac;
    }};
 
@@ -89,7 +98,7 @@ class Main inherits Test {
    };
 
    getInt(context : String, value : InterpreterValue) : Int {{
-      assertStringEquals(context.concat(" type"), "Int", value.type().name());
+      assertType(context, "Int", value);
       case value of x : InterpreterIntValue => x.value(); esac;
    }};
 
@@ -106,7 +115,7 @@ class Main inherits Test {
    };
 
    getString(context : String, value : InterpreterValue) : String {{
-      assertStringEquals(context.concat(" type"), "String", value.type().name());
+      assertType(context, "String", value);
       case value of x : InterpreterStringValue => x.value(); esac;
    }};
 
@@ -119,7 +128,7 @@ class Main inherits Test {
    };
 
    getObject(context : String, type : String, value : InterpreterValue) : InterpreterObjectValue {{
-      assertStringEquals(context.concat(" type"), type, value.type().name());
+      assertType(context, type, value);
       case value of x : InterpreterObjectValue => x; esac;
    }};
 

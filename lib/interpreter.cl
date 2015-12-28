@@ -1084,7 +1084,7 @@ class InterpreterErrorValue inherits InterpreterValue {
       self;
    }};
 
-   toString() : String { "error[".concat(value).concat("]") };
+   toString() : String { "error: ".concat(value) };
 };
 
 class InterpreterObjectValue inherits InterpreterValue {
@@ -1104,7 +1104,7 @@ class InterpreterObjectValue inherits InterpreterValue {
          }
    };
 
-   toString() : String { "object[".concat(type().name()).concat("]") };
+   toString() : String { "object ".concat(type.name()) };
 };
 
 class InterpreterBoolValue inherits InterpreterValue {
@@ -1173,14 +1173,14 @@ class InterpreterExprState {
    proceed(interpreter : Interpreter) : Bool { new ObjectUtil.abortBool(self, "proceed: unimplemented") };
    addValue(value : InterpreterValue) : Object { new ObjectUtil.abortObject(self, "addValue: unimplemented") };
 
-   toString() : String { self.type_name() };
+   toString() : String { type_name() };
 };
 
 class InterpreterExpr {
    -- Must call interpretValue or pushState
    interpret(interpreter : Interpreter) : Bool { new ObjectUtil.abortBool(self, "interpret: unimplemented") };
 
-   toString() : String { self.type_name() };
+   toString() : String { type_name() };
 };
 
 class InterpreterBlockExpr inherits InterpreterExpr {
@@ -1634,7 +1634,7 @@ class InterpreterNewExpr inherits InterpreterExpr {
          }
    };
 
-   toString() : String { "new[".concat(type.name()).concat("]") };
+   toString() : String { "new ".concat(type.name()) };
 };
 
 class InterpreterNewExprState inherits InterpreterExprState {
@@ -1689,7 +1689,7 @@ class InterpreterNewExprState inherits InterpreterExprState {
       "new ".concat(selfObject.type().name())
    };
 
-   toString() : String { "new[".concat(type.name()).concat("]") };
+   toString() : String { "new ".concat(type.name()) };
 };
 
 class InterpreterNewSelfTypeExpr inherits InterpreterExpr {
@@ -1717,7 +1717,7 @@ class InterpreterSimpleNewExpr inherits InterpreterExpr {
       interpreter.interpretValue(new InterpreterObjectValue.init(type))
    };
 
-   toString() : String { "new.simple[".concat(type.name()).concat("]") };
+   toString() : String { "new.simple ".concat(type.name()) };
 };
 
 class InterpreterDispatchExpr inherits InterpreterExpr {
@@ -1740,7 +1740,7 @@ class InterpreterDispatchExpr inherits InterpreterExpr {
       interpreter.pushState(createState().init(line, arguments, target, method))
    };
 
-   toString() : String { "dispatch[".concat(method.toString()).concat("]") };
+   toString() : String { "dispatch ".concat(method.toString()) };
 };
 
 class InterpreterDispatchExprState inherits InterpreterExprState {

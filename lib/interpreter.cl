@@ -399,6 +399,84 @@ class InterpreterBasicStringSubstrMethod inherits InterpreterMethod {
    };
 };
 
+class InterpreterUvaBasicStringSubstrMethod inherits InterpreterMethod {
+   backslash : String <- new StringUtil.backslash();
+   stringType : InterpreterType;
+   emptyValue : InterpreterValue;
+
+   initBasic(stringType_ : InterpreterType, emptyValue_ : InterpreterValue) : SELF_TYPE {{
+      stringType <- stringType_;
+      emptyValue <- emptyValue_;
+      self;
+   }};
+
+   interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
+      let value : InterpreterStringValue <- case state.target() of x : InterpreterStringValue => x; esac,
+            s : String <- value.value(),
+            valueLength : Int <- s.length(),
+            argBegin : Int <- case state.args().getWithInt(0) of x : InterpreterIntValue => x.value(); esac,
+            argLength : Int <- case state.args().getWithInt(1) of x : InterpreterIntValue => x.value(); esac in
+         if if argBegin < 0 then
+               true
+            else
+               if argLength < 0 then
+                  true
+               else
+                  valueLength < argBegin + argLength
+               fi
+            fi
+         then
+            let stringUtil : StringUtil <- new StringUtil in
+               interpreter.proceedError(0, "substr(".concat(stringUtil.fromInt(argBegin))
+                     .concat(", ").concat(stringUtil.fromInt(argLength))
+                     .concat(") is out of range for string of length ").concat(stringUtil.fromInt(valueLength)))
+         else
+            if argLength = 0 then
+               interpreter.proceedValue(emptyValue)
+            else
+               if if argBegin = 0 then
+                     argLength = valueLength
+                  else false fi
+               then
+                  interpreter.proceedValue(value)
+               else
+                  let result : String <- s.substr(argBegin, argLength),
+                        escapes : Int in
+                     {
+                        if not value.escapes() = 0 then
+                           let i : Int in
+                              while i < argLength loop
+                                 if if result.substr(i, 1) = backslash then
+                                       not i + 1 = argLength
+                                    else false fi
+                                 then
+                                    {
+                                       let c : String <- result.substr(i + 1, 1) in
+                                          if if c = "n" then
+                                                true
+                                             else
+                                                c = "t"
+                                             fi
+                                          then
+                                             escapes <- escapes + 1
+                                          else false fi;
+
+                                       i <- i + 2;
+                                    }
+                                 else
+                                    i <- i + 1
+                                 fi
+                              pool
+                        else false fi;
+
+                        interpreter.proceedValue(new InterpreterStringValue.init(stringType, result, escapes));
+                     }
+               fi
+            fi
+         fi
+   };
+};
+
 class InterpreterAnalyzerAttribute {
    index : Int;
    index() : Int { index };
@@ -719,7 +797,12 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
                      new InterpreterBasicStringLengthMethod.initIntType(intType.type())
                   fi);
             stringType.addBasicMethod("concat", new InterpreterBasicStringConcatMethod.initIntType(stringType.type()));
-            stringType.addBasicMethod("substr", new InterpreterBasicStringSubstrMethod.initBasic(stringType.type(), defaultStringValue));
+            stringType.addBasicMethod("substr",
+                  if uva then
+                     new InterpreterUvaBasicStringSubstrMethod.initBasic(stringType.type(), defaultStringValue)
+                  else
+                     new InterpreterBasicStringSubstrMethod.initBasic(stringType.type(), defaultStringValue)
+                  fi);
 
             types.putWithString(boolType.name(), boolType);
             boolType.setInheritsType(objectType);

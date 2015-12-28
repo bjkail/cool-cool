@@ -66,6 +66,10 @@ class Main inherits Test {
       getError(context, interpretExpr(context, program))
    };
 
+   interpretErrorUvaExpr(context : String, program : String) : InterpreterErrorValue {
+      getError(context, interpretUvaExpr(context, program))
+   };
+
    assertErrorEquals(context : String, message : String, stack : String, error : InterpreterErrorValue) : Object {{
       assertStringEquals(context.concat(" message"), message, error.value());
       assertStringEquals(context.concat(" stack"), stack, error.stack());
@@ -125,6 +129,10 @@ class Main inherits Test {
 
    interpretStringExpr(context : String, program : String) : String {
       getString(context, interpretExpr(context, program))
+   };
+
+   interpretStringUvaExpr(context : String, program : String) : String {
+      getString(context, interpretUvaExpr(context, program))
    };
 
    getObject(context : String, type : String, value : InterpreterValue) : InterpreterObjectValue {{
@@ -673,6 +681,54 @@ class Main inherits Test {
                   interpretIntExpr("substr escapes 1 2 length", "\"\\b\\t\\n\\f\".substr(1, 2).length()"));
             assertIntEquals("substr escapes 2 2 length", 2,
                   interpretIntExpr("substr escapes 2 2 length", "\"\\b\\t\\n\\f\".substr(2, 2).length()"));
+
+            assertErrorEquals("uva substr begin low",
+                  "substr(-1, 0) is out of range for string of length 0",
+                  "\tat Main.main (line 1)\n",
+                  interpretErrorUvaExpr("uva substr begin low", "\"\".substr(~1, 0)"));
+            assertErrorEquals("uva substr begin high",
+                  "substr(1, 0) is out of range for string of length 0",
+                  "\tat Main.main (line 1)\n",
+                  interpretErrorUvaExpr("uva substr begin high", "\"\".substr(1, 0)"));
+            assertErrorEquals("uva substr length low",
+                  "substr(0, -1) is out of range for string of length 0",
+                  "\tat Main.main (line 1)\n",
+                  interpretErrorUvaExpr("uva substr length low", "\"\".substr(0, ~1)"));
+            assertErrorEquals("uva substr length high",
+                  "substr(0, 1) is out of range for string of length 0",
+                  "\tat Main.main (line 1)\n",
+                  interpretErrorUvaExpr("uva substr length high", "\"\".substr(0, 1)"));
+            assertErrorEquals("uva substr escapes begin high",
+                  "substr(3, 0) is out of range for string of length 2",
+                  "\tat Main.main (line 1)\n",
+                  interpretErrorUvaExpr("uva substr escapes begin high", "\"\\n\".substr(3, 0)"));
+            assertErrorEquals("uva substr escapes length high",
+                  "substr(0, 3) is out of range for string of length 2",
+                  "\tat Main.main (line 1)\n",
+                  interpretErrorUvaExpr("uva substr escapes begin high", "\"\\n\".substr(0, 3)"));
+
+            assertStringEquals("uva substr 0 0 0", "", interpretStringUvaExpr("uva substr 0 0 0", "\"\".substr(0, 0)"));
+            assertStringEquals("uva substr 1 0 1", "a", interpretStringUvaExpr("uva substr 1 0 1", "\"a\".substr(0, 1)"));
+            assertStringEquals("uva substr 1 1 0", "", interpretStringUvaExpr("uva substr 1 1 0", "\"a\".substr(1, 0)"));
+            assertStringEquals("uva substr 2 0 1", "a", interpretStringUvaExpr("uva substr 2 1 1", "\"ab\".substr(0, 1)"));
+            assertStringEquals("uva substr 2 1 1", "b", interpretStringUvaExpr("uva substr 2 1 1", "\"ab\".substr(1, 1)"));
+            assertStringEquals("uva substr 2 0 2", "ab", interpretStringUvaExpr("uva substr 2 0 2", "\"ab\".substr(0, 2)"));
+            assertStringEquals("uva substr escapes 0 8", "\b\t\n\f",
+                  interpretStringUvaExpr("uva substr escapes 0 4", "\"\\b\\t\\n\\f\".substr(0, 8)"));
+            assertStringEquals("uva substr escapes 0 4", "\b\t",
+                  interpretStringUvaExpr("uva substr escapes 0 2", "\"\\b\\t\\n\\f\".substr(0, 4)"));
+            assertStringEquals("uva substr escapes 1 4", "b\t".concat(stringUtil.backslash()),
+                  interpretStringUvaExpr("uva substr escapes 1 4", "\"\\b\\t\\n\\f\".substr(1, 4)"));
+            assertStringEquals("uva substr escapes 2 4", "\t\n",
+                  interpretStringUvaExpr("uva substr escapes 2 4", "\"\\b\\t\\n\\f\".substr(2, 4)"));
+            assertIntEquals("uva substr escapes 0 8 length", 8,
+                  interpretIntUvaExpr("uva substr escapes 0 8 length", "\"\\b\\t\\n\\f\".substr(0, 8).length()"));
+            assertIntEquals("uva substr escapes 0 4 length", 4,
+                  interpretIntUvaExpr("uva substr escapes 0 4 length", "\"\\b\\t\\n\\f\".substr(0, 4).length()"));
+            assertIntEquals("uva substr escapes 1 4 length", 4,
+                  interpretIntUvaExpr("uva substr escapes 1 4 length", "\"\\b\\t\\n\\f\".substr(1, 4).length()"));
+            assertIntEquals("uva substr escapes 2 4 length", 4,
+                  interpretIntUvaExpr("uva substr escapes 2 4 length", "\"\\b\\t\\n\\f\".substr(2, 4).length()"));
          }
       else false fi
    };

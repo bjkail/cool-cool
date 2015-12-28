@@ -178,6 +178,18 @@ class InterpreterBasicIOOutStringMethod inherits InterpreterMethod {
    };
 };
 
+class InterpreterUvaBasicIOOutStringMethod inherits InterpreterMethod {
+   backslash : String <- new StringUtil.backslash();
+
+   interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
+      let arg : InterpreterStringValue <- case state.args().getWithInt(0) of x : InterpreterStringValue => x; esac in
+         {
+            interpreter.io().outString(arg.value(), arg.length());
+            interpreter.proceedValue(state.target());
+         }
+   };
+};
+
 class InterpreterBasicIOOutIntMethod inherits InterpreterMethod {
    interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
       let arg : InterpreterIntValue <- case state.args().getWithInt(0) of x : InterpreterIntValue => x; esac in
@@ -780,7 +792,12 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
 
             types.putWithString(ioType.name(), ioType);
             ioType.setInheritsType(objectType);
-            ioType.addBasicMethod("out_string", new InterpreterBasicIOOutStringMethod);
+            ioType.addBasicMethod("out_string",
+                  if uva then
+                     new InterpreterUvaBasicIOOutStringMethod
+                  else
+                     new InterpreterBasicIOOutStringMethod
+                  fi);
             ioType.addBasicMethod("out_int", new InterpreterBasicIOOutIntMethod);
             ioType.addBasicMethod("in_string", new InterpreterBasicIOInStringMethod.initStringType(stringType.type()));
             ioType.addBasicMethod("in_int", new InterpreterBasicIOInIntMethod.initIntType(intType.type()));

@@ -538,27 +538,27 @@ class Main inherits Test {
             assertErrorEquals("self abort",
                   "abort",
                   "\tat Main.main (line 1)\n",
-                  interpretError("self abort", "class Main { main() : Object { abort() }; };"));
+                  interpretErrorExpr("self abort", "abort()"));
 
             assertErrorEquals("bool abort",
                   "abort",
                   "\tat Main.main (line 1)\n",
-                  interpretError("bool abort", "class Main { main() : Object { false.abort() }; };"));
+                  interpretErrorExpr("bool abort", "false.abort()"));
 
             assertErrorEquals("int abort",
                   "abort",
                   "\tat Main.main (line 1)\n",
-                  interpretError("int abort", "class Main { main() : Object { 0.abort() }; };"));
+                  interpretErrorExpr("int abort", "0.abort()"));
 
             assertErrorEquals("string abort",
                   "abort",
                   "\tat Main.main (line 1)\n",
-                  interpretError("string abort", "class Main { main() : Object { \"\".abort() }; };"));
+                  interpretErrorExpr("string abort", "\"\".abort()"));
 
             assertErrorEquals("object abort",
                   "abort",
                   "\tat Main.main (line 1)\n",
-                  interpretError("object abort", "class Main { main() : Object { new Object.abort() }; };"));
+                  interpretErrorExpr("object abort", "new Object.abort()"));
 
             assertStringEquals("bool type_name", "Bool", interpretStringExpr("bool type_name", "false.type_name()"));
             assertStringEquals("int type_name", "Int", interpretStringExpr("int type_name", "0.type_name()"));

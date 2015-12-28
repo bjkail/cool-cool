@@ -978,7 +978,7 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
                         if type.attributeInits() then
                            new InterpreterNewExpr.init(expr.line(), type.type())
                         else
-                           new InterpreterSimpleNewExpr.init(type.type())
+                           new InterpreterSimpleNewExpr.init(expr.line(), type.type())
                         fi
                      fi
                   fi
@@ -1624,14 +1624,7 @@ class InterpreterNewExpr inherits InterpreterExpr {
    }};
 
    interpret(interpreter : Interpreter) : Bool {
-      let result : Bool <- interpreter.pushState(new InterpreterNewExprState.init(line, type, interpreter)) in
-         {
-            if interpreter.debugDispatch() then
-               interpreter.debugOut("initializing ".concat(toString()))
-            else false fi;
-
-            result;
-         }
+      interpreter.pushState(new InterpreterNewExprState.init(line, type, interpreter))
    };
 
    toString() : String { "new ".concat(type.name()) };
@@ -1652,18 +1645,36 @@ class InterpreterNewExprState inherits InterpreterExprState {
    init(line_ : Int, type_ : InterpreterType, interpreter : Interpreter) : SELF_TYPE {{
       line <- line_;
       type <- type_;
-      attrInitIter <- type.attributeInits().iterator();
 
       selfObject <- new InterpreterObjectValue.init(type_);
       selfObjectAttributes <- selfObject.attributes();
-
-      savedSelfObject <- interpreter.selfObject();
-      interpreter.setSelfObject(selfObject);
 
       self;
    }};
 
    proceed(interpreter : Interpreter) : Bool {
+      if isvoid attrInitIter then
+         {
+            if interpreter.debugDispatch() then
+               interpreter.debugOut("initializing ".concat(type.name()))
+            else false fi;
+
+            savedSelfObject <- interpreter.selfObject();
+            if interpreter.pushNewActivationRecord(selfObject) then
+               {
+                  attrInitIter <- type.attributeInits().iterator();
+                  proceedInit(interpreter);
+               }
+            else
+               interpreter.proceedError(line, "stack overflow")
+            fi;
+         }
+      else
+         proceedInit(interpreter)
+      fi
+   };
+
+   proceedInit(interpreter : Interpreter) : Bool {
       if attrInitIter.next() then
          {
             attrInit <- case attrInitIter.get() of x : InterpreterAttributeInit => x; esac;
@@ -1675,7 +1686,7 @@ class InterpreterNewExprState inherits InterpreterExprState {
                interpreter.debugOut("initialized")
             else false fi;
 
-            interpreter.setSelfObject(savedSelfObject);
+            interpreter.popNewActivationRecord(savedSelfObject);
             interpreter.proceedValue(selfObject);
          }
       fi
@@ -1706,15 +1717,21 @@ class InterpreterNewSelfTypeExpr inherits InterpreterExpr {
 };
 
 class InterpreterSimpleNewExpr inherits InterpreterExpr {
+   line : Int;
    type : InterpreterType;
 
-   init(type_ : InterpreterType) : SELF_TYPE {{
+   init(line_ : Int, type_ : InterpreterType) : SELF_TYPE {{
+      line <- line_;
       type <- type_;
       self;
    }};
 
    interpret(interpreter : Interpreter) : Bool {
-      interpreter.interpretValue(new InterpreterObjectValue.init(type))
+      if interpreter.canPushActivationRecord() then
+         interpreter.interpretValue(new InterpreterObjectValue.init(type))
+      else
+         interpreter.proceedError(line, "stack overflow")
+      fi
    };
 
    toString() : String { "new.simple ".concat(type.name()) };
@@ -1822,15 +1839,19 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
                   interpreter.proceedError(line, "dispatch on void for method '".concat(method.id())
                         .concat("' in type '").concat(method.containingType().name()).concat("'"))
                else
-                  let method : InterpreterMethod <- lookupMethod() in
-                     {
-                        if interpreter.debugDispatch() then
-                           interpreter.debugOut("call ".concat(method.toString())
-                                 .concat(" on ").concat(target.type().name()))
-                        else false fi;
+                  if interpreter.canPushActivationRecord() then
+                     let method : InterpreterMethod <- lookupMethod() in
+                        {
+                           if interpreter.debugDispatch() then
+                              interpreter.debugOut("call ".concat(method.toString())
+                                    .concat(" on ").concat(target.type().name()))
+                           else false fi;
 
-                        method.interpret(interpreter, self);
-                     }
+                           method.interpret(interpreter, self);
+                        }
+                  else
+                     interpreter.proceedError(line, "stack overflow")
+                  fi
                fi
             else
                {
@@ -1838,7 +1859,7 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
                      interpreter.debugOut("return ".concat(if isvoid result then "void" else result.type_name() fi))
                   else false fi;
 
-                  interpreter.setDispatchContext(savedSelfObject, savedArgs, savedVars);
+                  interpreter.popDispatchContext(savedSelfObject, savedArgs, savedVars);
                   interpreter.proceedValue(result);
                }
             fi
@@ -1850,10 +1871,7 @@ class InterpreterDispatchExprState inherits InterpreterExprState {
       savedSelfObject <- interpreter.selfObject();
       savedArgs <- interpreter.arguments();
       savedVars <- interpreter.vars();
-      interpreter.setDispatchContext(
-         case target of x : InterpreterObjectValue => x; esac,
-         args,
-         let void : IntMap in void);
+      interpreter.pushDispatchContext(case target of x : InterpreterObjectValue => x; esac, args);
 
       expr.interpret(interpreter);
    }};
@@ -2207,7 +2225,6 @@ class Interpreter {
 
    selfObject : InterpreterObjectValue;
    selfObject() : InterpreterObjectValue { selfObject };
-   setSelfObject(selfObject_ : InterpreterObjectValue) : Object { selfObject <- selfObject_ };
 
    arguments : IntMap;
    arguments() : IntMap { arguments };
@@ -2223,10 +2240,44 @@ class Interpreter {
       fi
    };
 
-   setDispatchContext(selfObject_ : InterpreterObjectValue, arguments_ : IntMap, vars_ : IntMap) : Object {{
+   numActivationRecords : Int;
+
+   canPushActivationRecord() : Bool {
+      if uva then
+         (numActivationRecords + 1) < 1000
+      else
+         true
+      fi
+   };
+
+   pushNewActivationRecord(selfObject_ : InterpreterObjectValue) : Bool {{
+      selfObject <- selfObject_;
+
+      numActivationRecords <- numActivationRecords + 1;
+      if uva then
+         numActivationRecords < 1000
+      else
+         true
+      fi;
+   }};
+
+   popNewActivationRecord(savedSelfObject : InterpreterObjectValue) : Object {{
+      selfObject <- savedSelfObject;
+      numActivationRecords <- numActivationRecords - 1;
+   }};
+
+   pushDispatchContext(selfObject_ : InterpreterObjectValue, arguments_ : IntMap) : Object {{
       selfObject <- selfObject_;
       arguments <- arguments_;
-      vars <- vars_;
+      vars <- let void : IntMap in void;
+      numActivationRecords <- numActivationRecords + 1;
+   }};
+
+   popDispatchContext(savedSelfObject : InterpreterObjectValue, savedArguments : IntMap, savedVars : IntMap) : Object {{
+      selfObject <- savedSelfObject;
+      arguments <- savedArguments;
+      vars <- savedVars;
+      numActivationRecords <- numActivationRecords - 1;
    }};
 
    value : InterpreterValue;
@@ -2247,6 +2298,7 @@ class Interpreter {
    debugOut(s : String) : Object {{
       io.out_string("DEBUG: interpreter: ").out_int(debugOutIndex)
             .out_string(" [").out_string(exprState.toString())
+            .out_int(numActivationRecords).out_string(" ")
             .out_string("] ").out_string(s)
             .out_string("\n");
       debugOutIndex <- debugOutIndex + 1;

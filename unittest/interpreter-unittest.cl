@@ -10,6 +10,7 @@ class Main inherits Test {
       testNew();
       testInitialization();
       testDispatch();
+      testStackOverflow();
       testUnary();
       testBinary();
       testBasicClasses();
@@ -45,12 +46,16 @@ class Main inherits Test {
       interpretImpl(context, program, false)
    };
 
+   interpretUva(context : String, program : String) : InterpreterValue {
+      interpretImpl(context, program, true)
+   };
+
    interpretExpr(context : String, program : String) : InterpreterValue {
       interpret(context, "class Main { main() : Object { ".concat(program).concat(" }; };"))
    };
 
    interpretUvaExpr(context : String, program : String) : InterpreterValue {
-      interpretImpl(context, "class Main { main() : Object { ".concat(program).concat(" }; };"), true)
+      interpretUva(context, "class Main { main() : Object { ".concat(program).concat(" }; };"))
    };
 
    getError(context : String, value : InterpreterValue) : InterpreterErrorValue {{
@@ -63,7 +68,7 @@ class Main inherits Test {
    };
 
    interpretErrorUva(context : String, program : String) : InterpreterErrorValue {
-      getError(context, interpretImpl(context, program, true))
+      getError(context, interpretUva(context, program))
    };
 
    interpretErrorExpr(context : String, program : String) : InterpreterErrorValue {
@@ -112,6 +117,10 @@ class Main inherits Test {
 
    interpretInt(context : String, program : String) : Int {
       getInt(context, interpret(context, program))
+   };
+
+   interpretIntUva(context : String, program : String) : Int {
+      getInt(context, interpretUva(context, program))
    };
 
    interpretIntExpr(context : String, program : String) : Int {
@@ -397,6 +406,76 @@ class Main inherits Test {
                   "class Main { main() : Int { a(1, 2) }; a(a : Int, b : Int) : Int { a + b }; };"));
             assertIntEquals("dispatch nested", 3, interpretInt("dispatch",
                   "class Main { main() : Int { a(1) }; a(a : Int) : Int { b(2) + a }; b(b : Int) : Int { b }; };"));
+         }
+      else false fi
+   };
+
+   testStackOverflow() : Object {
+      if begin("stackOverflow") then
+         {
+            assertIntEquals("dispatch", 0, interpretInt("dispatch",
+                  "class Main { main() : Object { a(2) }; a(a : Int) : Object { if a + 1 < 1000 then a(a + 1) else 0 fi }; };"));
+            assertIntEquals("uva dispatch", 0, interpretIntUva("uva dispatch",
+                  "class Main { main() : Object { a(2) }; a(a : Int) : Object { if a + 1 < 1000 then a(a + 1) else 0 fi }; };"));
+
+            assertIntEquals("dispatch overflow", 0, interpretInt("dispatch overflow",
+                  "class Main { main() : Object { a(1) }; a(a : Int) : Object { if a + 1 < 1000 then a(a + 1) else 0 fi }; };"));
+            assertErrorEquals("uva dispatch overflow",
+                  "stack overflow", "1",
+                  interpretErrorUva("uva dispatch overflow",
+                     "class Main { main() : Object { a(1) }; a(a : Int) : Object { if a + 1 < 1000 then a(a + 1) else 0 fi }; };"));
+
+            assertIntEquals("basic dispatch", 0, interpretInt("basic dispatch",
+                  "class Main { main() : Object { a(3) }; a(a : Int) : Object { if a + 1 < 1000 then a(a + 1) else \"\".length() fi }; };"));
+            assertIntEquals("uva basic dispatch", 0, interpretIntUva("uva basic dispatch",
+                  "class Main { main() : Object { a(3) }; a(a : Int) : Object { if a + 1 < 1000 then a(a + 1) else \"\".length() fi }; };"));
+
+            assertIntEquals("basic dispatch overflow", 0, interpretInt("basic dispatch overflow",
+                  "class Main { main() : Object { a(2) }; a(a : Int) : Object { if a + 1 < 1000 then a(a + 1) else \"\".length() fi }; };"));
+            assertErrorEquals("uva basic dispatch overflow",
+                  "stack overflow", "1",
+                  interpretErrorUva("uva basic dispatch overflow",
+                     "class Main { main() : Object { a(2) }; a(a : Int) : Object { if a + 1 < 1000 then a(a + 1) else \"\".length() fi }; };"));
+
+            assertType("new", "A", interpret("new",
+                  "class Main { main() : Object { new A }; };"
+                  .concat("class A { a : Object <- a(3); a(a : Int) : Object { if a + 2 < 1000 then a(a + 1) else new B fi }; };")
+                  .concat("class B { b : Int <- 1; };")));
+            assertType("uva new", "A", interpretUva("uva new",
+                  "class Main { main() : Object { new A }; };"
+                  .concat("class A { a : Object <- a(3); a(a : Int) : Object { if a + 2 < 1000 then a(a + 1) else new B fi }; };")
+                  .concat("class B { b : Int <- 1; };")));
+
+            assertType("new overflow", "A", interpret("new overflow",
+                  "class Main { main() : Object { new A }; };"
+                  .concat("class A { a : Object <- a(2); a(a : Int) : Object { if a + 2 < 1000 then a(a + 1) else new B fi }; };")
+                  .concat("class B { b : Int <- 1; };")));
+            assertErrorEquals("uva new overflow",
+                  "stack overflow", "1",
+                  interpretErrorUva("uva new overflow",
+                     "class Main { main() : Object { new A }; };"
+                     .concat("class A { a : Object <- a(2); a(a : Int) : Object { if a + 2 < 1000 then a(a + 1) else new B fi }; };")
+                     .concat("class B { b : Int <- 1; };")));
+
+            assertType("simple new", "A", interpret("simple new",
+                  "class Main { main() : Object { new A }; };"
+                  .concat("class A { a : Object <- a(3); a(a : Int) : Object { if a + 2 < 1000 then a(a + 1) else new B fi }; };")
+                  .concat("class B { b : Int; };")));
+            assertType("uva simple new", "A", interpretUva("uva simple new",
+                  "class Main { main() : Object { new A }; };"
+                  .concat("class A { a : Object <- a(3); a(a : Int) : Object { if a + 2 < 1000 then a(a + 1) else new B fi }; };")
+                  .concat("class B { b : Int; };")));
+
+            assertType("simple new overflow", "A", interpret("simple new overflow",
+                  "class Main { main() : Object { new A }; };"
+                  .concat("class A { a : Object <- a(2); a(a : Int) : Object { if a + 2 < 1000 then a(a + 1) else new B fi }; };")
+                  .concat("class B { b : Int; };")));
+            assertErrorEquals("uva simple new overflow",
+                  "stack overflow", "1",
+                  interpretErrorUva("uva simple new overflow",
+                     "class Main { main() : Object { new A }; };"
+                     .concat("class A { a : Object <- a(2); a(a : Int) : Object { if a + 2 < 1000 then a(a + 1) else new B fi }; };")
+                     .concat("class B { b : Int; };")));
          }
       else false fi
    };

@@ -665,12 +665,12 @@ class Main inherits Test {
                   interpretStringExpr("substr escapes 1 2", "\"\\b\\t\\n\\f\".substr(1, 2)"));
             assertStringEquals("substr escapes 2 2", "\n\f",
                   interpretStringExpr("substr escapes 2 2", "\"\\b\\t\\n\\f\".substr(2, 2)"));
-            assertIntEquals("substr escapes 0 4 length 0 4 length", 4,
-                  interpretIntExpr("substr escapes", "\"\\b\\t\\n\\f\".substr(0, 4).length()"));
-            assertIntEquals("substr escapes 0 2 length 0 2 length", 2,
-                  interpretIntExpr("substr escapes", "\"\\b\\t\\n\\f\".substr(0, 2).length()"));
-            assertIntEquals("substr escapes 1 2 length 1 2 length", 2,
-                  interpretIntExpr("substr escapes", "\"\\b\\t\\n\\f\".substr(1, 2).length()"));
+            assertIntEquals("substr escapes 0 4 length", 4,
+                  interpretIntExpr("substr escapes 0 4 length", "\"\\b\\t\\n\\f\".substr(0, 4).length()"));
+            assertIntEquals("substr escapes 0 2 length", 2,
+                  interpretIntExpr("substr escapes 0 2 length", "\"\\b\\t\\n\\f\".substr(0, 2).length()"));
+            assertIntEquals("substr escapes 1 2 length", 2,
+                  interpretIntExpr("substr escapes 1 2 length", "\"\\b\\t\\n\\f\".substr(1, 2).length()"));
             assertIntEquals("substr escapes 2 2 length", 2,
                   interpretIntExpr("substr escapes 2 2 length", "\"\\b\\t\\n\\f\".substr(2, 2).length()"));
          }

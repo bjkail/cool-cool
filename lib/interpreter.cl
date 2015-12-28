@@ -265,6 +265,20 @@ class InterpreterBasicStringLengthMethod inherits InterpreterMethod {
    };
 };
 
+class InterpreterUvaBasicStringLengthMethod inherits InterpreterMethod {
+   intType : InterpreterType;
+
+   initIntType(intType_ : InterpreterType) : SELF_TYPE {{
+      intType <- intType_;
+      self;
+   }};
+
+   interpret(interpreter : Interpreter, state : InterpreterDispatchExprState) : Bool {
+      let value : InterpreterStringValue <- case state.target() of x : InterpreterStringValue => x; esac in
+         interpreter.proceedValue(new InterpreterIntValue.init(intType, value.value().length()))
+   };
+};
+
 class InterpreterBasicStringConcatMethod inherits InterpreterMethod {
    stringType : InterpreterType;
 
@@ -566,6 +580,14 @@ class InterpreterAnalyzerType {
 };
 
 class InterpreterAnalyzer inherits AnalyzedExprVisitor {
+   uva : Bool;
+   uva() : Bool { uva };
+
+   setUva(uva_ : Bool) : SELF_TYPE {{
+      uva <- uva_;
+      self;
+   }};
+
    boolType : InterpreterAnalyzerType <- new InterpreterAnalyzerType.initBasic("Bool", 1);
    defaultBoolValue : InterpreterBoolValue <- new InterpreterBoolValue.init(boolType.type(), false);
 
@@ -690,7 +712,12 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
 
             types.putWithString(stringType.name(), stringType);
             stringType.setInheritsType(objectType);
-            stringType.addBasicMethod("length", new InterpreterBasicStringLengthMethod.initIntType(intType.type()));
+            stringType.addBasicMethod("length",
+                  if uva then
+                     new InterpreterUvaBasicStringLengthMethod.initIntType(intType.type())
+                  else
+                     new InterpreterBasicStringLengthMethod.initIntType(intType.type())
+                  fi);
             stringType.addBasicMethod("concat", new InterpreterBasicStringConcatMethod.initIntType(stringType.type()));
             stringType.addBasicMethod("substr", new InterpreterBasicStringSubstrMethod.initBasic(stringType.type(), defaultStringValue));
 

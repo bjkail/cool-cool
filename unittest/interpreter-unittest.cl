@@ -22,8 +22,9 @@ class Main inherits Test {
             lineMap : TokenizerLineMap <- tokenizer.lineMap(),
             analyzer : Analyzer <- new TestFailErrorAnalyzer.initTest(self, context).setUva(uva),
             program : AnalyzedProgram <- analyzer.analyze(program),
+            interpreterAnalyzer : InterpreterAnalyzer <- new InterpreterAnalyzer.setUva(uva),
             interpreter : Interpreter <- new Interpreter.init(lineMap, io, true),
-            value : InterpreterValue <- interpreter.interpret(new InterpreterAnalyzer.analyze(program)) in
+            value : InterpreterValue <- interpreter.interpret(interpreterAnalyzer.analyze(program)) in
          {
             io.assert();
             value;
@@ -98,6 +99,10 @@ class Main inherits Test {
 
    interpretIntExpr(context : String, program : String) : Int {
       getInt(context, interpretExpr(context, program))
+   };
+
+   interpretIntUvaExpr(context : String, program : String) : Int {
+      getInt(context, interpretUvaExpr(context, program))
    };
 
    getString(context : String, value : InterpreterValue) : String {{
@@ -601,6 +606,11 @@ class Main inherits Test {
             assertIntEquals("length 1", 1, interpretIntExpr("length 1", "\"a\".length()"));
             assertIntEquals("length special", 7, interpretIntExpr("length linefeed", "\"a\\nb\\tc\\\\d\".length()"));
             assertIntEquals("length concat special", 2, interpretIntExpr("length linefeed", "\"\\n\".concat(\"\\n\").length()"));
+
+            assertIntEquals("uva length 0", 0, interpretIntUvaExpr("length 0", "\"\".length()"));
+            assertIntEquals("uva length 1", 1, interpretIntUvaExpr("length 1", "\"a\".length()"));
+            assertIntEquals("uva length special", 10, interpretIntUvaExpr("length linefeed", "\"a\\nb\\tc\\\\d\".length()"));
+            assertIntEquals("uva length concat special", 4, interpretIntUvaExpr("length linefeed", "\"\\n\".concat(\"\\n\").length()"));
 
             assertStringEquals("concat 0 0", "", interpretStringExpr("concat 0 0", "\"\".concat(\"\")"));
             assertStringEquals("concat 1 0", "a", interpretStringExpr("concat 1 0", "\"a\".concat(\"\")"));

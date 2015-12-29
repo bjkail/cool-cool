@@ -1020,7 +1020,7 @@ class Main inherits Test {
       if begin("basicClasses") then
          {
             -- Not specified, but...
-            assertAnalyzerError("", "line 1: redefinition of class 'Object'",
+            assertAnalyzerError("", "line 1: redefinition of basic class 'Object'",
                   "class Object { a : Bool; };");
 
             let analyzer : TestAnalyzer <- newAnalyzerExpr("abort", "new Object.abort()"),
@@ -1037,7 +1037,7 @@ class Main inherits Test {
                   expr : AnalyzedExpr <- type.getAttribute("a").expr() in
                assertSameType("copy", type, expr.type());
 
-            assertAnalyzerError("", "line 1: redefinition of class 'IO'",
+            assertAnalyzerError("", "line 1: redefinition of basic class 'IO'",
                   "class IO { a : Bool; };");
 
             let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("out_string", "class A inherits IO { a : Object <- new A.out_string(\"\"); };"),
@@ -1060,14 +1060,14 @@ class Main inherits Test {
                   expr : AnalyzedExpr <- assertAnalyzeExpr("in_int", analyzer) in
                assertSameType("in_int", analyzer.intType(), expr.type());
 
-            assertAnalyzerError("", "line 1: invalid type 'Int' for 'inherits'",
+            assertAnalyzerError("", "line 1: invalid basic type 'Int' for 'inherits'",
                   "class A inherits Int { a : Bool; };");
-            assertAnalyzerError("", "line 1: redefinition of class 'Int'",
+            assertAnalyzerError("", "line 1: redefinition of basic class 'Int'",
                   "class Int { a : Bool; };");
 
-            assertAnalyzerError("", "line 1: invalid type 'String' for 'inherits'",
+            assertAnalyzerError("", "line 1: invalid basic type 'String' for 'inherits'",
                   "class A inherits String { a : Bool; };");
-            assertAnalyzerError("", "line 1: redefinition of class 'String'",
+            assertAnalyzerError("", "line 1: redefinition of basic class 'String'",
                   "class String { a : Bool; };");
 
             let analyzer : TestAnalyzer <- newAnalyzerExpr("length", "\"\".length()"),
@@ -1082,9 +1082,9 @@ class Main inherits Test {
                   expr : AnalyzedExpr <- assertAnalyzeExpr("substr", analyzer) in
                assertSameType("substr", analyzer.stringType(), expr.type());
 
-            assertAnalyzerError("", "line 1: invalid type 'Bool' for 'inherits'",
+            assertAnalyzerError("", "line 1: invalid basic type 'Bool' for 'inherits'",
                   "class A inherits Bool { a : Bool; };");
-            assertAnalyzerError("", "line 1: redefinition of class 'Bool'",
+            assertAnalyzerError("", "line 1: redefinition of basic class 'Bool'",
                   "class Bool { a : Bool; };");
          }
       else false fi

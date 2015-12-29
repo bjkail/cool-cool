@@ -26,6 +26,9 @@ class AnalyzedType {
    name() : String { name };
    isSelfType() : Bool { name = "SELF_TYPE" };
 
+   basic : Bool;
+   basic() : Bool { basic };
+
    parsedClass : ParsedClass;
    parsedClass() : ParsedClass { parsedClass };
    unsetParsedClass() : Object { parsedClass <- let void : ParsedClass in void };
@@ -171,6 +174,7 @@ class AnalyzedType {
 
    initBasicObject() : SELF_TYPE {{
       name <- "Object";
+      basic <- true;
       attributes <- new StringListMap;
       methods <- new StringListMap;
       selfTypeType <- new AnalyzedType.initSelfType(self);
@@ -179,6 +183,7 @@ class AnalyzedType {
 
    initBasic(name_ : String, inheritsType_ : AnalyzedType) : SELF_TYPE {{
       name <- name_;
+      basic <- true;
       inheritsType <- inheritsType_;
       self;
    }};
@@ -1260,7 +1265,7 @@ class Analyzer {
                fi
             then
                {
-                  errorAt(node, "invalid type '".concat(name).concat("' for 'inherits'"));
+                  errorAt(node, "invalid basic type '".concat(name).concat("' for 'inherits'"));
                   objectType;
                }
             else
@@ -1511,11 +1516,15 @@ class Analyzer {
                      if typeName = "SELF_TYPE" then
                         errorAt(class_, "invalid class name 'SELF_TYPE'")
                      else
-                        let type : AnalyzedType <- new AnalyzedType.init(class_) in
-                           if isvoid types.putNewWithString(typeName, type) then
+                        let type : AnalyzedType <- new AnalyzedType.init(class_),
+                              oldType : Object <- types.putNewWithString(typeName, type) in
+                           if isvoid oldType then
                               typeList.add(type)
                            else
-                              errorAt(class_, "redefinition of class '".concat(typeName).concat("'"))
+                              let oldType : AnalyzedType <- case oldType of x : AnalyzedType => x; esac in
+                                 errorAt(class_, "redefinition of "
+                                       .concat(if oldType.basic() then "basic " else "" fi)
+                                       .concat("class '").concat(typeName).concat("'"))
                            fi
                      fi
                pool;

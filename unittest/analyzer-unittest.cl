@@ -92,32 +92,32 @@ class Main inherits Test {
    testRegister() : Object {
       if begin("register") then
          {
-            assertAnalyzerError("", "line 1: redefinition of class 'A'",
-                  "class A { a : Bool; }; class A { a : Bool; };");
-            assertAnalyzerError("", "line 1: undefined type 'B' for 'inherits' of class 'A'",
-                  "class A inherits B { a : Bool; };");
-            assertAnalyzerError("", "line 1: hierarchy of class 'A' contains a cycle",
-                  "class A inherits B { a : Bool; }; class B inherits A { b : Bool; };");
-            assertAnalyzerError("", "line 1: undefined type 'B' for attribute 'b' in class 'A'",
-                  "class A { b : B; };");
-            assertAnalyzerError("", "line 1: redefinition of attribute 'a' in class 'A'",
-                  "class A { a : Bool; a : Bool; };");
-            assertAnalyzerError("", "line 1: redefinition of attribute 'a' in class 'B' of attribute in class 'A'",
-                  "class A { a : Bool; }; class B inherits A { a : Bool; };");
-            assertAnalyzerError("", "line 1: undefined type 'B' for formal parameter #1",
-                  "class A { a(b : B) : Object { 0 }; };");
-            assertAnalyzerError("", "line 1: undefined type 'B' for return",
-                  "class A { a() : B { 0 }; };");
-            assertAnalyzerError("", "line 1: redefinition of method 'a' in class 'A'",
-                  "class A { a() : Object { 0 }; a() : Object { 0 }; };");
-            assertAnalyzerError("", "line 1: redefinition of method 'a' in class 'B' with 1 formal parameter is not the same as 0 in class 'A'",
-                  "class A { a() : Object { 0 }; }; class B inherits A { a(b : Int) : Object { 0 }; };");
-            assertAnalyzerError("", "line 1: redefinition of method 'a' in class 'B' with 2 formal parameters is not the same as 0 in class 'A'",
-                  "class A { a() : Object { 0 }; }; class B inherits A { a(b : Int, c : Int) : Object { 0 }; };");
-            assertAnalyzerError("", "line 1: redefinition of method 'a' in class 'B' with type 'Bool' for formal parameter #1 is not the same as type 'Int' in class 'A'",
-                  "class A { a(a : Int) : Object { 0 }; }; class B inherits A { a(b : Bool) : Object { 0 }; };");
-            assertAnalyzerError("", "line 1: redefinition of method 'a' in class 'B' with return type 'Int' is not the same as type 'Object' in class 'A'",
-                  "class A { a() : Object { 0 }; }; class B inherits A { a() : Int { 0 }; };");
+            assertAnalyzerError("", "line 2: redefinition of class 'A'",
+                  "class A { a : Bool; }; class\nA\n{ a : Bool; };");
+            assertAnalyzerError("", "line 2: undefined type 'B' for 'inherits' of class 'A'",
+                  "class\nA\ninherits B { a : Bool; };");
+            assertAnalyzerError("", "line 2: hierarchy of class 'A' contains a cycle",
+                  "class\nA\ninherits B { a : Bool; }; class B inherits A { b : Bool; };");
+            assertAnalyzerError("", "line 2: undefined type 'B' for attribute 'b' in class 'A'",
+                  "class A {\nb\n: B; };");
+            assertAnalyzerError("", "line 2: redefinition of attribute 'a' in class 'A'",
+                  "class A { a : Bool;\na\n: Bool; };");
+            assertAnalyzerError("", "line 2: redefinition of attribute 'a' in class 'B' of attribute in class 'A'",
+                  "class A { a : Bool; }; class B inherits A {\na\n: Bool; };");
+            assertAnalyzerError("", "line 2: undefined type 'B' for formal parameter #1",
+                  "class A { a(\nb\n: B) : Object { 0 }; };");
+            assertAnalyzerError("", "line 2: undefined type 'B' for return",
+                  "class A {\na\n() : B { 0 }; };");
+            assertAnalyzerError("", "line 2: redefinition of method 'a' in class 'A'",
+                  "class A { a() : Object { 0 };\na\n() : Object { 0 }; };");
+            assertAnalyzerError("", "line 2: redefinition of method 'a' in class 'B' with 1 formal parameter is not the same as 0 in class 'A'",
+                  "class A { a() : Object { 0 }; }; class B inherits A {\na\n(b : Int) : Object { 0 }; };");
+            assertAnalyzerError("", "line 2: redefinition of method 'a' in class 'B' with 2 formal parameters is not the same as 0 in class 'A'",
+                  "class A { a() : Object { 0 }; }; class B inherits A {\na\n(b : Int, c : Int) : Object { 0 }; };");
+            assertAnalyzerError("", "line 2: redefinition of method 'a' in class 'B' with type 'Bool' for formal parameter #1 is not the same as type 'Int' in class 'A'",
+                  "class A { a(a : Int) : Object { 0 }; }; class B inherits A {\na\n(b : Bool) : Object { 0 }; };");
+            assertAnalyzerError("", "line 2: redefinition of method 'a' in class 'B' with return type 'Int' is not the same as type 'Object' in class 'A'",
+                  "class A { a() : Object { 0 }; }; class B inherits A {\na\n() : Int { 0 }; };");
 
             let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("inherits",
                      "class A inherits B { b() : Object { false }; }; class B { b() : Object { false }; };"),
@@ -136,10 +136,10 @@ class Main inherits Test {
          {
             assertAnalyzerErrorImpl("", "line 0: expected class 'Main'",
                   "class A { a : Bool; };");
-            assertAnalyzerErrorImpl("", "line 1: expected method 'main' in class 'Main'",
-                  "class Main { a : Bool; };");
-            assertAnalyzerErrorImpl("", "line 1: expected 0 formal parameters for method 'main' in class 'Main'",
-                  "class Main { main(a : Bool) : Object { 0 }; };");
+            assertAnalyzerErrorImpl("", "line 2: expected method 'main' in class 'Main'",
+                  "class\nMain\n{ a : Bool; };");
+            assertAnalyzerErrorImpl("", "line 2: expected 0 formal parameters for method 'main' in class 'Main'",
+                  "class Main {\nmain\n(a : Bool) : Object { 0 }; };");
 
             let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("main", ""),
                   program : AnalyzedProgram <- analyzer.analyzeTest(),
@@ -155,10 +155,10 @@ class Main inherits Test {
    testAttribute() : Object {
       if begin("attribute") then
          {
-            assertAnalyzerError("", "line 1: invalid attribute name 'self'",
-                  "class A { self : Bool; };");
-            assertAnalyzerError("", "line 1: expression type 'Int' does not conform to type 'Bool' of attribute 'a'",
-                  "class A { a : Bool <- 0; };");
+            assertAnalyzerError("", "line 2: invalid attribute name 'self'",
+                  "class A {\nself\n: Bool; };");
+            assertAnalyzerError("", "line 2: expression type 'Int' does not conform to type 'Bool' of attribute 'a'",
+                  "class A { a : Bool <-\n0\n; };");
 
             let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("attribute",
                      "class A { a : Object; b : Int <- 0; c : String <- c; };"),
@@ -196,10 +196,10 @@ class Main inherits Test {
    testMethod() : Object {
       if begin("method") then
          {
-            assertAnalyzerError("", "line 1: duplicate formal parameter name 'a' for method 'a'",
-                  "class A { a(a : Int, a : Int) : Object { false }; };");
-            assertAnalyzerError("", "line 1: expression type 'Int' does not conform to return type 'Bool' of method 'a'",
-                  "class A { a() : Bool { 0 }; };");
+            assertAnalyzerError("", "line 2: duplicate formal parameter name 'a' for method 'a'",
+                  "class A { a(a : Int, \na\n: Int) : Object { false }; };");
+            assertAnalyzerError("", "line 2: expression type 'Int' does not conform to return type 'Bool' of method 'a'",
+                  "class A { a() : Bool {\n0\n}; };");
 
             let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("method",
                      "class A inherits B { a() : Object { false }; b(a : Int) : Bool { false }; };"
@@ -298,8 +298,8 @@ class Main inherits Test {
                   expr : AnalyzedNewExpr <- case mainMethod.expr() of x : AnalyzedNewExpr => x; esac in
                assertSameType("new", mainMethod.containingType(), expr.type());
 
-            assertAnalyzerError("", "line 1: type 'Int' of argument #1 does not conform to type 'Bool' of formal parameter in method 'a' in class 'A' in dispatch expression",
-                  "class A { a(a : Bool) : Object { a(0) }; };");
+            assertAnalyzerError("", "line 2: type 'Int' of argument #1 does not conform to type 'Bool' of formal parameter in method 'a' in class 'A' in dispatch expression",
+                  "class A { a(a : Bool) : Object { a(\n0\n) }; };");
 
             let analyzer : TestAnalyzer <- newAnalyzer("dispatch",
                      "class Main { main() : Object { new A.a(0) }; }; class A { a(b : Int) : Bool { false }; };"),
@@ -324,10 +324,10 @@ class Main inherits Test {
                      };
                };
 
-            assertAnalyzerError("", "line 1: undefined type 'B' for static dispatch expression",
-                  "class A { a(a : Bool) : Object { a@B.b() }; };");
-            assertAnalyzerError("", "line 1: expression type 'Bool' does not conform to static type 'Int' in dispatch expression",
-                  "class A { a(a : Bool) : Object { a@Int.copy() }; };");
+            assertAnalyzerError("", "line 2: undefined type 'B' for static dispatch expression",
+                  "class A { a(a : Bool) : Object { a@B\n.\nb() }; };");
+            assertAnalyzerError("", "line 2: expression type 'Bool' does not conform to static type 'Int' in dispatch expression",
+                  "class A { a(a : Bool) : Object { a@Int\n.\ncopy() }; };");
 
             let analyzer : TestAnalyzer <- newAnalyzer("static dispatch",
                      "class Main inherits A { main() : Object { new Main@A.a(0) }; a(b : Int) : Bool { false }; };"
@@ -353,11 +353,11 @@ class Main inherits Test {
                      };
                };
 
-            assertAnalyzerError("", "line 1: expression type 'Int' is not type 'Bool' for predicate in 'if' expression",
-                  "class A { a() : Object { if 0 then 0 else 0 fi }; };");
+            assertAnalyzerError("", "line 2: expression type 'Int' is not type 'Bool' for predicate in 'if' expression",
+                  "class A { a() : Object { if\n0\nthen 0 else 0 fi }; };");
             -- Test join(error, Object)
-            assertAnalyzerError("", "line 1: undefined type 'B' for 'new' expression",
-                  "class A { a() : Object { if false then new B else new Object fi }; };");
+            assertAnalyzerError("", "line 2: undefined type 'B' for 'new' expression",
+                  "class A { a() : Object { if false then\nnew\nB else new Object fi }; };");
 
             let analyzer : TestAnalyzer <- newAnalyzer("if",
                      "class Main { main() : Object { if true then 0 else 0 fi }; };"),
@@ -416,10 +416,10 @@ class Main inherits Test {
                      };
                };
 
-            assertAnalyzerExprError("let", "line 1: undefined variable 'a'",
-                  "let a : Object <- a in 0");
-            assertAnalyzerExprError("", "line 1: expression type 'Bool' does not conform to type 'Int' of variable 'a' in 'let' expression",
-                  "let a : Int <- false in 0");
+            assertAnalyzerExprError("let", "line 2: undefined variable 'a'",
+                  "let a : Object <-\na\nin 0");
+            assertAnalyzerExprError("", "line 2: expression type 'Bool' does not conform to type 'Int' of variable 'a' in 'let' expression",
+                  "let a : Int <-\nfalse\nin 0");
 
             let analyzer : TestAnalyzer <- newAnalyzerExpr("let", "let b : Bool in b"),
                   expr : AnalyzedLetExpr <- case assertAnalyzeExpr("let", analyzer) of x : AnalyzedLetExpr => x; esac in
@@ -533,8 +533,8 @@ class Main inherits Test {
                -- (let (b < 0)) not ((let b) < 0)
                case assertAnalyzeExpr("let", analyzer) of x : AnalyzedLetExpr => x; esac;
 
-            assertAnalyzerExprError("case", "line 1: duplicate type 'Int' in 'case' expression",
-                  "case 0 of a : Int => a; a : Int => a; esac");
+            assertAnalyzerExprError("case", "line 2: duplicate type 'Int' in 'case' expression",
+                  "case 0 of a : Int => a;\na\n: Int => a; esac");
 
             let analyzer : TestAnalyzer <- newAnalyzerExpr("case", "case 0 of a : Bool => a; esac"),
                   expr : AnalyzedCaseExpr <- case assertAnalyzeExpr("case", analyzer) of x : AnalyzedCaseExpr => x; esac in
@@ -625,8 +625,8 @@ class Main inherits Test {
                   expr : AnalyzedCaseExpr <- case mainMethod.expr() of x : AnalyzedCaseExpr => x; esac in
                assertSameType("if", program.getType("B"), expr.type());
 
-            assertAnalyzerError("", "line 1: expression type 'Int' is not type 'Bool' for predicate in 'while' expression",
-                  "class A { a() : Object { while 0 loop 0 pool }; };");
+            assertAnalyzerError("", "line 2: expression type 'Int' is not type 'Bool' for predicate in 'while' expression",
+                  "class A { a() : Object { while\n0\nloop 0 pool }; };");
 
             let analyzer : TestAnalyzer <- newAnalyzerExpr("while", "while false loop 0 pool"),
                   expr : AnalyzedWhileExpr <- case assertAnalyzeExpr("while", analyzer) of x : AnalyzedWhileExpr => x; esac in
@@ -644,8 +644,8 @@ class Main inherits Test {
                   case expr.expr() of x : AnalyzedConstantIntExpr => x; esac;
                };
 
-            assertAnalyzerExprError("", "line 1: expression type 'Int' is not type 'Bool' for 'not' expression",
-                  "not 0");
+            assertAnalyzerExprError("", "line 2: expression type 'Int' is not type 'Bool' for 'not' expression",
+                  "not\n0\n");
 
             let analyzer : TestAnalyzer <- newAnalyzerExpr("not", "not false"),
                   expr : AnalyzedUnaryExpr <- case assertAnalyzeExpr("not", analyzer) of x : AnalyzedUnaryExpr => x; esac in
@@ -655,10 +655,10 @@ class Main inherits Test {
                   case expr.expr() of x : AnalyzedConstantBoolExpr => x; esac;
                };
 
-            assertAnalyzerExprError("", "line 1: left expression type 'Bool' is not type 'Int' for '<' expression",
-                  "false < 0");
-            assertAnalyzerExprError("", "line 1: right expression type 'Bool' is not type 'Int' for '<' expression",
-                  "0 < false");
+            assertAnalyzerExprError("", "line 2: left expression type 'Bool' is not type 'Int' for '<' expression",
+                  "\nfalse\n< 0");
+            assertAnalyzerExprError("", "line 2: right expression type 'Bool' is not type 'Int' for '<' expression",
+                  "0 <\nfalse\n");
 
             let analyzer : TestAnalyzer <- newAnalyzerExpr("less", "0 < \"\".length()"),
                   expr : AnalyzedBinaryExpr <- case assertAnalyzeExpr("less", analyzer) of x : AnalyzedBinaryExpr => x; esac in
@@ -669,18 +669,18 @@ class Main inherits Test {
                   case expr.right() of x : AnalyzedDispatchExpr => x; esac;
                };
 
-            assertAnalyzerUvaExprError("uva", "line 1: left expression type 'Int' is not the same as right expression type 'String' in '<' expression",
-                  "0 < \"\"");
-            assertAnalyzerUvaExprError("uva", "line 1: left expression type 'String' is not the same as right expression type 'Int' in '<' expression",
-                  "\"\" < 0");
-            assertAnalyzerUvaExprError("uva", "line 1: left expression type 'Int' is not the same as right expression type 'Bool' in '<' expression",
-                  "0 < false");
-            assertAnalyzerUvaExprError("uva", "line 1: left expression type 'Bool' is not the same as right expression type 'Int' in '<' expression",
-                  "false < 0");
-            assertAnalyzerUvaExprError("uva", "line 1: left expression type 'String' is not the same as right expression type 'Bool' in '<' expression",
-                  "\"\" < false");
-            assertAnalyzerUvaExprError("uva", "line 1: left expression type 'Bool' is not the same as right expression type 'String' in '<' expression",
-                  "false < \"\"");
+            assertAnalyzerUvaExprError("uva", "line 2: left expression type 'Int' is not the same as right expression type 'String' in '<' expression",
+                  "0\n<\n\"\"");
+            assertAnalyzerUvaExprError("uva", "line 2: left expression type 'String' is not the same as right expression type 'Int' in '<' expression",
+                  "\"\"\n<\n0");
+            assertAnalyzerUvaExprError("uva", "line 2: left expression type 'Int' is not the same as right expression type 'Bool' in '<' expression",
+                  "0\n<\nfalse");
+            assertAnalyzerUvaExprError("uva", "line 2: left expression type 'Bool' is not the same as right expression type 'Int' in '<' expression",
+                  "false\n<\n0");
+            assertAnalyzerUvaExprError("uva", "line 2: left expression type 'String' is not the same as right expression type 'Bool' in '<' expression",
+                  "\"\"\n<\nfalse");
+            assertAnalyzerUvaExprError("uva", "line 2: left expression type 'Bool' is not the same as right expression type 'String' in '<' expression",
+                  "false\n<\n\"\"");
 
             let analyzer : TestAnalyzer <- newAnalyzerExpr("less", "0 < \"\".length()").setUva(true),
                   expr : AnalyzedBinaryExpr <- case assertAnalyzeExpr("less", analyzer) of x : AnalyzedBinaryExpr => x; esac in
@@ -730,10 +730,10 @@ class Main inherits Test {
                   case expr.right() of x : AnalyzedNewExpr => x; esac;
                };
 
-            assertAnalyzerExprError("", "line 1: left expression type 'Bool' is not type 'Int' for '<=' expression",
-                  "false <= 0");
-            assertAnalyzerExprError("", "line 1: right expression type 'Bool' is not type 'Int' for '<=' expression",
-                  "0 <= false");
+            assertAnalyzerExprError("", "line 2: left expression type 'Bool' is not type 'Int' for '<=' expression",
+                  "\nfalse\n<= 0");
+            assertAnalyzerExprError("", "line 2: right expression type 'Bool' is not type 'Int' for '<=' expression",
+                  "0 <=\nfalse\n");
 
             let analyzer : TestAnalyzer <- newAnalyzerExpr("lessEqual", "0 <= \"\".length()"),
                   expr : AnalyzedBinaryExpr <- case assertAnalyzeExpr("lessEqual", analyzer) of x : AnalyzedBinaryExpr => x; esac in
@@ -744,18 +744,18 @@ class Main inherits Test {
                   case expr.right() of x : AnalyzedDispatchExpr => x; esac;
                };
 
-            assertAnalyzerUvaExprError("uva", "line 1: left expression type 'Int' is not the same as right expression type 'String' in '<=' expression",
-                  "0 <= \"\"");
-            assertAnalyzerUvaExprError("uva", "line 1: left expression type 'String' is not the same as right expression type 'Int' in '<=' expression",
-                  "\"\" <= 0");
-            assertAnalyzerUvaExprError("uva", "line 1: left expression type 'Int' is not the same as right expression type 'Bool' in '<=' expression",
-                  "0 <= false");
-            assertAnalyzerUvaExprError("uva", "line 1: left expression type 'Bool' is not the same as right expression type 'Int' in '<=' expression",
-                  "false <= 0");
-            assertAnalyzerUvaExprError("uva", "line 1: left expression type 'String' is not the same as right expression type 'Bool' in '<=' expression",
-                  "\"\" <= false");
-            assertAnalyzerUvaExprError("uva", "line 1: left expression type 'Bool' is not the same as right expression type 'String' in '<=' expression",
-                  "false <= \"\"");
+            assertAnalyzerUvaExprError("uva", "line 2: left expression type 'Int' is not the same as right expression type 'String' in '<=' expression",
+                  "0\n<=\n\"\"");
+            assertAnalyzerUvaExprError("uva", "line 2: left expression type 'String' is not the same as right expression type 'Int' in '<=' expression",
+                  "\"\"\n<=\n0");
+            assertAnalyzerUvaExprError("uva", "line 2: left expression type 'Int' is not the same as right expression type 'Bool' in '<=' expression",
+                  "0\n<=\nfalse");
+            assertAnalyzerUvaExprError("uva", "line 2: left expression type 'Bool' is not the same as right expression type 'Int' in '<=' expression",
+                  "false\n<=\n0");
+            assertAnalyzerUvaExprError("uva", "line 2: left expression type 'String' is not the same as right expression type 'Bool' in '<=' expression",
+                  "\"\"\n<=\nfalse");
+            assertAnalyzerUvaExprError("uva", "line 2: left expression type 'Bool' is not the same as right expression type 'String' in '<=' expression",
+                  "false\n<=\n\"\"");
 
             let analyzer : TestAnalyzer <- newAnalyzerExpr("less equal", "0 <= \"\".length()").setUva(true),
                   expr : AnalyzedBinaryExpr <- case assertAnalyzeExpr("less equal", analyzer) of x : AnalyzedBinaryExpr => x; esac in
@@ -805,8 +805,8 @@ class Main inherits Test {
                   case expr.right() of x : AnalyzedNewExpr => x; esac;
                };
 
-            assertAnalyzerExprError("", "line 1: expression type 'Bool' is not type 'Int' for '~' expression",
-                  "~false");
+            assertAnalyzerExprError("", "line 2: expression type 'Bool' is not type 'Int' for '~' expression",
+                  "~\nfalse\n");
 
             let analyzer : TestAnalyzer <- newAnalyzerExpr("complement", "~1"),
                   expr : AnalyzedUnaryExpr <- case assertAnalyzeExpr("complement", analyzer) of x : AnalyzedUnaryExpr => x; esac in
@@ -816,10 +816,10 @@ class Main inherits Test {
                   case expr.expr() of x : AnalyzedConstantIntExpr => x; esac;
                };
 
-            assertAnalyzerExprError("", "line 1: left expression type 'Bool' is not type 'Int' for '*' expression",
-                  "false * 0");
-            assertAnalyzerExprError("", "line 1: right expression type 'Bool' is not type 'Int' for '*' expression",
-                  "0 * false");
+            assertAnalyzerExprError("", "line 2: left expression type 'Bool' is not type 'Int' for '*' expression",
+                  "\nfalse\n* 0");
+            assertAnalyzerExprError("", "line 2: right expression type 'Bool' is not type 'Int' for '*' expression",
+                  "0 *\nfalse\n");
 
             let analyzer : TestAnalyzer <- newAnalyzerExpr("multiply", "0 * \"\".length()"),
                   expr : AnalyzedBinaryExpr <- case assertAnalyzeExpr("multiply", analyzer) of x : AnalyzedBinaryExpr => x; esac in
@@ -830,10 +830,10 @@ class Main inherits Test {
                   case expr.right() of x : AnalyzedDispatchExpr => x; esac;
                };
 
-            assertAnalyzerExprError("", "line 1: left expression type 'Bool' is not type 'Int' for '+' expression",
-                  "false + 0");
-            assertAnalyzerExprError("", "line 1: right expression type 'Bool' is not type 'Int' for '+' expression",
-                  "0 + false");
+            assertAnalyzerExprError("", "line 2: left expression type 'Bool' is not type 'Int' for '+' expression",
+                  "\nfalse\n+ 0");
+            assertAnalyzerExprError("", "line 2: right expression type 'Bool' is not type 'Int' for '+' expression",
+                  "0 +\nfalse\n");
 
             let analyzer : TestAnalyzer <- newAnalyzerExpr("add", "0 + \"\".length()"),
                   expr : AnalyzedBinaryExpr <- case assertAnalyzeExpr("add", analyzer) of x : AnalyzedBinaryExpr => x; esac in
@@ -844,10 +844,10 @@ class Main inherits Test {
                   case expr.right() of x : AnalyzedDispatchExpr => x; esac;
                };
 
-            assertAnalyzerExprError("", "line 1: left expression type 'Bool' is not type 'Int' for '-' expression",
-                  "false - 0");
-            assertAnalyzerExprError("", "line 1: right expression type 'Bool' is not type 'Int' for '-' expression",
-                  "0 - false");
+            assertAnalyzerExprError("", "line 2: left expression type 'Bool' is not type 'Int' for '-' expression",
+                  "\nfalse\n- 0");
+            assertAnalyzerExprError("", "line 2: right expression type 'Bool' is not type 'Int' for '-' expression",
+                  "0 -\nfalse\n");
 
             let analyzer : TestAnalyzer <- newAnalyzerExpr("subtract", "0 - \"\".length()"),
                   expr : AnalyzedBinaryExpr <- case assertAnalyzeExpr("subtract", analyzer) of x : AnalyzedBinaryExpr => x; esac in
@@ -858,10 +858,10 @@ class Main inherits Test {
                   case expr.right() of x : AnalyzedDispatchExpr => x; esac;
                };
 
-            assertAnalyzerExprError("", "line 1: left expression type 'Bool' is not type 'Int' for '/' expression",
-                  "false / 0");
-            assertAnalyzerExprError("", "line 1: right expression type 'Bool' is not type 'Int' for '/' expression",
-                  "0 / false");
+            assertAnalyzerExprError("", "line 2: left expression type 'Bool' is not type 'Int' for '/' expression",
+                  "\nfalse\n/ 0");
+            assertAnalyzerExprError("", "line 2: right expression type 'Bool' is not type 'Int' for '/' expression",
+                  "0 /\nfalse\n");
 
             let analyzer : TestAnalyzer <- newAnalyzerExpr("divide", "0 / \"\".length()"),
                   expr : AnalyzedBinaryExpr <- case assertAnalyzeExpr("divide", analyzer) of x : AnalyzedBinaryExpr => x; esac in
@@ -872,18 +872,18 @@ class Main inherits Test {
                   case expr.right() of x : AnalyzedDispatchExpr => x; esac;
                };
 
-            assertAnalyzerExprError("", "line 1: left expression type 'Int' is not the same as right expression type 'String' in '=' expression",
-                  "0 = \"\"");
-            assertAnalyzerExprError("", "line 1: left expression type 'String' is not the same as right expression type 'Int' in '=' expression",
-                  "\"\" = 0");
-            assertAnalyzerExprError("", "line 1: left expression type 'Int' is not the same as right expression type 'Bool' in '=' expression",
-                  "0 = false");
-            assertAnalyzerExprError("", "line 1: left expression type 'Bool' is not the same as right expression type 'Int' in '=' expression",
-                  "false = 0");
-            assertAnalyzerExprError("", "line 1: left expression type 'String' is not the same as right expression type 'Bool' in '=' expression",
-                  "\"\" = false");
-            assertAnalyzerExprError("", "line 1: left expression type 'Bool' is not the same as right expression type 'String' in '=' expression",
-                  "false = \"\"");
+            assertAnalyzerExprError("", "line 2: left expression type 'Int' is not the same as right expression type 'String' in '=' expression",
+                  "0\n=\n\"\"");
+            assertAnalyzerExprError("", "line 2: left expression type 'String' is not the same as right expression type 'Int' in '=' expression",
+                  "\"\"\n=\n0");
+            assertAnalyzerExprError("", "line 2: left expression type 'Int' is not the same as right expression type 'Bool' in '=' expression",
+                  "0\n=\nfalse");
+            assertAnalyzerExprError("", "line 2: left expression type 'Bool' is not the same as right expression type 'Int' in '=' expression",
+                  "false\n=\n0");
+            assertAnalyzerExprError("", "line 2: left expression type 'String' is not the same as right expression type 'Bool' in '=' expression",
+                  "\"\"\n=\nfalse");
+            assertAnalyzerExprError("", "line 2: left expression type 'Bool' is not the same as right expression type 'String' in '=' expression",
+                  "false\n=\n\"\"");
 
             let analyzer : TestAnalyzer <- newAnalyzerExpr("equal", "0 = \"\".length()"),
                   expr : AnalyzedBinaryExpr <- case assertAnalyzeExpr("equal", analyzer) of x : AnalyzedBinaryExpr => x; esac in
@@ -939,14 +939,14 @@ class Main inherits Test {
    testSelf() : Object {
       if begin("self") then
          {
-            assertAnalyzerExprError("", "line 1: invalid assignment to 'self' variable",
-                  "self <- new SELF_TYPE");
-            assertAnalyzerExprError("", "line 1: invalid variable name 'self' in 'let' expression",
-                  "let self : Object in 0");
-            assertAnalyzerExprError("", "line 1: invalid variable name 'self' in 'case' expression",
-                  "case 0 of self : Object => 0; esac");
-            assertAnalyzerError("", "line 1: invalid formal parameter name 'self'",
-                  "class A { a(self : Object) : Object { 0 }; };");
+            assertAnalyzerExprError("", "line 2: invalid assignment to 'self' variable",
+                  "self\n<-\nnew SELF_TYPE");
+            assertAnalyzerExprError("", "line 2: invalid variable name 'self' in 'let' expression",
+                  "let\nself\n: Object in 0");
+            assertAnalyzerExprError("", "line 2: invalid variable name 'self' in 'case' expression",
+                  "case 0 of\nself\n: Object => 0; esac");
+            assertAnalyzerError("", "line 2: invalid formal parameter name 'self'",
+                  "class A { a(\nself\n: Object) : Object { 0 }; };");
 
             let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("new", "class A { a : Object <- self; };"),
                   program : AnalyzedProgram <- assertAnalyze("reference", analyzer),
@@ -963,16 +963,16 @@ class Main inherits Test {
    testSelfType() : Object {
       if begin("selfType") then
          {
-            assertAnalyzerError("", "line 1: invalid class name 'SELF_TYPE'",
-                  "class SELF_TYPE { a : Bool; };");
-            assertAnalyzerError("", "line 1: invalid type 'SELF_TYPE' for 'inherits' of class 'A'",
-                  "class A inherits SELF_TYPE { a : Bool; };");
-            assertAnalyzerError("", "line 1: invalid type 'SELF_TYPE' for formal parameter #1",
-                  "class A { a(b : SELF_TYPE) : Object { 0 }; };");
-            assertAnalyzerError("", "line 1: invalid type 'SELF_TYPE' for static dispatch expression",
-                  "class A { a(a : A) : Object { a@SELF_TYPE.copy() }; };");
-            assertAnalyzerExprError("", "line 1: invalid type 'SELF_TYPE' for 'case' branch",
-                  "case 0 of x : SELF_TYPE => x; esac");
+            assertAnalyzerError("", "line 2: invalid class name 'SELF_TYPE'",
+                  "class\nSELF_TYPE\n{ a : Bool; };");
+            assertAnalyzerError("", "line 2: invalid type 'SELF_TYPE' for 'inherits' of class 'A'",
+                  "class\nA\ninherits SELF_TYPE { a : Bool; };");
+            assertAnalyzerError("", "line 2: invalid type 'SELF_TYPE' for formal parameter #1",
+                  "class A { a(\nb\n: SELF_TYPE) : Object { 0 }; };");
+            assertAnalyzerError("", "line 2: invalid type 'SELF_TYPE' for static dispatch expression",
+                  "class A { a(a : A) : Object { a@SELF_TYPE\n.\ncopy() }; };");
+            assertAnalyzerExprError("", "line 2: invalid type 'SELF_TYPE' for 'case' branch",
+                  "case 0 of\nx\n: SELF_TYPE => x; esac");
 
             let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("new", "class A { a : Object <- new SELF_TYPE; };"),
                   program : AnalyzedProgram <- assertAnalyze("new", analyzer),
@@ -1020,8 +1020,8 @@ class Main inherits Test {
       if begin("basicClasses") then
          {
             -- Not specified, but...
-            assertAnalyzerError("", "line 1: redefinition of basic class 'Object'",
-                  "class Object { a : Bool; };");
+            assertAnalyzerError("", "line 2: redefinition of basic class 'Object'",
+                  "class\nObject\n{ a : Bool; };");
 
             let analyzer : TestAnalyzer <- newAnalyzerExpr("abort", "new Object.abort()"),
                   expr : AnalyzedExpr <- assertAnalyzeExpr("abort", analyzer) in
@@ -1037,8 +1037,8 @@ class Main inherits Test {
                   expr : AnalyzedExpr <- type.getAttribute("a").expr() in
                assertSameType("copy", type, expr.type());
 
-            assertAnalyzerError("", "line 1: redefinition of basic class 'IO'",
-                  "class IO { a : Bool; };");
+            assertAnalyzerError("", "line 2: redefinition of basic class 'IO'",
+                  "class\nIO\n{ a : Bool; };");
 
             let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("out_string", "class A inherits IO { a : Object <- new A.out_string(\"\"); };"),
                   program : AnalyzedProgram <- assertAnalyze("out_string", analyzer),
@@ -1060,15 +1060,15 @@ class Main inherits Test {
                   expr : AnalyzedExpr <- assertAnalyzeExpr("in_int", analyzer) in
                assertSameType("in_int", analyzer.intType(), expr.type());
 
-            assertAnalyzerError("", "line 1: invalid basic type 'Int' for 'inherits'",
-                  "class A inherits Int { a : Bool; };");
-            assertAnalyzerError("", "line 1: redefinition of basic class 'Int'",
-                  "class Int { a : Bool; };");
+            assertAnalyzerError("", "line 2: invalid basic type 'Int' for 'inherits'",
+                  "class\nA\ninherits Int { a : Bool; };");
+            assertAnalyzerError("", "line 2: redefinition of basic class 'Int'",
+                  "class\nInt\n{ a : Bool; };");
 
-            assertAnalyzerError("", "line 1: invalid basic type 'String' for 'inherits'",
-                  "class A inherits String { a : Bool; };");
-            assertAnalyzerError("", "line 1: redefinition of basic class 'String'",
-                  "class String { a : Bool; };");
+            assertAnalyzerError("", "line 2: invalid basic type 'String' for 'inherits'",
+                  "class\nA\ninherits String { a : Bool; };");
+            assertAnalyzerError("", "line 2: redefinition of basic class 'String'",
+                  "class\nString\n{ a : Bool; };");
 
             let analyzer : TestAnalyzer <- newAnalyzerExpr("length", "\"\".length()"),
                   expr : AnalyzedExpr <- assertAnalyzeExpr("length", analyzer) in
@@ -1082,10 +1082,10 @@ class Main inherits Test {
                   expr : AnalyzedExpr <- assertAnalyzeExpr("substr", analyzer) in
                assertSameType("substr", analyzer.stringType(), expr.type());
 
-            assertAnalyzerError("", "line 1: invalid basic type 'Bool' for 'inherits'",
-                  "class A inherits Bool { a : Bool; };");
-            assertAnalyzerError("", "line 1: redefinition of basic class 'Bool'",
-                  "class Bool { a : Bool; };");
+            assertAnalyzerError("", "line 2: invalid basic type 'Bool' for 'inherits'",
+                  "class\nA\ninherits Bool { a : Bool; };");
+            assertAnalyzerError("", "line 2: redefinition of basic class 'Bool'",
+                  "class\nBool\n{ a : Bool; };");
          }
       else false fi
    };

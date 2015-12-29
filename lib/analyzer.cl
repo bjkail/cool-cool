@@ -782,7 +782,7 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
                                  expr <- env.analyze(var.expr());
 
                                  if not expr.type().conformsTo(type) then
-                                    analyzer.errorAt(var, "expression type '".concat(expr.type().name())
+                                    analyzer.errorAt(var.expr(), "expression type '".concat(expr.type().name())
                                           .concat("' does not conform to type '").concat(type.name())
                                           .concat("' of variable '").concat(var.id())
                                           .concat("' in 'let' expression"))
@@ -1083,13 +1083,13 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
             else
                {
                   if not left.type() = analyzer.intType() then
-                     analyzer.errorAt(parsedExpr, "left expression type '".concat(left.type().name())
+                     analyzer.errorAt(parsedExpr.left(), "left expression type '".concat(left.type().name())
                            .concat("' is not type 'Int' for '").concat(op)
                            .concat("' expression"))
                   else false fi;
 
                   if not right.type() = analyzer.intType() then
-                     analyzer.errorAt(parsedExpr, "right expression type '".concat(right.type().name())
+                     analyzer.errorAt(parsedExpr.right(), "right expression type '".concat(right.type().name())
                            .concat("' is not type 'Int' for '").concat(op)
                            .concat("' expression"))
                   else false fi;
@@ -1291,7 +1291,7 @@ class Analyzer {
                   let formal : ParsedFormal <- case formalIter.get() of x : ParsedFormal => x; esac in
                      {
                         formalTypes.add(getType(
-                              method,
+                              formal,
                               " for formal parameter #".concat(stringUtil.fromInt(index)),
                               formal.type()));
                         index <- index + 1;

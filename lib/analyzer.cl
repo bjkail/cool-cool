@@ -1244,11 +1244,11 @@ class Analyzer {
       fi
    };
 
-   getInheritsType(node : ParsedNode, name : String) : AnalyzedType {
+   getInheritsType(node : ParsedClass, name : String) : AnalyzedType {
       if name = "" then
          objectType
       else
-         let type : AnalyzedType <- getType(node, " for 'inherits'", name) in
+         let type : AnalyzedType <- getType(node, " for 'inherits' of class '".concat(node.type()).concat("'"), name) in
             if if type = intType then
                   true
                else

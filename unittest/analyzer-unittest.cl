@@ -94,7 +94,7 @@ class Main inherits Test {
          {
             assertAnalyzerError("", "line 1: redefinition of class 'A'",
                   "class A { a : Bool; }; class A { a : Bool; };");
-            assertAnalyzerError("", "line 1: undefined type 'B' for 'inherits'",
+            assertAnalyzerError("", "line 1: undefined type 'B' for 'inherits' of class 'A'",
                   "class A inherits B { a : Bool; };");
             assertAnalyzerError("", "line 1: hierarchy of class 'A' contains a cycle",
                   "class A inherits B { a : Bool; }; class B inherits A { b : Bool; };");
@@ -961,7 +961,7 @@ class Main inherits Test {
          {
             assertAnalyzerError("", "line 1: definition of type 'SELF_TYPE'",
                   "class SELF_TYPE { a : Bool; };");
-            assertAnalyzerError("", "line 1: invalid type 'SELF_TYPE' for 'inherits'",
+            assertAnalyzerError("", "line 1: invalid type 'SELF_TYPE' for 'inherits' of class 'A'",
                   "class A inherits SELF_TYPE { a : Bool; };");
             assertAnalyzerError("", "line 1: invalid type 'SELF_TYPE' for formal parameter #1",
                   "class A { a(b : SELF_TYPE) : Object { 0 }; };");

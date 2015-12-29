@@ -102,7 +102,7 @@ class Main inherits Test {
                   "class A { b : B; };");
             assertAnalyzerError("", "line 1: redefinition of attribute 'a' in class 'A'",
                   "class A { a : Bool; a : Bool; };");
-            assertAnalyzerError("", "line 1: redefinition of attribute 'a' in class 'B'",
+            assertAnalyzerError("", "line 1: redefinition of attribute 'a' in class 'B' of attribute in class 'A'",
                   "class A { a : Bool; }; class B inherits A { a : Bool; };");
             assertAnalyzerError("", "line 1: undefined type 'B' for formal parameter #1",
                   "class A { a(b : B) : Object { 0 }; };");

@@ -1395,10 +1395,20 @@ class Analyzer {
                                     else false fi
                                  else false fi
                            else
-                              if not isvoid type.addAttribute(createAnalyzedAttribute(type, attr)) then
-                                 errorAt(feature, "redefinition of attribute '".concat(feature.id())
-                                       .concat("' in class '").concat(type.name()).concat("'"))
-                              else false fi
+                              let oldAttr : AnalyzedAttribute <- type.addAttribute(createAnalyzedAttribute(type, attr)) in
+                                 if not isvoid oldAttr then
+                                    let error : String <- "redefinition of attribute '".concat(feature.id())
+                                             .concat("' in class '").concat(type.name()).concat("'"),
+                                          oldType : AnalyzedType <- oldAttr.containingType() in
+                                       {
+                                          if not type = oldType then
+                                             error <- error.concat(" of attribute in class '")
+                                                   .concat(oldType.name()).concat("'")
+                                          else false fi;
+
+                                          errorAt(feature, error);
+                                       }
+                                 else false fi
                            fi
                      pool
                else false fi;

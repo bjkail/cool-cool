@@ -110,8 +110,10 @@ class Main inherits Test {
                   "class A { a() : B { 0 }; };");
             assertAnalyzerError("", "line 1: redefinition of method 'a' in class 'A'",
                   "class A { a() : Object { 0 }; a() : Object { 0 }; };");
-            assertAnalyzerError("", "line 1: redefinition of method 'a' in class 'B' with 1 formal parameters is not the same as 0 in class 'A'",
+            assertAnalyzerError("", "line 1: redefinition of method 'a' in class 'B' with 1 formal parameter is not the same as 0 in class 'A'",
                   "class A { a() : Object { 0 }; }; class B inherits A { a(b : Int) : Object { 0 }; };");
+            assertAnalyzerError("", "line 1: redefinition of method 'a' in class 'B' with 2 formal parameters is not the same as 0 in class 'A'",
+                  "class A { a() : Object { 0 }; }; class B inherits A { a(b : Int, c : Int) : Object { 0 }; };");
             assertAnalyzerError("", "line 1: redefinition of method 'a' in class 'B' with type 'Bool' for formal parameter #1 is not the same as type 'Int' in class 'A'",
                   "class A { a(a : Int) : Object { 0 }; }; class B inherits A { a(b : Bool) : Object { 0 }; };");
             assertAnalyzerError("", "line 1: redefinition of method 'a' in class 'B' with return type 'Int' is not the same as type 'Object' in class 'A'",

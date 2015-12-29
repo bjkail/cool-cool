@@ -296,7 +296,7 @@ class Main inherits Test {
                   expr : AnalyzedNewExpr <- case mainMethod.expr() of x : AnalyzedNewExpr => x; esac in
                assertSameType("new", mainMethod.containingType(), expr.type());
 
-            assertAnalyzerError("", "line 1: argument 1 type 'Int' does not conform to type 'Bool' of formal parameter in method 'a' in class 'A' in dispatch expression",
+            assertAnalyzerError("", "line 1: type 'Int' of argument #1 does not conform to type 'Bool' of formal parameter in method 'a' in class 'A' in dispatch expression",
                   "class A { a(a : Bool) : Object { a(0) }; };");
 
             let analyzer : TestAnalyzer <- newAnalyzer("dispatch",

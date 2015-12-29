@@ -977,10 +977,10 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
                                        if formalTypeIter.next() then
                                           let formalType : AnalyzedType <- case formalTypeIter.get() of x : AnalyzedType => x; esac in
                                              if not expr.type().conformsTo(formalType) then
-                                                analyzer.errorAt(arg, "argument "
+                                                analyzer.errorAt(arg, "type '".concat(expr.type().name())
+                                                      .concat("' of argument #")
                                                       .concat(analyzer.stringUtil().fromInt(exprs.size() + 1))
-                                                      .concat(" type '").concat(expr.type().name())
-                                                      .concat("' does not conform to type '")
+                                                      .concat(" does not conform to type '")
                                                       .concat(formalType.name())
                                                       .concat("' of formal parameter in method '")
                                                       .concat(parsedExpr.id())

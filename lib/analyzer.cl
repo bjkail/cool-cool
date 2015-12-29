@@ -1499,7 +1499,7 @@ class Analyzer {
                   let class_ : ParsedClass <- case classIter.get() of x : ParsedClass => x; esac,
                         typeName : String <- class_.type() in
                      if typeName = "SELF_TYPE" then
-                        errorAt(class_, "definition of type '".concat(typeName).concat("'"))
+                        errorAt(class_, "invalid class name 'SELF_TYPE'")
                      else
                         let type : AnalyzedType <- new AnalyzedType.init(class_) in
                            if isvoid types.putNewWithString(typeName, type) then

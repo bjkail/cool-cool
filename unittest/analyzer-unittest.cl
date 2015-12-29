@@ -963,7 +963,7 @@ class Main inherits Test {
    testSelfType() : Object {
       if begin("selfType") then
          {
-            assertAnalyzerError("", "line 1: definition of type 'SELF_TYPE'",
+            assertAnalyzerError("", "line 1: invalid class name 'SELF_TYPE'",
                   "class SELF_TYPE { a : Bool; };");
             assertAnalyzerError("", "line 1: invalid type 'SELF_TYPE' for 'inherits' of class 'A'",
                   "class A inherits SELF_TYPE { a : Bool; };");

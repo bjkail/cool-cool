@@ -1,20 +1,11 @@
 class AnalyzedProgram {
-   types : StringMap;
-   types() : StringMap { types };
-
-   getType(name : String) : AnalyzedType {
-      let type : Object <- types.getWithString(name) in
-         if isvoid type then
-            let void : AnalyzedType in void
-         else
-            case type of x : AnalyzedType => x; esac
-         fi
-   };
+   types : Collection;
+   types() : Collection { types };
 
    mainMethod : AnalyzedMethod;
    mainMethod() : AnalyzedMethod { mainMethod };
 
-   init(types_ : StringMap, mainMethod_ : AnalyzedMethod) : SELF_TYPE {{
+   init(types_ : Collection, mainMethod_ : AnalyzedMethod) : SELF_TYPE {{
       types <- types_;
       mainMethod <- mainMethod_;
       self;
@@ -1635,7 +1626,7 @@ class Analyzer {
                      if error then
                         let void : AnalyzedProgram in void
                      else
-                        new AnalyzedProgram.init(types, mainMethod)
+                        new AnalyzedProgram.init(typeList, mainMethod)
                      fi;
                };
          }

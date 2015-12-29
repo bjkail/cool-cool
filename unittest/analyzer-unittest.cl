@@ -34,6 +34,24 @@ class Main inherits Test {
          }
    };
 
+   getType(program : AnalyzedProgram, name : String) : AnalyzedType {
+      let result : AnalyzedType in
+         {
+            let iter : Iterator <- program.types().iterator() in
+               while if isvoid result then
+                     iter.next()
+                  else false fi
+               loop
+                  let type : AnalyzedType <- case iter.get() of x : AnalyzedType => x; esac in
+                     if name = type.name() then
+                        result <- type
+                     else false fi
+               pool;
+
+            result;
+         }
+   };
+
    assertAnalyzeExpr(context : String, analyzer : TestAnalyzer) : AnalyzedExpr {
       let program : AnalyzedProgram <- assertAnalyze(context, analyzer),
             type : AnalyzedType <- program.mainMethod().containingType(),
@@ -122,7 +140,7 @@ class Main inherits Test {
             let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("inherits",
                      "class A inherits B { b() : Object { false }; }; class B { b() : Object { false }; };"),
                   program : AnalyzedProgram <- assertAnalyze("inherits", analyzer) in
-               assertSameType("inherits", program.getType("B"), program.getType("A").inheritsType());
+               assertSameType("inherits", getType(program, "B"), getType(program, "A").inheritsType());
 
             let analyzer : TestAnalyzer <- newAnalyzer("same",
                      "class Main { main() : Object { 0 }; main : Bool; };") in
@@ -163,7 +181,7 @@ class Main inherits Test {
             let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("attribute",
                      "class A { a : Object; b : Int <- 0; c : String <- c; };"),
                   program : AnalyzedProgram <- analyzer.analyzeTest(),
-                  type : AnalyzedType <- program.getType("A") in
+                  type : AnalyzedType <- getType(program, "A") in
                {
                   let attr : AnalyzedAttribute <- type.getAttribute("a") in
                      {
@@ -206,7 +224,7 @@ class Main inherits Test {
                      .concat("class B { b(a : Int) : Bool { false }; };")),
                   program : AnalyzedProgram <- analyzer.analyzeTest() in
                {
-                  let type : AnalyzedType <- program.getType("A") in
+                  let type : AnalyzedType <- getType(program, "A") in
                      {
                         let method : AnalyzedMethod <- type.getMethod("a") in
                            {
@@ -231,7 +249,7 @@ class Main inherits Test {
                            };
                      };
 
-                  let type : AnalyzedType <- program.getType("B") in
+                  let type : AnalyzedType <- getType(program, "B") in
                      {
                         let method : AnalyzedMethod <- type.getMethod("b") in
                            {
@@ -311,7 +329,7 @@ class Main inherits Test {
                   assertSameType("dispatch", analyzer.boolType(), expr.type());
 
                   let method : AnalyzedMethod <- expr.method() in
-                     if not method = program.getType("A").getMethod("a") then
+                     if not method = getType(program, "A").getMethod("a") then
                         failContext("dispatch method", "expected=A.a, actual="
                               .concat(method.containingType().name())
                               .concat(".").concat(method.id()))
@@ -340,7 +358,7 @@ class Main inherits Test {
                   assertSameType("static dispatch", analyzer.boolType(), expr.type());
 
                   let method : AnalyzedMethod <- expr.method() in
-                     if not method = program.getType("A").getMethod("a") then
+                     if not method = getType(program, "A").getMethod("a") then
                         failContext("static dispatch method", "expected=A.a, actual="
                               .concat(method.containingType().name())
                               .concat(".").concat(method.id()))
@@ -383,7 +401,7 @@ class Main inherits Test {
                   program : AnalyzedProgram <- assertAnalyze("if", analyzer),
                   mainMethod : AnalyzedMethod <- program.mainMethod(),
                   expr : AnalyzedIfExpr <- case mainMethod.expr() of x : AnalyzedIfExpr => x; esac in
-               assertSameType("if", program.getType("B"), expr.type());
+               assertSameType("if", getType(program, "B"), expr.type());
 
             let analyzer : TestAnalyzer <- newAnalyzer("block",
                      "class Main { main() : Object {{ 0; }}; }; "),
@@ -623,7 +641,7 @@ class Main inherits Test {
                   program : AnalyzedProgram <- assertAnalyze("dispatch", analyzer),
                   mainMethod : AnalyzedMethod <- program.mainMethod(),
                   expr : AnalyzedCaseExpr <- case mainMethod.expr() of x : AnalyzedCaseExpr => x; esac in
-               assertSameType("if", program.getType("B"), expr.type());
+               assertSameType("if", getType(program, "B"), expr.type());
 
             assertAnalyzerError("", "line 2: expression type 'Int' is not type 'Bool' for predicate in 'while' expression",
                   "class A { a() : Object { while\n0\nloop 0 pool }; };");
@@ -950,7 +968,7 @@ class Main inherits Test {
 
             let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("new", "class A { a : Object <- self; };"),
                   program : AnalyzedProgram <- assertAnalyze("reference", analyzer),
-                  type : AnalyzedType <- program.getType("A"),
+                  type : AnalyzedType <- getType(program, "A"),
                   expr : AnalyzedObjectExpr <- case type.getAttribute("a").expr() of x : AnalyzedObjectExpr => x; esac in
                {
                   case expr.object() of x : AnalyzedSelfObject => x; esac;
@@ -976,13 +994,13 @@ class Main inherits Test {
 
             let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("new", "class A { a : Object <- new SELF_TYPE; };"),
                   program : AnalyzedProgram <- assertAnalyze("new", analyzer),
-                  type : AnalyzedType <- program.getType("A"),
+                  type : AnalyzedType <- getType(program, "A"),
                   attr : AnalyzedAttribute <- type.getAttribute("a") in
                assertSameType("new", type.selfTypeType(), attr.expr().type());
 
             let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("return", "class A { a() : SELF_TYPE { self }; b() : A { a() }; };"),
                   program : AnalyzedProgram <- assertAnalyze("return", analyzer),
-                  type : AnalyzedType <- program.getType("A"),
+                  type : AnalyzedType <- getType(program, "A"),
                   methodA : AnalyzedMethod <- type.getMethod("a"),
                   methodB : AnalyzedMethod <- type.getMethod("b") in
                {
@@ -992,13 +1010,13 @@ class Main inherits Test {
 
             let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("let", "class A { a() : Object { let a : SELF_TYPE in a }; };"),
                   program : AnalyzedProgram <- assertAnalyze("let", analyzer),
-                  type : AnalyzedType <- program.getType("A"),
+                  type : AnalyzedType <- getType(program, "A"),
                   method : AnalyzedMethod <- type.getMethod("a") in
                assertSameType("let", type.selfTypeType(), method.expr().type());
 
             let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("attribute", "class A { a : SELF_TYPE; };"),
                   program : AnalyzedProgram <- assertAnalyze("attribute", analyzer),
-                  type : AnalyzedType <- program.getType("A"),
+                  type : AnalyzedType <- getType(program, "A"),
                   attr : AnalyzedAttribute <- type.getAttribute("a") in
                assertSameType("attribute", type.selfTypeType(), attr.type());
 
@@ -1033,7 +1051,7 @@ class Main inherits Test {
 
             let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("copy", "class A { a : Object <- new A.copy(); };"),
                   program : AnalyzedProgram <- assertAnalyze("copy", analyzer),
-                  type : AnalyzedType <- program.getType("A"),
+                  type : AnalyzedType <- getType(program, "A"),
                   expr : AnalyzedExpr <- type.getAttribute("a").expr() in
                assertSameType("copy", type, expr.type());
 
@@ -1042,13 +1060,13 @@ class Main inherits Test {
 
             let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("out_string", "class A inherits IO { a : Object <- new A.out_string(\"\"); };"),
                   program : AnalyzedProgram <- assertAnalyze("out_string", analyzer),
-                  type : AnalyzedType <- program.getType("A"),
+                  type : AnalyzedType <- getType(program, "A"),
                   expr : AnalyzedExpr <- type.getAttribute("a").expr() in
                assertSameType("out_string", type, expr.type());
 
             let analyzer : TestAnalyzer <- newAnalyzerDefaultMain("out_int", "class A inherits IO { a : Object <- new A.out_int(1); };"),
                   program : AnalyzedProgram <- assertAnalyze("out_int", analyzer),
-                  type : AnalyzedType <- program.getType("A"),
+                  type : AnalyzedType <- getType(program, "A"),
                   expr : AnalyzedExpr <- type.getAttribute("a").expr() in
                assertSameType("out_int", type, expr.type());
 

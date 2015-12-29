@@ -879,14 +879,14 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
       let typeList : Collection <- new LinkedList in
          {
             -- Create InterpreterAnalyzerType
-            let analyzedTypeIter : StringMapIterator <- program.types().iterator() in
+            let analyzedTypeIter : Iterator <- program.types().iterator() in
                while analyzedTypeIter.next() loop
-                  let analyzedType : AnalyzedType <- case analyzedTypeIter.value() of x : AnalyzedType => x; esac,
+                  let analyzedType : AnalyzedType <- case analyzedTypeIter.get() of x : AnalyzedType => x; esac,
                         type : InterpreterAnalyzerType <- new InterpreterAnalyzerType.init(analyzedType) in
-                     -- Don't redefine basic types.
-                     if isvoid types.putNewWithString(analyzedType.name(), type) then
-                        typeList.add(type)
-                     else false fi
+                     {
+                        types.putWithString(type.name(), type);
+                        typeList.add(type);
+                     }
                pool;
 
             -- Create attributes/methods.

@@ -1270,7 +1270,10 @@ class Analyzer {
    };
 
    createAnalyzedAttribute(type : AnalyzedType, attr : ParsedAttribute) : AnalyzedAttribute {
-      new AnalyzedAttribute.init(type, attr, getTypeAllowSelf(attr, " for attribute", attr.type(), type))
+      new AnalyzedAttribute.init(type, attr,
+            getTypeAllowSelf(attr, " for attribute '".concat(attr.id())
+                  .concat("' in class '").concat(type.name()).concat("'"),
+            attr.type(), type))
    };
 
    createAnalyzedMethod(type : AnalyzedType, method : ParsedMethod) : AnalyzedMethod {

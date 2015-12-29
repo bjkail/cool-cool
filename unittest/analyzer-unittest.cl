@@ -98,7 +98,7 @@ class Main inherits Test {
                   "class A inherits B { a : Bool; };");
             assertAnalyzerError("", "line 1: hierarchy of class 'A' contains a cycle",
                   "class A inherits B { a : Bool; }; class B inherits A { b : Bool; };");
-            assertAnalyzerError("", "line 1: undefined type 'B' for attribute",
+            assertAnalyzerError("", "line 1: undefined type 'B' for attribute 'b' in class 'A'",
                   "class A { b : B; };");
             assertAnalyzerError("", "line 1: redefinition of attribute 'a' in class 'A'",
                   "class A { a : Bool; a : Bool; };");

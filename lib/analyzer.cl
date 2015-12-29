@@ -169,7 +169,7 @@ class AnalyzedType {
       selfTypeType <- new AnalyzedType.initSelfType(self);
    }};
 
-   initBuiltinObject() : SELF_TYPE {{
+   initBasicObject() : SELF_TYPE {{
       name <- "Object";
       attributes <- new StringListMap;
       methods <- new StringListMap;
@@ -177,7 +177,7 @@ class AnalyzedType {
       self;
    }};
 
-   initBuiltin(name_ : String, inheritsType_ : AnalyzedType) : SELF_TYPE {{
+   initBasic(name_ : String, inheritsType_ : AnalyzedType) : SELF_TYPE {{
       name <- name_;
       inheritsType <- inheritsType_;
       self;
@@ -263,7 +263,7 @@ class AnalyzedMethod inherits AnalyzedFeature {
    formalTypes : Collection;
    formalTypes() : Collection { formalTypes };
 
-   initBuiltin(containingType_ : AnalyzedType, id_ : String, formalTypes_ : Collection, returnType_ : AnalyzedType) : SELF_TYPE {{
+   initBasic(containingType_ : AnalyzedType, id_ : String, formalTypes_ : Collection, returnType_ : AnalyzedType) : SELF_TYPE {{
       containingType <- containingType_;
       id <- id_;
       formalTypes <- formalTypes_;
@@ -273,7 +273,7 @@ class AnalyzedMethod inherits AnalyzedFeature {
 
    init(containingType : AnalyzedType, parsedMethod_ : ParsedMethod, formalTypes : Collection, returnType : AnalyzedType) : SELF_TYPE {{
       parsedMethod <- parsedMethod_;
-      initBuiltin(containingType, parsedMethod_.id(), formalTypes, returnType);
+      initBasic(containingType, parsedMethod_.id(), formalTypes, returnType);
    }};
 
    toString() : String { containingType().name().concat(".").concat(id()) };
@@ -1139,23 +1139,23 @@ class Analyzer {
       self;
    }};
 
-   objectType : AnalyzedType <- new AnalyzedType.initBuiltinObject();
+   objectType : AnalyzedType <- new AnalyzedType.initBasicObject();
    objectType() : AnalyzedType { objectType };
 
-   ioType : AnalyzedType <- new AnalyzedType.initBuiltin("IO", objectType);
+   ioType : AnalyzedType <- new AnalyzedType.initBasic("IO", objectType);
 
-   intType : AnalyzedType <- new AnalyzedType.initBuiltin("Int", objectType);
+   intType : AnalyzedType <- new AnalyzedType.initBasic("Int", objectType);
    intType() : AnalyzedType { intType };
 
-   stringType : AnalyzedType <- new AnalyzedType.initBuiltin("String", objectType);
+   stringType : AnalyzedType <- new AnalyzedType.initBasic("String", objectType);
    stringType() : AnalyzedType { stringType };
 
-   boolType : AnalyzedType <- new AnalyzedType.initBuiltin("Bool", objectType);
+   boolType : AnalyzedType <- new AnalyzedType.initBasic("Bool", objectType);
    boolType() : AnalyzedType { boolType };
 
-   types : StringMap <- initBuiltinTypes();
+   types : StringMap <- initBasicTypes();
 
-   initBuiltinTypes() : StringMap {
+   initBasicTypes() : StringMap {
       let types : StringMap <- new StringListMap in
          {
             types.putWithString(objectType.name(), objectType);
@@ -1169,22 +1169,22 @@ class Analyzer {
                   collInt : Collection <- new LinkedList.add(intType),
                   collIntInt : Collection <- new LinkedList.add(intType).add(intType) in
                {
-                  objectType.addMethod(new AnalyzedMethod.initBuiltin(objectType, "abort", collEmpty, objectType));
-                  objectType.addMethod(new AnalyzedMethod.initBuiltin(objectType, "type_name", collEmpty, stringType));
-                  objectType.addMethod(new AnalyzedMethod.initBuiltin(objectType, "copy", collEmpty, objectType.selfTypeType()));
+                  objectType.addMethod(new AnalyzedMethod.initBasic(objectType, "abort", collEmpty, objectType));
+                  objectType.addMethod(new AnalyzedMethod.initBasic(objectType, "type_name", collEmpty, stringType));
+                  objectType.addMethod(new AnalyzedMethod.initBasic(objectType, "copy", collEmpty, objectType.selfTypeType()));
 
                   ioType.processInherits();
-                  ioType.addMethod(new AnalyzedMethod.initBuiltin(ioType, "out_string", collString, ioType.selfTypeType()));
-                  ioType.addMethod(new AnalyzedMethod.initBuiltin(ioType, "out_int", collInt, ioType.selfTypeType()));
-                  ioType.addMethod(new AnalyzedMethod.initBuiltin(ioType, "in_string", collEmpty, stringType));
-                  ioType.addMethod(new AnalyzedMethod.initBuiltin(ioType, "in_int", collEmpty, intType));
+                  ioType.addMethod(new AnalyzedMethod.initBasic(ioType, "out_string", collString, ioType.selfTypeType()));
+                  ioType.addMethod(new AnalyzedMethod.initBasic(ioType, "out_int", collInt, ioType.selfTypeType()));
+                  ioType.addMethod(new AnalyzedMethod.initBasic(ioType, "in_string", collEmpty, stringType));
+                  ioType.addMethod(new AnalyzedMethod.initBasic(ioType, "in_int", collEmpty, intType));
 
                   intType.processInherits();
 
                   stringType.processInherits();
-                  stringType.addMethod(new AnalyzedMethod.initBuiltin(stringType, "length", collEmpty, intType));
-                  stringType.addMethod(new AnalyzedMethod.initBuiltin(stringType, "concat", collString, stringType));
-                  stringType.addMethod(new AnalyzedMethod.initBuiltin(stringType, "substr", collIntInt, stringType));
+                  stringType.addMethod(new AnalyzedMethod.initBasic(stringType, "length", collEmpty, intType));
+                  stringType.addMethod(new AnalyzedMethod.initBasic(stringType, "concat", collString, stringType));
+                  stringType.addMethod(new AnalyzedMethod.initBasic(stringType, "substr", collIntInt, stringType));
 
                   boolType.processInherits();
                };

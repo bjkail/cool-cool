@@ -1448,6 +1448,7 @@ class Analyzer {
          {
             let formalIter : Iterator <- method.parsedMethod().formals().iterator(),
                   formalTypeIter : Iterator <- method.formalTypes().iterator(),
+                  usedIds : StringMap <- new StringListMap,
                   index : Int <- 0 in
                {
                   formalTypeIter.next();
@@ -1459,7 +1460,12 @@ class Analyzer {
                            if id = "self" then
                               errorAt(formal, "invalid formal parameter name 'self'")
                            else
-                              env.put(id, new AnalyzedArgumentObject.init(formalType, index))
+                              if not isvoid usedIds.putWithString(id, true) then
+                                 errorAt(formal, "duplicate formal parameter name '".concat(id)
+                                       .concat("' for method '").concat(method.id()).concat("'"))
+                              else
+                                 env.put(id, new AnalyzedArgumentObject.init(formalType, index))
+                              fi
                            fi;
 
                            index <- index + 1;

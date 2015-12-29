@@ -196,6 +196,8 @@ class Main inherits Test {
    testMethod() : Object {
       if begin("method") then
          {
+            assertAnalyzerError("", "line 1: duplicate formal parameter name 'a' for method 'a'",
+                  "class A { a(a : Int, a : Int) : Object { false }; };");
             assertAnalyzerError("", "line 1: expression type 'Int' does not conform to return type 'Bool' of method 'a'",
                   "class A { a() : Bool { 0 }; };");
 

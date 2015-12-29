@@ -941,9 +941,9 @@ class Main inherits Test {
          {
             assertAnalyzerExprError("", "line 1: invalid assignment to 'self' variable",
                   "self <- new SELF_TYPE");
-            assertAnalyzerExprError("", "line 1: redefinition of 'self' variable in 'let' expression",
+            assertAnalyzerExprError("", "line 1: invalid variable name 'self' in 'let' expression",
                   "let self : Object in 0");
-            assertAnalyzerExprError("", "line 1: redefinition of 'self' variable in 'case' expression",
+            assertAnalyzerExprError("", "line 1: invalid variable name 'self' in 'case' expression",
                   "case 0 of self : Object => 0; esac");
             assertAnalyzerError("", "line 1: invalid formal parameter name 'self'",
                   "class A { a(self : Object) : Object { 0 }; };");

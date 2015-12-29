@@ -787,7 +787,7 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
 
                         let id : String <- var.id() in
                            if id = "self" then
-                              analyzer.errorAt(var, "redefinition of 'self' variable in 'let' expression")
+                              analyzer.errorAt(var, "invalid variable name 'self' in 'let' expression")
                            else
                               vars.add(new AnalyzedLetVar.init(env.putVar(id, type), expr))
                            fi;
@@ -820,7 +820,7 @@ class AnalyzedTypeEnv inherits ParsedExprVisitor {
                            {
                               let id : String <- branch.id() in
                                  if id = "self" then
-                                    analyzer.errorAt(branch, "redefinition of 'self' variable in 'case' expression")
+                                    analyzer.errorAt(branch, "invalid variable name 'self' in 'case' expression")
                                  else
                                     env.putVar(id, checkType)
                                  fi;

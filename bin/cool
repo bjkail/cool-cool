@@ -151,6 +151,11 @@ if $stdin; then
       printf '%s\n' "$line"
       read cmd < "$stdiofifo" || break
     done
+
+    while test -z "$cmd"; do
+      echo
+      read cmd < "$stdiofifo" || break
+    done
   } | run_interpreter_wrapper | {
     while IFS= read -r line; do
       case $line in

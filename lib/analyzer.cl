@@ -1521,17 +1521,17 @@ class Analyzer {
                pool;
 
             -- Resolve inherits
-            let classIter : Iterator <- definedTypes.iterator() in
-               while classIter.next() loop
-                  let type : AnalyzedType <- case classIter.get() of x : AnalyzedType => x; esac,
+            let typeIter : Iterator <- definedTypes.iterator() in
+               while typeIter.next() loop
+                  let type : AnalyzedType <- case typeIter.get() of x : AnalyzedType => x; esac,
                         class_ : ParsedClass <- type.parsedClass() in
                      type.setInheritsType(getInheritsType(class_, class_.inherits_()))
                pool;
 
             -- Diagnose recursive inherits.
-            let classIter : Iterator <- definedTypes.iterator() in
-               while classIter.next() loop
-                  let type : AnalyzedType <- case classIter.get() of x : AnalyzedType => x; esac,
+            let typeIter : Iterator <- definedTypes.iterator() in
+               while typeIter.next() loop
+                  let type : AnalyzedType <- case typeIter.get() of x : AnalyzedType => x; esac,
                         slow : AnalyzedType <- type.inheritsType(),
                         fast : AnalyzedType <- type.inheritsType2(),
                         continue : Bool <- true in
@@ -1562,16 +1562,16 @@ class Analyzer {
                pool;
 
             -- Define features.
-            let classIter : Iterator <- definedTypes.iterator() in
-               while classIter.next() loop
-                  let type : AnalyzedType <- case classIter.get() of x : AnalyzedType => x; esac in
+            let typeIter : Iterator <- definedTypes.iterator() in
+               while typeIter.next() loop
+                  let type : AnalyzedType <- case typeIter.get() of x : AnalyzedType => x; esac in
                      defineFeatures(type)
                pool;
 
             -- Semantic analysis.
-            let classIter : Iterator <- definedTypes.iterator() in
-               while classIter.next() loop
-                  let type : AnalyzedType <- case classIter.get() of x : AnalyzedType => x; esac,
+            let typeIter : Iterator <- definedTypes.iterator() in
+               while typeIter.next() loop
+                  let type : AnalyzedType <- case typeIter.get() of x : AnalyzedType => x; esac,
                         env : AnalyzedTypeEnv <- createTypeEnv(type),
                         featureIter : Iterator <- type.definedFeatures().iterator() in
                      while featureIter.next() loop
@@ -1609,9 +1609,9 @@ class Analyzer {
                      fi;
 
                      -- Allow parse nodes to be GC'ed.
-                     let classIter : Iterator <- definedTypes.iterator() in
-                        while classIter.next() loop
-                           let type : AnalyzedType <- case classIter.get() of x : AnalyzedType => x; esac in
+                     let typeIter : Iterator <- definedTypes.iterator() in
+                        while typeIter.next() loop
+                           let type : AnalyzedType <- case typeIter.get() of x : AnalyzedType => x; esac in
                               {
                                  let featureIter : Iterator <- type.definedFeatures().iterator() in
                                     while featureIter.next() loop

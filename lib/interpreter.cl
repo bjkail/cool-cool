@@ -601,13 +601,25 @@ class InterpreterAnalyzerType {
          };
    }};
 
-   definedFeatures : Bool;
-   definedFeatures() : Bool { definedFeatures };
-   setDefinedFeatures(definedFeatures_ : Bool) : Object { definedFeatures <- definedFeatures_ };
+   analyzed : Bool;
+
+   analyze() : Bool {
+      if analyzed then
+         false
+      else
+         analyzed <- true
+      fi
+   };
 
    analyzedAttributes : Bool;
-   analyzedAttributes() : Bool { analyzedAttributes };
-   setAnalyzedAttributes(analyzedAttributes_ : Bool) : Object { analyzedAttributes <- analyzedAttributes_ };
+
+   analyzeAttributes() : Bool {
+      if analyzedAttributes then
+         false
+      else
+         analyzedAttributes <- true
+      fi
+   };
 
    attributes : StringMap <- new StringListMap;
    attributes() : StringMap { attributes };
@@ -703,7 +715,7 @@ class InterpreterAnalyzerType {
 
    initBasic(name : String, inheritsDepth : Int) : SELF_TYPE {{
       type <- new InterpreterType.init(name, inheritsDepth);
-      definedFeatures <- true;
+      analyzed <- true;
       analyzedAttributes <- true;
       self;
    }};
@@ -756,31 +768,27 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
          fi
    };
 
-   defineFeatures(type : InterpreterAnalyzerType) : Object {
-      if not type.definedFeatures() then
-         {
-            type.setDefinedFeatures(true);
+   analyzeType(type : InterpreterAnalyzerType) : Object {
+      if type.analyze() then
+         let analyzedType : AnalyzedType <- type.analyzedType() in
+            {
+               let inheritsType : InterpreterAnalyzerType <- getType(analyzedType.inheritsType()) in
+                  {
+                     analyzeType(inheritsType);
+                     type.setInheritsType(inheritsType);
+                  };
 
-            let analyzedType : AnalyzedType <- type.analyzedType() in
-               {
-                  let inheritsType : InterpreterAnalyzerType <- getType(analyzedType.inheritsType()) in
-                     {
-                        defineFeatures(inheritsType);
-                        type.setInheritsType(inheritsType);
-                     };
-
-                  let analyzedFeatureIter : Iterator <- analyzedType.definedFeatures().iterator() in
-                     while analyzedFeatureIter.next() loop
-                        let analyzedFeature : AnalyzedFeature <- case analyzedFeatureIter.get() of x : AnalyzedFeature => x; esac,
-                              analyzedAttribute : AnalyzedAttribute <- analyzedFeature.asAttribute() in
-                           if isvoid analyzedAttribute then
-                              type.addMethod(analyzedFeature.asMethod())
-                           else
-                              type.addAttribute(analyzedAttribute)
-                           fi
-                     pool;
-               };
-         }
+               let analyzedFeatureIter : Iterator <- analyzedType.definedFeatures().iterator() in
+                  while analyzedFeatureIter.next() loop
+                     let analyzedFeature : AnalyzedFeature <- case analyzedFeatureIter.get() of x : AnalyzedFeature => x; esac,
+                           analyzedAttribute : AnalyzedAttribute <- analyzedFeature.asAttribute() in
+                        if isvoid analyzedAttribute then
+                           type.addMethod(analyzedFeature.asMethod())
+                        else
+                           type.addAttribute(analyzedAttribute)
+                        fi
+                  pool;
+            }
       else false fi
    };
 
@@ -801,29 +809,25 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
    };
 
    analyzeAttributes(type : InterpreterAnalyzerType) : Object {
-      if not type.analyzedAttributes() then
-         {
-            type.setAnalyzedAttributes(true);
+      if type.analyzeAttributes() then
+         let inheritsType : InterpreterAnalyzerType <- type.inheritsType() in
+            {
+               analyzeAttributes(inheritsType);
 
-            let inheritsType : InterpreterAnalyzerType <- type.inheritsType() in
-               {
-                  analyzeAttributes(inheritsType);
+               let attrInits : LinkedList <- type.type().attributeInits() in
+                  {
+                     attrInits.addAll(inheritsType.type().attributeInits());
 
-                  let attrInits : LinkedList <- type.type().attributeInits() in
-                     {
-                        attrInits.addAll(inheritsType.type().attributeInits());
-
-                        let iter : Iterator <- type.definedAttributes().iterator() in
-                           while iter.next() loop
-                              let attr : InterpreterAnalyzerAttribute <- case iter.get() of x : InterpreterAnalyzerAttribute => x; esac,
-                                    expr : AnalyzedExpr <- attr.analyzedAttr().expr() in
-                                 if not isvoid expr then
-                                    attrInits.add(new InterpreterAttributeInit.init(attr.index(), analyzeExpr(expr)))
-                                 else false fi
-                           pool;
-                     };
-               };
-         }
+                     let iter : Iterator <- type.definedAttributes().iterator() in
+                        while iter.next() loop
+                           let attr : InterpreterAnalyzerAttribute <- case iter.get() of x : InterpreterAnalyzerAttribute => x; esac,
+                                 expr : AnalyzedExpr <- attr.analyzedAttr().expr() in
+                              if not isvoid expr then
+                                 attrInits.add(new InterpreterAttributeInit.init(attr.index(), analyzeExpr(expr)))
+                              else false fi
+                        pool;
+                  };
+            }
       else false fi
    };
 
@@ -889,11 +893,11 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
                      }
                pool;
 
-            -- Create attributes/methods.
+            -- Set inheritsType, and create attributes and methods.
             let typeIter : Iterator <- typeList.iterator() in
                while typeIter.next() loop
                   let type : InterpreterAnalyzerType <- case typeIter.get() of x : InterpreterAnalyzerType => x; esac in
-                     defineFeatures(type)
+                     analyzeType(type)
                pool;
 
             -- Analyze attributes/methods.

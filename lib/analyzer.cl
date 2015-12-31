@@ -1,11 +1,36 @@
 class AnalyzedProgram {
+   objectType : AnalyzedType;
+   objectType() : AnalyzedType { objectType };
+
+   ioType : AnalyzedType;
+   ioType() : AnalyzedType { ioType };
+
+   intType : AnalyzedType;
+   intType() : AnalyzedType { intType };
+
+   stringType : AnalyzedType;
+   stringType() : AnalyzedType { stringType };
+
+   boolType : AnalyzedType;
+   boolType() : AnalyzedType { boolType };
+
    definedTypes : Collection;
    definedTypes() : Collection { definedTypes };
 
    mainMethod : AnalyzedMethod;
    mainMethod() : AnalyzedMethod { mainMethod };
 
-   init(definedTypes_ : Collection, mainMethod_ : AnalyzedMethod) : SELF_TYPE {{
+   init(objectType_ : AnalyzedType,
+         ioType_ : AnalyzedType,
+         intType_ : AnalyzedType,
+         stringType_ : AnalyzedType,
+         boolType_ : AnalyzedType,
+         definedTypes_ : Collection, mainMethod_ : AnalyzedMethod) : SELF_TYPE {{
+      objectType <- objectType_;
+      ioType <- ioType_;
+      intType <- intType_;
+      stringType <- stringType_;
+      boolType <- boolType_;
       definedTypes <- definedTypes_;
       mainMethod <- mainMethod_;
       self;
@@ -1626,7 +1651,7 @@ class Analyzer {
                      if error then
                         let void : AnalyzedProgram in void
                      else
-                        new AnalyzedProgram.init(definedTypes, mainMethod)
+                        new AnalyzedProgram.init(objectType, ioType, intType, stringType, boolType, definedTypes, mainMethod)
                      fi;
                };
          }

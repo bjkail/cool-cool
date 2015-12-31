@@ -1,12 +1,12 @@
 class AnalyzedProgram {
-   types : Collection;
-   types() : Collection { types };
+   definedTypes : Collection;
+   definedTypes() : Collection { definedTypes };
 
    mainMethod : AnalyzedMethod;
    mainMethod() : AnalyzedMethod { mainMethod };
 
-   init(types_ : Collection, mainMethod_ : AnalyzedMethod) : SELF_TYPE {{
-      types <- types_;
+   init(definedTypes_ : Collection, mainMethod_ : AnalyzedMethod) : SELF_TYPE {{
+      definedTypes <- definedTypes_;
       mainMethod <- mainMethod_;
       self;
    }};
@@ -1497,7 +1497,7 @@ class Analyzer {
    };
 
    analyze(prog : ParsedProgram) : AnalyzedProgram {
-      let typeList : Collection <- new LinkedList in
+      let definedTypes : Collection <- new LinkedList in
          {
             -- Register all classes.
             let classIter : Iterator <- prog.definedClasses().iterator() in
@@ -1510,7 +1510,7 @@ class Analyzer {
                         let type : AnalyzedType <- new AnalyzedType.init(class_),
                               oldType : Object <- types.putNewWithString(typeName, type) in
                            if isvoid oldType then
-                              typeList.add(type)
+                              definedTypes.add(type)
                            else
                               let oldType : AnalyzedType <- case oldType of x : AnalyzedType => x; esac in
                                  errorAt(class_, "redefinition of "
@@ -1521,7 +1521,7 @@ class Analyzer {
                pool;
 
             -- Resolve inherits
-            let classIter : Iterator <- typeList.iterator() in
+            let classIter : Iterator <- definedTypes.iterator() in
                while classIter.next() loop
                   let type : AnalyzedType <- case classIter.get() of x : AnalyzedType => x; esac,
                         class_ : ParsedClass <- type.parsedClass() in
@@ -1529,7 +1529,7 @@ class Analyzer {
                pool;
 
             -- Diagnose recursive inherits.
-            let classIter : Iterator <- typeList.iterator() in
+            let classIter : Iterator <- definedTypes.iterator() in
                while classIter.next() loop
                   let type : AnalyzedType <- case classIter.get() of x : AnalyzedType => x; esac,
                         slow : AnalyzedType <- type.inheritsType(),
@@ -1562,14 +1562,14 @@ class Analyzer {
                pool;
 
             -- Define features.
-            let classIter : Iterator <- typeList.iterator() in
+            let classIter : Iterator <- definedTypes.iterator() in
                while classIter.next() loop
                   let type : AnalyzedType <- case classIter.get() of x : AnalyzedType => x; esac in
                      defineFeatures(type)
                pool;
 
             -- Semantic analysis.
-            let classIter : Iterator <- typeList.iterator() in
+            let classIter : Iterator <- definedTypes.iterator() in
                while classIter.next() loop
                   let type : AnalyzedType <- case classIter.get() of x : AnalyzedType => x; esac,
                         env : AnalyzedTypeEnv <- createTypeEnv(type),
@@ -1609,7 +1609,7 @@ class Analyzer {
                      fi;
 
                      -- Allow parse nodes to be GC'ed.
-                     let classIter : Iterator <- typeList.iterator() in
+                     let classIter : Iterator <- definedTypes.iterator() in
                         while classIter.next() loop
                            let type : AnalyzedType <- case classIter.get() of x : AnalyzedType => x; esac in
                               {
@@ -1626,7 +1626,7 @@ class Analyzer {
                      if error then
                         let void : AnalyzedProgram in void
                      else
-                        new AnalyzedProgram.init(typeList, mainMethod)
+                        new AnalyzedProgram.init(definedTypes, mainMethod)
                      fi;
                };
          }

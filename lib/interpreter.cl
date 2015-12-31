@@ -883,7 +883,7 @@ class InterpreterAnalyzer inherits AnalyzedExprVisitor {
       let typeList : Collection <- new LinkedList in
          {
             -- Create InterpreterAnalyzerType
-            let analyzedTypeIter : Iterator <- program.types().iterator() in
+            let analyzedTypeIter : Iterator <- program.definedTypes().iterator() in
                while analyzedTypeIter.next() loop
                   let analyzedType : AnalyzedType <- case analyzedTypeIter.get() of x : AnalyzedType => x; esac,
                         type : InterpreterAnalyzerType <- new InterpreterAnalyzerType.init(analyzedType) in

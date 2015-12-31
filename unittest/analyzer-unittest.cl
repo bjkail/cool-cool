@@ -37,7 +37,7 @@ class Main inherits Test {
    getType(program : AnalyzedProgram, name : String) : AnalyzedType {
       let result : AnalyzedType in
          {
-            let iter : Iterator <- program.types().iterator() in
+            let iter : Iterator <- program.definedTypes().iterator() in
                while if isvoid result then
                      iter.next()
                   else false fi

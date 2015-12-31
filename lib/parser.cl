@@ -4,11 +4,11 @@ class ParsedNode {
 };
 
 class ParsedProgram {
-   classes : Collection <- new LinkedList;
-   classes() : Collection { classes };
+   definedClasses : Collection <- new LinkedList;
+   definedClasses() : Collection { definedClasses };
 
-   init(classes_ : Collection) : SELF_TYPE {{
-      classes <- classes_;
+   init(definedClasses_ : Collection) : SELF_TYPE {{
+      definedClasses <- definedClasses_;
       self;
    }};
 };
@@ -1070,14 +1070,14 @@ class Parser {
    };
 
    parse() : ParsedProgram {
-      let classes : Collection <- new LinkedList in
+      let definedClasses : Collection <- new LinkedList in
          {
             let moreFiles : Bool <- true in
                while moreFiles loop
                   {
                      if parseKeyword("class", " for program") then
                         {
-                           classes.add(parseClass());
+                           definedClasses.add(parseClass());
                            parsePunct(";", " after class definition");
                         }
                      else false fi;
@@ -1086,7 +1086,7 @@ class Parser {
                         while continue loop
                            if tryParseKeyword("class") then
                               {
-                                 classes.add(parseClass());
+                                 definedClasses.add(parseClass());
                                  parsePunct(";", " after class definition");
                               }
                            else
@@ -1111,7 +1111,7 @@ class Parser {
             if error then
                let void : ParsedProgram in void
             else
-               new ParsedProgram.init(classes)
+               new ParsedProgram.init(definedClasses)
             fi;
          }
    };

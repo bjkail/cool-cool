@@ -1500,7 +1500,7 @@ class Analyzer {
       let typeList : Collection <- new LinkedList in
          {
             -- Register all classes.
-            let classIter : Iterator <- prog.classes().iterator() in
+            let classIter : Iterator <- prog.definedClasses().iterator() in
                while classIter.next() loop
                   let class_ : ParsedClass <- case classIter.get() of x : ParsedClass => x; esac,
                         typeName : String <- class_.type() in

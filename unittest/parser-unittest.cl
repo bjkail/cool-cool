@@ -57,7 +57,7 @@ class Main inherits Test {
                   "class A { a() : A { a }");
 
             let program : ParsedProgram <- newParser("class \nA\n { a : A; b() : B { c }; };").parse(),
-                  classIter : Iterator <- program.classes().iterator() in
+                  classIter : Iterator <- program.definedClasses().iterator() in
                {
                   let class_ : ParsedClass <- case getIteratorNext(classIter) of x : ParsedClass => x; esac in
                      {
@@ -76,7 +76,7 @@ class Main inherits Test {
                };
 
             let program : ParsedProgram <- newParser("class A { a : A; }; class B { b : B; };").parse(),
-                  classIter : Iterator <- program.classes().iterator() in
+                  classIter : Iterator <- program.definedClasses().iterator() in
                {
                   assertStringEquals("multiple", "A", case getIteratorNext(classIter) of x : ParsedClass => x.type(); esac);
                   assertStringEquals("multiple", "B", case getIteratorNext(classIter) of x : ParsedClass => x.type(); esac);
@@ -95,7 +95,7 @@ class Main inherits Test {
                   "class A { a : String <-;");
 
             let program : ParsedProgram <- newParser("class A { \nb\n : B; };").parse(),
-                  class_ : ParsedClass <- case getCollectionFirst(program.classes()) of x : ParsedClass => x; esac,
+                  class_ : ParsedClass <- case getCollectionFirst(program.definedClasses()) of x : ParsedClass => x; esac,
                   featureIter : Iterator <- class_.features().iterator() in
                {
                   let attr : ParsedAttribute <- case getIteratorNext(featureIter) of x : ParsedAttribute => x; esac in
@@ -110,7 +110,7 @@ class Main inherits Test {
                };
 
             let program : ParsedProgram <- newParser("class A { b : B <- c; };").parse(),
-                  class_ : ParsedClass <- case getCollectionFirst(program.classes()) of x : ParsedClass => x; esac,
+                  class_ : ParsedClass <- case getCollectionFirst(program.definedClasses()) of x : ParsedClass => x; esac,
                   featureIter : Iterator <- class_.features().iterator() in
                {
                   let attr : ParsedAttribute <- case getIteratorNext(featureIter) of x : ParsedAttribute => x; esac in
@@ -124,7 +124,7 @@ class Main inherits Test {
                };
 
             let program : ParsedProgram <- newParser("class A { b : B; c : C; };").parse(),
-                  class_ : ParsedClass <- case getCollectionFirst(program.classes()) of x : ParsedClass => x; esac,
+                  class_ : ParsedClass <- case getCollectionFirst(program.definedClasses()) of x : ParsedClass => x; esac,
                   featureIter : Iterator <- class_.features().iterator() in
                {
                   let attr : ParsedAttribute <- case getIteratorNext(featureIter) of x : ParsedAttribute => x; esac in
@@ -174,7 +174,7 @@ class Main inherits Test {
                   "class A { a() : A { a");
 
             let program : ParsedProgram <- newParser("class A { \nb\n() : B { c }; };").parse(),
-                  class_ : ParsedClass <- case getCollectionFirst(program.classes()) of x : ParsedClass => x; esac,
+                  class_ : ParsedClass <- case getCollectionFirst(program.definedClasses()) of x : ParsedClass => x; esac,
                   featureIter : Iterator <- class_.features().iterator() in
                {
                   let method : ParsedMethod <- case getIteratorNext(featureIter) of x : ParsedMethod => x; esac in
@@ -190,7 +190,7 @@ class Main inherits Test {
                };
 
             let program : ParsedProgram <- newParser("class A { b(\nc\n : C) : B { e }; f(g : G, h : H) : F { i }; };").parse(),
-                  class_ : ParsedClass <- case getCollectionFirst(program.classes()) of x : ParsedClass => x; esac,
+                  class_ : ParsedClass <- case getCollectionFirst(program.definedClasses()) of x : ParsedClass => x; esac,
                   featureIter : Iterator <- class_.features().iterator() in
                {
                   let method : ParsedMethod <- case getIteratorNext(featureIter) of x : ParsedMethod => x; esac in
@@ -263,7 +263,7 @@ class Main inherits Test {
          {
             assertStringEquals(context.concat(" error"), "", parser.errorString());
             assertNotVoid(context.concat(" program"), program);
-            let class_ : ParsedClass <- case getCollectionFirst(program.classes()) of x : ParsedClass => x; esac,
+            let class_ : ParsedClass <- case getCollectionFirst(program.definedClasses()) of x : ParsedClass => x; esac,
                   attr : ParsedAttribute <- case getCollectionFirst(class_.features()) of x : ParsedAttribute => x; esac in
                attr.expr();
          }

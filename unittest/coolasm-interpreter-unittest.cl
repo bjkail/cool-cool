@@ -139,6 +139,23 @@ class Main inherits Test {
                      .add(li(r0, 1))
                      .add(label)) in
                assertIntEquals("bnz", 1, getIntReg(interpreter, r0));
+
+            let label : CoolasmLabel <- new CoolasmLabel.init("label"),
+                  interpreter : CoolasmInterpreter <- interpretInstrs("beq false", new LinkedList
+                     .add(li(r0, 0))
+                     .add(li(r1, 1))
+                     .add(beq(r0, r1, label))
+                     .add(li(r0, 1))
+                     .add(label)) in
+               assertIntEquals("beq false", 1, getIntReg(interpreter, r0));
+
+            let label : CoolasmLabel <- new CoolasmLabel.init("label"),
+                  interpreter : CoolasmInterpreter <- interpretInstrs("beq true", new LinkedList
+                     .add(li(r0, 0))
+                     .add(beq(r0, r0, label))
+                     .add(li(r0, 1))
+                     .add(label)) in
+               assertIntEquals("beq true", 0, getIntReg(interpreter, r0));
          }
       else false fi
    };

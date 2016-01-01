@@ -135,6 +135,27 @@ class CoolasmInterpreterBnzInstr inherits CoolasmInterpreterInstr {
    };
 };
 
+class CoolasmInterpreterAbstractComparisonInstr inherits CoolasmInterpreterInstr {
+   reg1 : Int;
+   reg2 : Int;
+   pc : Int;
+
+   init(reg1_ : Int, reg2_ : Int, pc_ : Int) : Object {{
+      pc <- pc_;
+      reg1 <- reg1_;
+      reg2 <- reg2_;
+      self;
+   }};
+};
+
+class CoolasmInterpreterBeqInstr inherits CoolasmInterpreterAbstractComparisonInstr {
+   interpret(interpreter : CoolasmInterpreter) : Object {
+      if interpreter.getReg(reg1) = interpreter.getReg(reg2) then
+         interpreter.setPc(pc)
+      else false fi
+   };
+};
+
 class CoolasmInterpreterSyscallExitInstr inherits CoolasmInterpreterInstr {
    interpret(interpreter : CoolasmInterpreter) : Object {
       interpreter.exit()
@@ -225,6 +246,10 @@ class CoolasmInterpreterAnalyzer inherits CoolasmInstrVisitor {
 
    visitBnz(instr : CoolasmBnzInstr) : Object {
       new CoolasmInterpreterBnzInstr.init(instr.reg().value(), getLabel(instr.label()).pc() - 1)
+   };
+
+   visitBeq(instr : CoolasmBeqInstr) : Object {
+      new CoolasmInterpreterBeqInstr.init(instr.reg1().value(), instr.reg2().value(), getLabel(instr.label()).pc() - 1)
    };
 
    visitSyscall(instr : CoolasmSyscallInstr) : Object {

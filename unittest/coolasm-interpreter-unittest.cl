@@ -131,6 +131,14 @@ class Main inherits Test {
                      .add(li(r0, 1))
                      .add(label)) in
                assertIntEquals("bz", 0, getIntReg(interpreter, r0));
+
+            let label : CoolasmLabel <- new CoolasmLabel.init("label"),
+                  interpreter : CoolasmInterpreter <- interpretInstrs("bnz", new LinkedList
+                     .add(li(r0, 0))
+                     .add(bnz(r0, label))
+                     .add(li(r0, 1))
+                     .add(label)) in
+               assertIntEquals("bnz", 1, getIntReg(interpreter, r0));
          }
       else false fi
    };

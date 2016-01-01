@@ -27,7 +27,7 @@ class CoolasmInterpreterLoadConstantInstr inherits CoolasmInterpreterInstr {
    }};
 
    interpret(interpreter : CoolasmInterpreter) : Object {
-      interpreter.getReg(reg).setValue(value)
+      interpreter.setReg(reg, value)
    };
 };
 
@@ -42,7 +42,7 @@ class CoolasmInterpreterMovInstr inherits CoolasmInterpreterInstr {
    }};
 
    interpret(interpreter : CoolasmInterpreter) : Object {
-      interpreter.getReg(dst).setValue(interpreter.getReg(src).value())
+      interpreter.setReg(dst, interpreter.getReg(src))
    };
 };
 
@@ -61,19 +61,19 @@ class CoolasmInterpreterAbstractArithmeticInstr inherits CoolasmInterpreterInstr
 
 class CoolasmInterpreterAddInstr inherits CoolasmInterpreterAbstractArithmeticInstr {
    interpret(interpreter : CoolasmInterpreter) : Object {
-      interpreter.getReg(dst).setValue(interpreter.getIntReg(src1) + interpreter.getIntReg(src2))
+      interpreter.setReg(dst, interpreter.getIntReg(src1) + interpreter.getIntReg(src2))
    };
 };
 
 class CoolasmInterpreterSubInstr inherits CoolasmInterpreterAbstractArithmeticInstr {
    interpret(interpreter : CoolasmInterpreter) : Object {
-      interpreter.getReg(dst).setValue(interpreter.getIntReg(src1) - interpreter.getIntReg(src2))
+      interpreter.setReg(dst, interpreter.getIntReg(src1) - interpreter.getIntReg(src2))
    };
 };
 
 class CoolasmInterpreterMulInstr inherits CoolasmInterpreterAbstractArithmeticInstr {
    interpret(interpreter : CoolasmInterpreter) : Object {
-      interpreter.getReg(dst).setValue(interpreter.getIntReg(src1) * interpreter.getIntReg(src2))
+      interpreter.setReg(dst, interpreter.getIntReg(src1) * interpreter.getIntReg(src2))
    };
 };
 
@@ -83,7 +83,7 @@ class CoolasmInterpreterDivInstr inherits CoolasmInterpreterAbstractArithmeticIn
          if divisor = 0 then
             interpreter.exitError("divide by 0")
          else
-            interpreter.getReg(dst).setValue(interpreter.getIntReg(src1) / divisor)
+            interpreter.setReg(dst, interpreter.getIntReg(src1) / divisor)
          fi
    };
 };
@@ -235,18 +235,11 @@ class CoolasmInterpreterAnalyzer inherits CoolasmInstrVisitor {
    };
 };
 
-class CoolasmInterpreterReg {
-   value : Object;
-   value() : Object { value };
-   setValue(value_ : Object) : Object { value <- value_ };
-};
-
 class CoolasmInterpreter {
    memory : IntMap <- new IntTreeMap;
    memory() : IntMap { memory };
 
    regs : IntMap <- new IntTreeMap;
-   regs() : IntMap { regs };
 
    pc : Int;
    setPc(pc_ : Int) : Object { pc <- pc_ };
@@ -259,12 +252,16 @@ class CoolasmInterpreter {
       exit();
    }};
 
-   getReg(reg : Int) : CoolasmInterpreterReg {
-      case regs.getWithInt(reg) of x : CoolasmInterpreterReg => x; esac
+   setReg(reg : Int, value : Object) : Object {
+      regs.putWithInt(reg, value)
+   };
+
+   getReg(reg : Int) : Object {
+      regs.getWithInt(reg)
    };
 
    getIntReg(reg : Int) : Int {
-      case getReg(reg).value() of x : Int => x; esac
+      case getReg(reg) of x : Int => x; esac
    };
 
    getMemory(addr : Int) : Object {
@@ -277,14 +274,6 @@ class CoolasmInterpreter {
 
    interpret(program : CoolasmInterpreterProgram) : Bool {{
       memory.putAll(program.memory());
-
-      let i : Int in
-         while i < 10 loop
-            {
-               regs.putWithInt(i, new CoolasmInterpreterReg);
-               i <- i + 1;
-            }
-         pool;
 
       pc <- program.start();
       while 0 < pc loop

@@ -3,19 +3,31 @@ class Main inherits Test {
       testInstr();
    }};
 
-   interpret(context : String, program : CoolasmProgram) : CoolasmInterpreter {
+   interpretError(context : String, error : String, program : CoolasmProgram) : CoolasmInterpreter {
       let program : CoolasmInterpreterProgram <- new CoolasmInterpreterAnalyzer.analyze(program),
             interpreter : CoolasmInterpreter <- new CoolasmInterpreter in
          {
-            interpreter.interpret(program);
+            assertBoolEquals(context.concat(" error"), error = "", interpreter.interpret(program));
+            assertStringEquals(context.concat(" error"), error, interpreter.error());
             interpreter;
          }
    };
 
+   interpret(context : String, program : CoolasmProgram) : CoolasmInterpreter {
+      interpretError(context, "", program)
+   };
+
+   getInstrsProgram(instrs : LinkedList) : CoolasmProgram {
+      new CoolasmProgram.init(instrs.addFirst(new CoolasmLabel.init("start"))
+            .add(new CoolasmSyscallInstr.init("exit")))
+   };
+
    interpretInstrs(context : String, instrs : LinkedList) : CoolasmInterpreter {
-      interpret(context, new CoolasmProgram.init(instrs
-            .addFirst(new CoolasmLabel.init("start"))
-            .add(new CoolasmSyscallInstr.init("exit"))))
+      interpret(context, getInstrsProgram(instrs))
+   };
+
+   interpretInstrsError(context : String, error : String, instrs : LinkedList) : CoolasmInterpreter {
+      interpretError(context, error, getInstrsProgram(instrs))
    };
 
    interpretInstr(context : String, instr : CoolasmInstr) : CoolasmInterpreter {
@@ -92,6 +104,17 @@ class Main inherits Test {
                      .add(li(r2, 3))
                      .add(mul(r0, r1, r2))) in
                assertIntEquals("mul", 6, getIntReg(interpreter, r0));
+
+            let interpreter : CoolasmInterpreter <- interpretInstrs("div", new LinkedList
+                     .add(li(r1, 6))
+                     .add(li(r2, 3))
+                     .add(div(r0, r1, r2))) in
+               assertIntEquals("div", 2, getIntReg(interpreter, r0));
+
+            interpretInstrsError("div zero", "divide by 0", new LinkedList
+                     .add(li(r1, 0))
+                     .add(li(r2, 0))
+                     .add(div(r0, r1, r2)));
          }
       else false fi
    };

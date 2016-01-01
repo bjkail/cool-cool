@@ -77,6 +77,17 @@ class CoolasmInterpreterMulInstr inherits CoolasmInterpreterAbstractArithmeticIn
    };
 };
 
+class CoolasmInterpreterDivInstr inherits CoolasmInterpreterAbstractArithmeticInstr {
+   interpret(interpreter : CoolasmInterpreter) : Object {
+      let divisor : Int <- interpreter.getIntReg(src2) in
+         if divisor = 0 then
+            interpreter.exitError("divide by 0")
+         else
+            interpreter.getReg(dst).setValue(interpreter.getIntReg(src1) / divisor)
+         fi
+   };
+};
+
 class CoolasmInterpreterSyscallExitInstr inherits CoolasmInterpreterInstr {
    interpret(interpreter : CoolasmInterpreter) : Object {
       interpreter.exit()
@@ -147,6 +158,10 @@ class CoolasmInterpreterAnalyzer inherits CoolasmInstrVisitor {
       new CoolasmInterpreterMulInstr.init(instr.dst().value(), instr.src1().value(), instr.src2().value())
    };
 
+   visitDiv(instr : CoolasmDivInstr) : Object {
+      new CoolasmInterpreterDivInstr.init(instr.dst().value(), instr.src1().value(), instr.src2().value())
+   };
+
    visitSyscall(instr : CoolasmSyscallInstr) : Object {
       let name : String <- instr.name() in
          if name = "exit" then
@@ -172,6 +187,13 @@ class CoolasmInterpreter {
    setPc(pc_ : Int) : Object { pc <- pc_ };
    exit() : Object { pc <- ~1 };
 
+   error : String;
+   error() : String { error };
+   exitError(s : String) : Object {{
+      error <- s;
+      exit();
+   }};
+
    getReg(reg : Int) : CoolasmInterpreterReg {
       case regs.getWithInt(reg) of x : CoolasmInterpreterReg => x; esac
    };
@@ -188,7 +210,7 @@ class CoolasmInterpreter {
       case memory.getWithInt(addr) of x : CoolasmInterpreterInstr => x; esac
    };
 
-   interpret(program : CoolasmInterpreterProgram) : Object {{
+   interpret(program : CoolasmInterpreterProgram) : Bool {{
       memory.putAll(program.memory());
 
       let i : Int in
@@ -207,5 +229,7 @@ class CoolasmInterpreter {
                pc <- pc + 1;
             }
       pool;
+
+      error = "";
    }};
 };

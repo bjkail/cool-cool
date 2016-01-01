@@ -73,6 +73,11 @@ class Main inherits Test {
          {
             let interpreter : CoolasmInterpreter <- interpretInstr("li", li(r0, 1)) in
                assertIntEquals("li", 1, getIntReg(interpreter, r0));
+
+            let interpreter : CoolasmInterpreter <- interpretInstrs("mov", new LinkedList
+                     .add(li(r1, 1))
+                     .add(mov(r0, r1))) in
+               assertIntEquals("mov", 1, getIntReg(interpreter, r0));
          }
       else false fi
    };

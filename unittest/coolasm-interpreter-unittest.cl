@@ -125,20 +125,36 @@ class Main inherits Test {
                assertIntEquals("jmp", 0, getIntReg(interpreter, r0));
 
             let label : CoolasmLabel <- new CoolasmLabel.init("label"),
-                  interpreter : CoolasmInterpreter <- interpretInstrs("bz", new LinkedList
+                  interpreter : CoolasmInterpreter <- interpretInstrs("bz false", new LinkedList
+                     .add(li(r0, 1))
+                     .add(bz(r0, label))
+                     .add(li(r0, 0))
+                     .add(label)) in
+               assertIntEquals("bz false", 0, getIntReg(interpreter, r0));
+
+            let label : CoolasmLabel <- new CoolasmLabel.init("label"),
+                  interpreter : CoolasmInterpreter <- interpretInstrs("bz true", new LinkedList
                      .add(li(r0, 0))
                      .add(bz(r0, label))
                      .add(li(r0, 1))
                      .add(label)) in
-               assertIntEquals("bz", 0, getIntReg(interpreter, r0));
+               assertIntEquals("bz true", 0, getIntReg(interpreter, r0));
 
             let label : CoolasmLabel <- new CoolasmLabel.init("label"),
-                  interpreter : CoolasmInterpreter <- interpretInstrs("bnz", new LinkedList
+                  interpreter : CoolasmInterpreter <- interpretInstrs("bnz false", new LinkedList
                      .add(li(r0, 0))
                      .add(bnz(r0, label))
                      .add(li(r0, 1))
                      .add(label)) in
-               assertIntEquals("bnz", 1, getIntReg(interpreter, r0));
+               assertIntEquals("bnz false", 1, getIntReg(interpreter, r0));
+
+            let label : CoolasmLabel <- new CoolasmLabel.init("label"),
+                  interpreter : CoolasmInterpreter <- interpretInstrs("bnz true", new LinkedList
+                     .add(li(r0, 1))
+                     .add(bnz(r0, label))
+                     .add(li(r0, 0))
+                     .add(label)) in
+               assertIntEquals("bnz true", 1, getIntReg(interpreter, r0));
 
             let label : CoolasmLabel <- new CoolasmLabel.init("label"),
                   interpreter : CoolasmInterpreter <- interpretInstrs("beq false", new LinkedList

@@ -80,6 +80,12 @@ class Main inherits Test {
                      .add(li(r2, 2))
                      .add(add(r0, r1, r2))) in
                assertIntEquals("add", 3, getIntReg(interpreter, r0));
+
+            let interpreter : CoolasmInterpreter <- interpretInstrs("sub", new LinkedList
+                     .add(li(r1, 1))
+                     .add(li(r2, 2))
+                     .add(sub(r0, r1, r2))) in
+               assertIntEquals("sub", ~1, getIntReg(interpreter, r0));
          }
       else false fi
    };

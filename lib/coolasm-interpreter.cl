@@ -156,6 +156,20 @@ class CoolasmInterpreterBeqInstr inherits CoolasmInterpreterAbstractComparisonIn
    };
 };
 
+class CoolasmInterpreterCallLabelInstr inherits CoolasmInterpreterInstr {
+   pc : Int;
+
+   init(pc_ : Int) : Object {{
+      pc <- pc_;
+      self;
+   }};
+
+   interpret(interpreter : CoolasmInterpreter) : Object {{
+      interpreter.setReg(10, interpreter.pc() + 1);
+      interpreter.setPc(pc);
+   }};
+};
+
 class CoolasmInterpreterSyscallExitInstr inherits CoolasmInterpreterInstr {
    interpret(interpreter : CoolasmInterpreter) : Object {
       interpreter.exit()
@@ -260,6 +274,10 @@ class CoolasmInterpreterAnalyzer inherits CoolasmInstrVisitor {
       new CoolasmInterpreterBleInstr.init(instr.reg1().value(), instr.reg2().value(), getLabel(instr.label()).pc() - 1)
    };
 
+   visitCallLabel(instr : CoolasmCallLabelInstr) : Object {
+      new CoolasmInterpreterCallLabelInstr.init(getLabel(instr.label()).pc() - 1)
+   };
+
    visitSyscall(instr : CoolasmSyscallInstr) : Object {
       let name : String <- instr.name() in
          if name = "exit" then
@@ -275,6 +293,7 @@ class CoolasmInterpreter {
    regs : IntMap <- new IntTreeMap;
 
    pc : Int;
+   pc() : Int { pc };
    setPc(pc_ : Int) : Object { pc <- pc_ };
    exit() : Object { pc <- ~1 };
 

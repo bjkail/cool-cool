@@ -13,7 +13,7 @@ run_test() {
     coolfiles=("$dir"/../lib/*)
     for i in ${!coolfiles[@]}; do
       case "${coolfiles[$i]}" in
-      */interpreter-support.cl) unset coolfiles[$i]
+      *-support.cl) unset coolfiles[$i]
       esac
     done
 

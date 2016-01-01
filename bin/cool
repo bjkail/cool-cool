@@ -82,7 +82,7 @@ run_interpreter_wrapper() {
   interpretercoolfiles=("${coolfiles[@]}")
   for i in ${!interpretercoolfiles[@]}; do
     case ${interpretercoolfiles[$i]} in
-    */interpreter-support.cl) unset interpretercoolfiles[$i]
+    *-support.cl) unset interpretercoolfiles[$i]
     esac
   done
 
@@ -117,8 +117,8 @@ eof=${eof// /$'\n'}
     bootstrapcoolfiles=("${coolfiles[@]}")
     for i in ${!bootstrapcoolfiles[@]}; do
       case ${bootstrapcoolfiles[$i]} in
-      */interpreter-support.cl) $uva && unset bootstrapcoolfiles[$i];;
-      */interpreter-support-uva.cl) ! $uva && unset bootstrapcoolfiles[$i]
+      *-support.cl) $uva && unset bootstrapcoolfiles[$i];;
+      *-support-uva.cl) ! $uva && unset bootstrapcoolfiles[$i]
       esac
     done
 

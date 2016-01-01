@@ -22,12 +22,8 @@ class Main inherits Test {
       interpretInstrs(context, new LinkedList.add(instr))
    };
 
-   getReg(interpreter : CoolasmInterpreter, reg : CoolasmReg) : Object {
-      interpreter.getReg(reg.value()).value()
-   };
-
    getIntReg(interpreter : CoolasmInterpreter, reg : CoolasmReg) : Int {
-      case getReg(interpreter, reg) of x : Int => x; esac
+      interpreter.getIntReg(reg.value())
    };
 
    r0 : CoolasmReg <- new CoolasmReg.init(0);
@@ -78,6 +74,12 @@ class Main inherits Test {
                      .add(li(r1, 1))
                      .add(mov(r0, r1))) in
                assertIntEquals("mov", 1, getIntReg(interpreter, r0));
+
+            let interpreter : CoolasmInterpreter <- interpretInstrs("add", new LinkedList
+                     .add(li(r1, 1))
+                     .add(li(r2, 2))
+                     .add(add(r0, r1, r2))) in
+               assertIntEquals("add", 3, getIntReg(interpreter, r0));
          }
       else false fi
    };

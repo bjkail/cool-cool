@@ -88,6 +88,19 @@ class CoolasmInterpreterDivInstr inherits CoolasmInterpreterAbstractArithmeticIn
    };
 };
 
+class CoolasmInterpreterJmpInstr inherits CoolasmInterpreterInstr {
+   pc : Int;
+
+   init(pc_ : Int) : Object {{
+      pc <- pc_;
+      self;
+   }};
+
+   interpret(interpreter : CoolasmInterpreter) : Object {
+      interpreter.setPc(pc)
+   };
+};
+
 class CoolasmInterpreterSyscallExitInstr inherits CoolasmInterpreterInstr {
    interpret(interpreter : CoolasmInterpreter) : Object {
       interpreter.exit()
@@ -108,8 +121,8 @@ class CoolasmInterpreterAnalyzer inherits CoolasmInstrVisitor {
    labels : StringMap <- new StringListMap;
    memory : IntMap <- new IntTreeMap;
 
-   getLabel(name : String) : CoolasmInterpreterLabel {
-      case labels.getWithString(name) of x : CoolasmInterpreterLabel => x; esac
+   getLabel(label : CoolasmLabel) : CoolasmInterpreterLabel {
+      case labels.getWithString(label.name()) of x : CoolasmInterpreterLabel => x; esac
    };
 
    analyze(program : CoolasmProgram) : CoolasmInterpreterProgram {{
@@ -118,13 +131,19 @@ class CoolasmInterpreterAnalyzer inherits CoolasmInstrVisitor {
          while iter.next() loop
             case iter.get() of
                label : CoolasmLabel =>
-                  let name : String <- label.name(),
-                        label : Object <- labels.getWithString(name) in
-                     if isvoid label then
-                        labels.putWithString(name, new CoolasmInterpreterLabel.init(pc))
-                     else
-                        case label of x : CoolasmInterpreterLabel => x.init(pc); esac
-                     fi;
+                  let name : String <- label.name() in
+                     labels.putWithString(name, new CoolasmInterpreterLabel.init(pc));
+
+               instr : CoolasmInstr =>
+                  pc <- pc + 1;
+            esac
+         pool;
+
+      let iter : Iterator <- program.instrs().iterator(),
+            pc : Int <- 1000 in
+         while iter.next() loop
+            case iter.get() of
+               label : CoolasmLabel => false;
 
                instr : CoolasmInstr =>
                   {
@@ -160,6 +179,10 @@ class CoolasmInterpreterAnalyzer inherits CoolasmInstrVisitor {
 
    visitDiv(instr : CoolasmDivInstr) : Object {
       new CoolasmInterpreterDivInstr.init(instr.dst().value(), instr.src1().value(), instr.src2().value())
+   };
+
+   visitJmp(instr : CoolasmJmpInstr) : Object {
+      new CoolasmInterpreterJmpInstr.init(getLabel(instr.label()).pc() - 1)
    };
 
    visitSyscall(instr : CoolasmSyscallInstr) : Object {

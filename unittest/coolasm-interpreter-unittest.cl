@@ -115,6 +115,14 @@ class Main inherits Test {
                      .add(li(r1, 0))
                      .add(li(r2, 0))
                      .add(div(r0, r1, r2)));
+
+            let label : CoolasmLabel <- new CoolasmLabel.init("label"),
+                  interpreter : CoolasmInterpreter <- interpretInstrs("jmp", new LinkedList
+                     .add(li(r0, 0))
+                     .add(jmp(label))
+                     .add(li(r0, 1))
+                     .add(label)) in
+               assertIntEquals("jmp", 0, getIntReg(interpreter, r0));
          }
       else false fi
    };

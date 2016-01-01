@@ -241,19 +241,19 @@ class Main inherits Test {
          {
             assertErrorEquals("void",
                   "case on void",
-                  "\tat Main.main (line 1)\n",
-                  interpretErrorExpr("void", "case let a : Object in a of x : Int => 0; esac"));
+                  "\tat Main.main (line 2)\n",
+                  interpretErrorExpr("void", "\ncase\nlet a : Object in a of x : Int => 0; esac"));
             assertErrorEquals("uva void",
-                  "case on void", "1",
-                  interpretErrorUvaExpr("void", "case let a : Object in a of x : Int => 0; esac"));
+                  "case on void", "2",
+                  interpretErrorUvaExpr("void", "\ncase\nlet a : Object in a of x : Int => 0; esac"));
 
             assertErrorEquals("unmatched",
                   "case branch not matched for type 'Int'",
-                  "\tat Main.main (line 1)\n",
-                  interpretErrorExpr("unmatched", "case 0 of x : Bool => x; esac"));
+                  "\tat Main.main (line 2)\n",
+                  interpretErrorExpr("unmatched", "\ncase\n0 of x : Bool => x; esac"));
             assertErrorEquals("uva unmatched",
-                  "case branch not matched for type 'Int'", "1",
-                  interpretErrorUvaExpr("unmatched", "case 0 of x : Bool => x; esac"));
+                  "case branch not matched for type 'Int'", "2",
+                  interpretErrorUvaExpr("unmatched", "\ncase\n0 of x : Bool => x; esac"));
 
             assertIntEquals("single", 3, interpretIntExpr("single", "case 1 of x : Int => x + 2; esac"));
             assertIntEquals("unrelated", 1, interpretIntExpr("unrelated 2",
@@ -351,10 +351,10 @@ class Main inherits Test {
 
             assertErrorEquals("dispatch void",
                   "dispatch on void for method 'void' in type 'Main'",
-                  "\tat Main.b (line 1)\n"
-                     .concat("\tat new Main (line 1)\n"),
+                  "\tat Main.b (line 4)\n"
+                     .concat("\tat new Main (line 2)\n"),
                   interpretError("void dispatch",
-                     "class Main { a : Main <- b(); b() : Main { a.void() }; void() : Main { a }; main() : Object { 0 }; };"));
+                     "class Main { a : Main <-\nb\n(); b() : Main { a\n.\nvoid() }; void() : Main { a }; main() : Object { 0 }; };"));
          }
       else false fi
    };
@@ -388,15 +388,15 @@ class Main inherits Test {
 
             assertErrorEquals("dispatch void",
                   "dispatch on void for method 'void' in type 'Main'",
-                  "\tat Main.a (line 1)\n"
-                     .concat("\tat Main.main (line 1)\n"),
+                  "\tat Main.a (line 4)\n"
+                     .concat("\tat Main.main (line 2)\n"),
                   interpretError("void dispatch",
-                     "class Main { a : Main; main() : Int { a() }; a() : Int { a.void() }; void() : Int { 0 }; };"));
+                     "class Main { a : Main; main() : Int { \na\n() }; a() : Int { a\n.\nvoid() }; void() : Int { 0 }; };"));
 
             assertErrorEquals("uva dispatch void",
-                  "dispatch on void for method 'void' in type 'Main'", "1",
+                  "dispatch on void for method 'void' in type 'Main'", "2",
                   interpretErrorUva("void dispatch",
-                     "class Main { a : Main; main() : Int { a() }; a() : Int { a.void() }; void() : Int { 0 }; };"));
+                     "class Main { a : Main; main() : Int { a() }; a() : Int { a\n.\nvoid() }; void() : Int { 0 }; };"));
 
             assertIntEquals("dispatch arg", 1, interpretInt("dispatch",
                   "class Main { main() : Int { a(1) }; a(a : Int) : Int { a }; };"));
@@ -512,11 +512,11 @@ class Main inherits Test {
 
             assertErrorEquals("divide 0",
                   "divide by 0",
-                  "\tat Main.main (line 1)\n",
-                  interpretErrorExpr("divide 0", "1 / 0"));
+                  "\tat Main.main (line 2)\n",
+                  interpretErrorExpr("divide 0", "1\n/\n0"));
             assertErrorEquals("uva divide 0",
-                  "divide by 0", "1",
-                  interpretErrorUvaExpr("divide 0", "1 / 0"));
+                  "divide by 0", "2",
+                  interpretErrorUvaExpr("divide 0", "1\n/\n0"));
 
             assertTrue("less", interpretBoolExpr("less", "0 < 1"));
             assertFalse("less 2", interpretBoolExpr("less 2", "0 < 0"));

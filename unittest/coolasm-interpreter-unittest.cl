@@ -217,6 +217,25 @@ class Main inherits Test {
                   assertIntEquals("call label r0", 0, getIntReg(interpreter, r0));
                   assertIntEquals("call label ra", 1002, getIntReg(interpreter, ra));
                };
+
+            let label : CoolasmLabel <- new CoolasmLabel.init("label"),
+                  interpreter : CoolasmInterpreter <- interpretInstrs("call reg", new LinkedList
+                     .add(li(r0, 1003))
+                     .add(callReg(r0))
+                     .add(li(r0, 0))) in
+               {
+                  assertIntEquals("call reg r0", 1003, getIntReg(interpreter, r0));
+                  assertIntEquals("call reg ra", 1002, getIntReg(interpreter, ra));
+               };
+
+            let label : CoolasmLabel <- new CoolasmLabel.init("label"),
+                  interpreter : CoolasmInterpreter <- interpretInstrs("call ra", new LinkedList
+                     .add(callReg(ra))
+                     .add(li(r0, 0))) in
+               {
+                  assertIntEquals("call reg r0", 0, getIntReg(interpreter, r0));
+                  assertIntEquals("call reg ra", 1001, getIntReg(interpreter, ra));
+               };
          }
       else false fi
    };

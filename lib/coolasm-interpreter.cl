@@ -170,6 +170,20 @@ class CoolasmInterpreterCallLabelInstr inherits CoolasmInterpreterInstr {
    }};
 };
 
+class CoolasmInterpreterCallRegInstr inherits CoolasmInterpreterInstr {
+   reg : Int;
+
+   init(reg_ : Int) : Object {{
+      reg <- reg_;
+      self;
+   }};
+
+   interpret(interpreter : CoolasmInterpreter) : Object {{
+      interpreter.setReg(10, interpreter.pc() + 1);
+      interpreter.setPc(interpreter.getIntReg(reg) - 1);
+   }};
+};
+
 class CoolasmInterpreterSyscallExitInstr inherits CoolasmInterpreterInstr {
    interpret(interpreter : CoolasmInterpreter) : Object {
       interpreter.exit()
@@ -276,6 +290,10 @@ class CoolasmInterpreterAnalyzer inherits CoolasmInstrVisitor {
 
    visitCallLabel(instr : CoolasmCallLabelInstr) : Object {
       new CoolasmInterpreterCallLabelInstr.init(getLabel(instr.label()).pc() - 1)
+   };
+
+   visitCallReg(instr : CoolasmCallRegInstr) : Object {
+      new CoolasmInterpreterCallRegInstr.init(instr.reg().value())
    };
 
    visitSyscall(instr : CoolasmSyscallInstr) : Object {

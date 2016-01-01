@@ -71,6 +71,12 @@ class CoolasmInterpreterSubInstr inherits CoolasmInterpreterAbstractArithmeticIn
    };
 };
 
+class CoolasmInterpreterMulInstr inherits CoolasmInterpreterAbstractArithmeticInstr {
+   interpret(interpreter : CoolasmInterpreter) : Object {
+      interpreter.getReg(dst).setValue(interpreter.getIntReg(src1) * interpreter.getIntReg(src2))
+   };
+};
+
 class CoolasmInterpreterSyscallExitInstr inherits CoolasmInterpreterInstr {
    interpret(interpreter : CoolasmInterpreter) : Object {
       interpreter.exit()
@@ -135,6 +141,10 @@ class CoolasmInterpreterAnalyzer inherits CoolasmInstrVisitor {
 
    visitSub(instr : CoolasmSubInstr) : Object {
       new CoolasmInterpreterSubInstr.init(instr.dst().value(), instr.src1().value(), instr.src2().value())
+   };
+
+   visitMul(instr : CoolasmMulInstr) : Object {
+      new CoolasmInterpreterMulInstr.init(instr.dst().value(), instr.src1().value(), instr.src2().value())
    };
 
    visitSyscall(instr : CoolasmSyscallInstr) : Object {

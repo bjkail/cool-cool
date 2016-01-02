@@ -309,6 +309,15 @@ class Main inherits Test {
                      .add(label)
                      .add(constantInteger(1))) in
                assertIntEquals("constant integer", 1, getIntReg(interpreter, r0));
+
+            let label : CoolasmLabel <- new CoolasmLabel.init("label"),
+                  interpreter : CoolasmInterpreter <- interpretInstrs("constant string", new LinkedList
+                     .add(la(r0, label))
+                     .add(ld(r0, r0, 0))
+                     .add(syscall("exit"))
+                     .add(label)
+                     .add(constantString("a"))) in
+               assertStringEquals("constant string", "a", case interpreter.getReg(r0.value()) of x : String => x; esac);
          }
       else false fi
    };

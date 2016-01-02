@@ -45,3 +45,11 @@ tab respectively
 and `new` expressions.
 ([Operational Rules](http://www.cs.virginia.edu/~weimer/2015-4610/cool-manual/node48.html)).
 1. Errors are printed without a filename or stack trace.
+
+## Status
+
+- Lexical analysis - Nearly complete.  The null character cannot be used (the
+UVA Cool Interpreter does not allow the null character in input strings).
+- Parsing - Complete.
+- Semantic analysis - Complete.
+- Interpreter - Complete.

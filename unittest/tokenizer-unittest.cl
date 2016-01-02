@@ -26,7 +26,7 @@ class Main inherits Test {
    };
 
    newIOTokenizer(context : String, lines : Collection) : Tokenizer {
-      let is : IOInputStream <- new IOInputStream.init(new TestIO.init(self, context, lines, new Collection)) in
+      let is : IOInputStream <- new IOInputStream.init(newTestIO(context, lines, new Collection)) in
          new Tokenizer.init(is).setListener(new TestTokenizerListener.init(is))
    };
 

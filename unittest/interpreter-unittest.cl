@@ -37,9 +37,7 @@ class Main inherits Test {
    };
 
    interpretImpl(context : String, program : String, uva : Bool) : InterpreterValue {
-      let empty : Collection <- new Collection,
-            io : TestIO <- new TestIO.init(self, context, empty, empty) in
-         interpretIOImpl(context, io, program, uva)
+      interpretIOImpl(context, newEmptyTestIO(context), program, uva)
    };
 
    interpret(context : String, program : String) : InterpreterValue {
@@ -381,7 +379,7 @@ class Main inherits Test {
                   "class Main inherits A { main() : Int { a() }; b() : Int { 2 }; };"
                   .concat("class A { a() : Int { b() }; b() : Int { 1 }; };")));
 
-            let io : TestIO <- new TestIO.init(self, "dispatch order", new Collection, new LinkedList.add(1).add(2).add(3).add(4).add(5)) in
+            let io : TestIO <- newTestIO("dispatch order", new Collection, new LinkedList.add(1).add(2).add(3).add(4).add(5)) in
                   interpretIO("dispatch order", io,
                         "class Main inherits IO { main() : Object { out_int(3).a(out_int(2)).b(out_int(1)) };"
                         .concat("a(o : Object) : SELF_TYPE { out_int(4) }; b(o : Object) : SELF_TYPE { out_int(5) }; };"));
@@ -681,7 +679,7 @@ class Main inherits Test {
 
             interpretObjectExpr("main copy", "Main", "copy()");
 
-            let io : TestIO <- new TestIO.init(self, "out_string", new Collection, new LinkedList.add("a")) in
+            let io : TestIO <- newTestIO("out_string", new Collection, new LinkedList.add("a")) in
                getObject("out_string", "IO",
                      interpretIO("out_string", io, "class Main { main() : Object { new IO.out_string(\"a\") }; };"));
 
@@ -691,42 +689,42 @@ class Main inherits Test {
                      else
                         new LinkedList.add("a\\b\nc")
                      fi,
-                  io : TestIO <- new TestIO.init(self, "out_string", new Collection, out) in
+                  io : TestIO <- newTestIO("out_string", new Collection, out) in
                getObject("out_string", "IO",
                      interpretIO("out_string", io, "class Main { main() : Object { new IO.out_string(\"a\\\\b\\nc\") }; };"));
             let out : Collection <- new LinkedList.add("a\\b\nc"),
-                  io : TestIO <- new TestIO.init(self, "out_string", new Collection, out) in
+                  io : TestIO <- newTestIO("out_string", new Collection, out) in
                getObject("out_string", "IO",
                      interpretIOImpl("out_string", io, "class Main { main() : Object { new IO.out_string(\"a\\\\b\\nc\") }; };", true));
-            let io : TestIO <- new TestIO.init(self, "out_string override", new Collection, new Collection) in
+            let io : TestIO <- newTestIO("out_string override", new Collection, new Collection) in
                getObject("out_string override", "Main", interpretIO("out_string override", io,
                      "class Main inherits IO { main() : Object { out_string(\"\") }; out_string(s : String) : SELF_TYPE { self }; };"));
 
-            let io : TestIO <- new TestIO.init(self, "out_int", new Collection, new LinkedList.add(1)) in
+            let io : TestIO <- newTestIO("out_int", new Collection, new LinkedList.add(1)) in
                getObject("out_int", "IO",
                      interpretIO("out_int", io, "class Main { main() : Object { new IO.out_int(1) }; };"));
-            let io : TestIO <- new TestIO.init(self, "out_int override", new Collection, new Collection) in
+            let io : TestIO <- newTestIO("out_int override", new Collection, new Collection) in
                getObject("out_int override", "Main", interpretIO("out_int override", io,
                      "class Main inherits IO { main() : Object { out_int(0) }; out_int(i : Int) : SELF_TYPE { self }; };"));
 
-            let io : TestIO <- new TestIO.init(self, "in_string", new LinkedList.add("a"), new Collection) in
+            let io : TestIO <- newTestIO("in_string", new LinkedList.add("a"), new Collection) in
                assertStringEquals("in_string", "a", getString("in_string",
                      interpretIO("in_string", io, "class Main { main() : Object { new IO.in_string() }; };")));
-            let io : TestIO <- new TestIO.init(self, "in_string escape", new LinkedList.add(stringUtil.backslash()), new Collection) in
+            let io : TestIO <- newTestIO("in_string escape", new LinkedList.add(stringUtil.backslash()), new Collection) in
                assertTrue("in_string escape", getBool("in_string escape",
                      interpretIO("in_string escape", io, "class Main { main() : Object { new IO.in_string() = \"\\\\\" }; };")));
             let s : String <- stringUtil.backslash().concat(stringUtil.backslash()).concat("\n"),
-                  io : TestIO <- new TestIO.init(self, "in_string escape", new LinkedList.add(s), new LinkedList.add(s)) in
+                  io : TestIO <- newTestIO("in_string escape", new LinkedList.add(s), new LinkedList.add(s)) in
                getObject("uva in_string escape", "Main",
                      interpretIOImpl("uva in_string escape", io, "class Main inherits IO { main() : Object { out_string(in_string()) }; };", true));
-            let io : TestIO <- new TestIO.init(self, "in_string override", new Collection, new Collection) in
+            let io : TestIO <- newTestIO("in_string override", new Collection, new Collection) in
                assertStringEquals("in_string override", "", getString("in_string override", interpretIO("in_string override", io,
                      "class Main { main() : Object { in_string() }; in_string() : String { \"\" }; };")));
 
-            let io : TestIO <- new TestIO.init(self, "in_int", new LinkedList.add(1), new Collection) in
+            let io : TestIO <- newTestIO("in_int", new LinkedList.add(1), new Collection) in
                assertIntEquals("in_int", 1, getInt("in_int",
                      interpretIO("in_int", io, "class Main { main() : Object { new IO.in_int() }; };")));
-            let io : TestIO <- new TestIO.init(self, "in_int override", new Collection, new Collection) in
+            let io : TestIO <- newTestIO("in_int override", new Collection, new Collection) in
                assertIntEquals("in_int override", 0, getInt("in_int override", interpretIO("in_int override", io,
                      "class Main { main() : Object { in_int() }; in_int() : Int { 0 }; };")));
 

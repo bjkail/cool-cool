@@ -4,7 +4,7 @@ class Main inherits Test {
    }};
 
    newIOInputStream(context : String, lines : Collection) : InputStream {
-      new IOInputStream.init(new TestIO.init(self, context, lines, new Collection))
+      new IOInputStream.init(newTestIO(context, lines, new Collection))
    };
 
    testIOInputStream() : Object {

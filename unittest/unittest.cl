@@ -97,6 +97,15 @@ class Test {
                .concat(" < value=").concat(stringUtil.fromInt(value)))
       else false fi
    };
+
+   newTestIO(context : String, in_ : Collection, out : Collection) : TestIO {
+         new TestIO.init(self, context, in_, out)
+   };
+
+   newEmptyTestIO(context : String) : TestIO {
+      let empty : Collection <- new Collection in
+         newTestIO(context, empty, empty)
+   };
 };
 
 -- Eyecatcher for runtime error.

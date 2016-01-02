@@ -184,6 +184,12 @@ class CoolasmInterpreterCallRegInstr inherits CoolasmInterpreterInstr {
    }};
 };
 
+class CoolasmInterpreterReturnInstr inherits CoolasmInterpreterInstr {
+   interpret(interpreter : CoolasmInterpreter) : Object {{
+      interpreter.setPc(interpreter.getIntReg(10) - 1);
+   }};
+};
+
 class CoolasmInterpreterSyscallExitInstr inherits CoolasmInterpreterInstr {
    interpret(interpreter : CoolasmInterpreter) : Object {
       interpreter.exit()
@@ -294,6 +300,10 @@ class CoolasmInterpreterAnalyzer inherits CoolasmInstrVisitor {
 
    visitCallReg(instr : CoolasmCallRegInstr) : Object {
       new CoolasmInterpreterCallRegInstr.init(instr.reg().value())
+   };
+
+   visitReturn(instr : CoolasmReturnInstr) : Object {
+      new CoolasmInterpreterReturnInstr
    };
 
    visitSyscall(instr : CoolasmSyscallInstr) : Object {

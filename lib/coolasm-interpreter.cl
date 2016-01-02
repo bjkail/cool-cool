@@ -202,6 +202,16 @@ class CoolasmInterpreterPushInstr inherits CoolasmInterpreterAbstractRegInstr {
    };
 };
 
+class CoolasmInterpreterPopInstr inherits CoolasmInterpreterAbstractRegInstr {
+   interpret(interpreter : CoolasmInterpreter) : Object {
+      let sp : Int <- interpreter.getIntReg(8) + 1 in
+         {
+            interpreter.setReg(8, sp);
+            interpreter.setReg(reg, interpreter.getMemory(sp));
+         }
+   };
+};
+
 class CoolasmInterpreterSyscallExitInstr inherits CoolasmInterpreterInstr {
    interpret(interpreter : CoolasmInterpreter) : Object {
       interpreter.exit()
@@ -320,6 +330,10 @@ class CoolasmInterpreterAnalyzer inherits CoolasmInstrVisitor {
 
    visitPush(instr : CoolasmPushInstr) : Object {
       new CoolasmInterpreterPushInstr.init(instr.reg().value())
+   };
+
+   visitPop(instr : CoolasmPopInstr) : Object {
+      new CoolasmInterpreterPopInstr.init(instr.reg().value())
    };
 
    visitSyscall(instr : CoolasmSyscallInstr) : Object {

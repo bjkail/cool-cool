@@ -380,6 +380,15 @@ class Main inherits Test {
                               .add(label)
                               .add(constantString("a"))),
                         newTestIO("syscall IO.out_string", new Collection, new LinkedList.add("a")));
+
+            let label : CoolasmLabel <- new CoolasmLabel.init("label"),
+                  interpreter : CoolasmInterpreter <- interpretInstrs("syscall String.length", new LinkedList
+                     .add(la(r1, label))
+                     .add(syscall("String.length"))
+                     .add(syscall("exit"))
+                     .add(label)
+                     .add(constantString("a"))) in
+               assertIntEquals("syscall String.length", 1, getIntReg(interpreter, r1));
          }
       else false fi
    };

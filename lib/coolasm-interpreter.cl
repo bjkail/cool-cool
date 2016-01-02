@@ -319,6 +319,32 @@ class CoolasmInterpreterSyscallStringConcatInstr inherits CoolasmInterpreterInst
    };
 };
 
+class CoolasmInterpreterSyscallStringSubstrInstr inherits CoolasmInterpreterInstr {
+   interpret(interpreter : CoolasmInterpreter) : Object {
+      let s : String <- interpreter.getStringMemory(interpreter.getIntReg(0)),
+            begin : Int <- interpreter.getIntReg(1),
+            length : Int <- interpreter.getIntReg(2) in
+         if if begin < 0 then
+               true
+            else
+               if length < 0 then
+                  true
+               else
+                  s.length() < begin + length
+               fi
+            fi
+         then
+            interpreter.setReg(1, 0)
+         else
+            let addr : Int <- interpreter.alloc(1) in
+               {
+                  interpreter.setMemory(addr, s.substr(begin, length));
+                  interpreter.setReg(1, addr);
+               }
+         fi
+   };
+};
+
 class CoolasmInterpreterLabel {
    pc : Int;
    pc() : Int { pc };
@@ -485,9 +511,13 @@ class CoolasmInterpreterAnalyzer inherits CoolasmInstrVisitor {
                         if name = "String.concat" then
                            new CoolasmInterpreterSyscallStringConcatInstr
                         else
-                           if name = "exit" then
-                              new CoolasmInterpreterSyscallExitInstr
-                           else new ObjectUtil.abortObject(self, "visitSyscall: ".concat(name)) fi
+                           if name = "String.substr" then
+                              new CoolasmInterpreterSyscallStringSubstrInstr
+                           else
+                              if name = "exit" then
+                                 new CoolasmInterpreterSyscallExitInstr
+                              else new ObjectUtil.abortObject(self, "visitSyscall: ".concat(name)) fi
+                           fi
                         fi
                      fi
                   fi

@@ -406,6 +406,69 @@ class Main inherits Test {
                   assertIntEquals("syscall String.concat", 20000, addr);
                   assertStringEquals("syscall String.concat", "abc", interpreter.getStringMemory(addr));
                };
+
+            let label : CoolasmLabel <- new CoolasmLabel.init("label"),
+                  interpreter : CoolasmInterpreter <- interpretInstrs("syscall String.substr begin low", new LinkedList
+                     .add(la(r0, label))
+                     .add(li(r1, ~1))
+                     .add(li(r2, 0))
+                     .add(syscall("String.substr"))
+                     .add(syscall("exit"))
+                     .add(label)
+                     .add(constantString(""))),
+                  addr : Int <- getIntReg(interpreter, r1) in
+               assertIntEquals("syscall String.substr begin low", 0, getIntReg(interpreter, r1));
+
+            let label : CoolasmLabel <- new CoolasmLabel.init("label"),
+                  interpreter : CoolasmInterpreter <- interpretInstrs("syscall String.substr begin high", new LinkedList
+                     .add(la(r0, label))
+                     .add(li(r1, 1))
+                     .add(li(r2, 0))
+                     .add(syscall("String.substr"))
+                     .add(syscall("exit"))
+                     .add(label)
+                     .add(constantString(""))),
+                  addr : Int <- getIntReg(interpreter, r1) in
+               assertIntEquals("syscall String.substr begin high", 0, getIntReg(interpreter, r1));
+
+            let label : CoolasmLabel <- new CoolasmLabel.init("label"),
+                  interpreter : CoolasmInterpreter <- interpretInstrs("syscall String.substr length low", new LinkedList
+                     .add(la(r0, label))
+                     .add(li(r1, 0))
+                     .add(li(r2, ~1))
+                     .add(syscall("String.substr"))
+                     .add(syscall("exit"))
+                     .add(label)
+                     .add(constantString(""))),
+                  addr : Int <- getIntReg(interpreter, r1) in
+               assertIntEquals("syscall String.substr length low", 0, getIntReg(interpreter, r1));
+
+            let label : CoolasmLabel <- new CoolasmLabel.init("label"),
+                  interpreter : CoolasmInterpreter <- interpretInstrs("syscall String.substr length high", new LinkedList
+                     .add(la(r0, label))
+                     .add(li(r1, 0))
+                     .add(li(r2, 1))
+                     .add(syscall("String.substr"))
+                     .add(syscall("exit"))
+                     .add(label)
+                     .add(constantString(""))),
+                  addr : Int <- getIntReg(interpreter, r1) in
+               assertIntEquals("syscall String.substr length high", 0, getIntReg(interpreter, r1));
+
+            let label : CoolasmLabel <- new CoolasmLabel.init("label"),
+                  interpreter : CoolasmInterpreter <- interpretInstrs("syscall String.substr", new LinkedList
+                     .add(la(r0, label))
+                     .add(li(r1, 1))
+                     .add(li(r2, 2))
+                     .add(syscall("String.substr"))
+                     .add(syscall("exit"))
+                     .add(label)
+                     .add(constantString("abcd"))),
+                  addr : Int <- getIntReg(interpreter, r1) in
+               {
+                  assertIntEquals("syscall String.substr address", 20000, getIntReg(interpreter, r1));
+                  assertStringEquals("syscall String.substr string", "bc", interpreter.getStringMemory(addr));
+               };
          }
       else false fi
    };

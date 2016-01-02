@@ -1,5 +1,6 @@
 class Main inherits Test {
    test() : Object {{
+      testStack();
       testInstr();
    }};
 
@@ -75,6 +76,18 @@ class Main inherits Test {
    constantString(value : String) : CoolasmConstantStringInstr { new CoolasmConstantStringInstr.init(value) };
    constantLabel(label : CoolasmLabel) : CoolasmConstantLabelInstr { new CoolasmConstantLabelInstr.init(label) };
    syscall(s : String) : CoolasmSyscallInstr { new CoolasmSyscallInstr.init(s) };
+
+   testStack() : Object {
+      if begin("stack") then
+         {
+            let interpreter : CoolasmInterpreter <- interpretInstrs("", new LinkedList) in
+               {
+                  assertIntEquals("sp", 2000000000, getIntReg(interpreter, sp));
+                  assertIntEquals("fp", 2000000000, getIntReg(interpreter, fp));
+               };
+         }
+      else false fi
+   };
 
    testInstr() : Object {
       if begin("instr") then
@@ -244,6 +257,14 @@ class Main inherits Test {
                      .add(return)
                      .add(li(r0, 1))) in
                assertIntEquals("return", 0, getIntReg(interpreter, r0));
+
+            let interpreter : CoolasmInterpreter <- interpretInstrs("push", new LinkedList
+                     .add(li(r0, 1))
+                     .add(push(r0))) in
+               {
+                  assertIntEquals("push memory", 1, case interpreter.getMemory(2000000000) of x : Int => x; esac);
+                  assertIntEquals("push sp", 1999999999, getIntReg(interpreter, sp));
+               };
          }
       else false fi
    };

@@ -170,14 +170,16 @@ class CoolasmInterpreterCallLabelInstr inherits CoolasmInterpreterInstr {
    }};
 };
 
-class CoolasmInterpreterCallRegInstr inherits CoolasmInterpreterInstr {
+class CoolasmInterpreterAbstractRegInstr inherits CoolasmInterpreterInstr {
    reg : Int;
 
    init(reg_ : Int) : Object {{
       reg <- reg_;
       self;
    }};
+};
 
+class CoolasmInterpreterCallRegInstr inherits CoolasmInterpreterAbstractRegInstr {
    interpret(interpreter : CoolasmInterpreter) : Object {{
       interpreter.setReg(10, interpreter.pc() + 1);
       interpreter.setPc(interpreter.getIntReg(reg) - 1);
@@ -188,6 +190,16 @@ class CoolasmInterpreterReturnInstr inherits CoolasmInterpreterInstr {
    interpret(interpreter : CoolasmInterpreter) : Object {{
       interpreter.setPc(interpreter.getIntReg(10) - 1);
    }};
+};
+
+class CoolasmInterpreterPushInstr inherits CoolasmInterpreterAbstractRegInstr {
+   interpret(interpreter : CoolasmInterpreter) : Object {
+      let sp : Int <- interpreter.getIntReg(8) in
+         {
+            interpreter.setMemory(sp, interpreter.getIntReg(reg));
+            interpreter.setReg(8, sp - 1);
+         }
+   };
 };
 
 class CoolasmInterpreterSyscallExitInstr inherits CoolasmInterpreterInstr {
@@ -306,6 +318,10 @@ class CoolasmInterpreterAnalyzer inherits CoolasmInstrVisitor {
       new CoolasmInterpreterReturnInstr
    };
 
+   visitPush(instr : CoolasmPushInstr) : Object {
+      new CoolasmInterpreterPushInstr.init(instr.reg().value())
+   };
+
    visitSyscall(instr : CoolasmSyscallInstr) : Object {
       let name : String <- instr.name() in
          if name = "exit" then
@@ -344,6 +360,10 @@ class CoolasmInterpreter {
       case getReg(reg) of x : Int => x; esac
    };
 
+   setMemory(addr : Int, value : Object) : Object {
+      memory.putWithInt(addr, value)
+   };
+
    getMemory(addr : Int) : Object {
       memory.getWithInt(addr)
    };
@@ -354,6 +374,9 @@ class CoolasmInterpreter {
 
    interpret(program : CoolasmInterpreterProgram) : Bool {{
       memory.putAll(program.memory());
+
+      regs.putWithInt(8, 2000000000);
+      regs.putWithInt(9, 2000000000);
 
       pc <- program.start();
       while 0 < pc loop

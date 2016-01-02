@@ -293,12 +293,19 @@ class Main inherits Test {
                assertIntEquals("la", 1000, getIntReg(interpreter, r0));
 
             let interpreter : CoolasmInterpreter <- interpretInstrs("alloc", new LinkedList
-                     .add(li(r0, 3))
-                     .add(alloc(r1, r0))
-                     .add(alloc(r2, r1))) in
+                     .add(li(r0, 1))
+                     .add(alloc(r0, r0))
+                     .add(li(r1, 9))
+                     .add(alloc(r1, r1))
+                     .add(li(r2, 10))
+                     .add(alloc(r2, r2))
+                     .add(li(r3, 1))
+                     .add(alloc(r3, r3))) in
                {
-                  assertIntEquals("alloc r1", 20000, getIntReg(interpreter, r1));
-                  assertIntEquals("alloc r2", 20003, getIntReg(interpreter, r2));
+                  assertIntEquals("alloc r0", 20000, getIntReg(interpreter, r0));
+                  assertIntEquals("alloc r1", 20010, getIntReg(interpreter, r1));
+                  assertIntEquals("alloc r2", 20020, getIntReg(interpreter, r2));
+                  assertIntEquals("alloc r3", 20040, getIntReg(interpreter, r3));
                };
 
             let label : CoolasmLabel <- new CoolasmLabel.init("label"),

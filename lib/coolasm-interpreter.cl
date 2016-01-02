@@ -464,6 +464,7 @@ class CoolasmInterpreter {
    alloc(size : Int) : Int {
       let result : Int <- allocAddress in
          {
+            size <- (size + 10) / 10 * 10;
             allocAddress <- allocAddress + size;
             result;
          }

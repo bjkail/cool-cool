@@ -370,6 +370,16 @@ class Main inherits Test {
                            .add(li(r1, 1))
                            .add(syscall("IO.out_int"))),
                      newTestIO("syscall IO.out_int", new Collection, new LinkedList.add(1)));
+
+            let label : CoolasmLabel <- new CoolasmLabel.init("label") in
+               interpretIO("syscall IO.out_string",
+                        getInstrsProgram(new LinkedList
+                              .add(la(r1, label))
+                              .add(syscall("IO.out_string"))
+                              .add(syscall("exit"))
+                              .add(label)
+                              .add(constantString("a"))),
+                        newTestIO("syscall IO.out_string", new Collection, new LinkedList.add("a")));
          }
       else false fi
    };

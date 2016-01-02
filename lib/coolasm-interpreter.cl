@@ -295,6 +295,12 @@ class CoolasmInterpreterSyscallIoOutIntInstr inherits CoolasmInterpreterInstr {
    };
 };
 
+class CoolasmInterpreterSyscallIoOutStringInstr inherits CoolasmInterpreterInstr {
+   interpret(interpreter : CoolasmInterpreter) : Object {
+      interpreter.io().out_string(interpreter.getStringMemory(interpreter.getIntReg(1)))
+   };
+};
+
 class CoolasmInterpreterLabel {
    pc : Int;
    pc() : Int { pc };
@@ -452,9 +458,13 @@ class CoolasmInterpreterAnalyzer inherits CoolasmInstrVisitor {
                if name = "IO.out_int" then
                   new CoolasmInterpreterSyscallIoOutIntInstr
                else
-                  if name = "exit" then
-                     new CoolasmInterpreterSyscallExitInstr
-                  else new ObjectUtil.abortObject(self, "visitSyscall: ".concat(name)) fi
+                  if name = "IO.out_string" then
+                     new CoolasmInterpreterSyscallIoOutStringInstr
+                  else
+                     if name = "exit" then
+                        new CoolasmInterpreterSyscallExitInstr
+                     else new ObjectUtil.abortObject(self, "visitSyscall: ".concat(name)) fi
+                  fi
                fi
             fi
          fi

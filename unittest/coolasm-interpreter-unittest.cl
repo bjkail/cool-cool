@@ -364,6 +364,12 @@ class Main inherits Test {
                      newTestIO("syscall IO.in_int", new LinkedList.add(1), new Collection)),
                      addr : Int <- getIntReg(interpreter, r1) in
                assertIntEquals("syscall IO.in_int r1", 1, getIntReg(interpreter, r1));
+
+            interpretIO("syscall IO.out_int",
+                     getInstrsProgram(new LinkedList
+                           .add(li(r1, 1))
+                           .add(syscall("IO.out_int"))),
+                     newTestIO("syscall IO.out_int", new Collection, new LinkedList.add(1)));
          }
       else false fi
    };

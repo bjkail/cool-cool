@@ -257,7 +257,12 @@ class CoolasmInterpreterAllocInstr inherits CoolasmInterpreterInstr {
    }};
 
    interpret(interpreter : CoolasmInterpreter) : Object {
-      interpreter.setReg(dst, interpreter.alloc(interpreter.getIntReg(size)))
+      let size : Int <- interpreter.getIntReg(size) in
+         if size = 0 then
+            interpreter.exitError("alloc of 0")
+         else
+            interpreter.setReg(dst, interpreter.alloc(size))
+         fi
    };
 };
 

@@ -308,6 +308,10 @@ class Main inherits Test {
                   assertIntEquals("alloc r3", 20040, getIntReg(interpreter, r3));
                };
 
+            interpretInstrsError("alloc zero", "alloc of 0", new LinkedList
+                     .add(li(r0, 0))
+                     .add(alloc(r0, r0)));
+
             let label : CoolasmLabel <- new CoolasmLabel.init("label"),
                   interpreter : CoolasmInterpreter <- interpretInstrs("constant integer", new LinkedList
                      .add(la(r0, label))

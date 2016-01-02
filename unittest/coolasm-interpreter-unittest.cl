@@ -86,13 +86,17 @@ class Main inherits Test {
    constantLabel(label : CoolasmLabel) : CoolasmConstantLabelInstr { new CoolasmConstantLabelInstr.init(label) };
    syscall(s : String) : CoolasmSyscallInstr { new CoolasmSyscallInstr.init(s) };
 
+   programAddress : Int <- 1000;
+   stackAddress : Int <- 2000000000;
+   allocAddress : Int <- 20000;
+
    testStack() : Object {
       if begin("stack") then
          {
             let interpreter : CoolasmInterpreter <- interpretInstrs("", new LinkedList) in
                {
-                  assertIntEquals("sp", 2000000000, getIntReg(interpreter, sp));
-                  assertIntEquals("fp", 2000000000, getIntReg(interpreter, fp));
+                  assertIntEquals("sp", stackAddress, getIntReg(interpreter, sp));
+                  assertIntEquals("fp", stackAddress, getIntReg(interpreter, fp));
                };
          }
       else false fi
@@ -237,17 +241,17 @@ class Main inherits Test {
                      .add(label)) in
                {
                   assertIntEquals("call label r0", 0, getIntReg(interpreter, r0));
-                  assertIntEquals("call label ra", 1002, getIntReg(interpreter, ra));
+                  assertIntEquals("call label ra", programAddress + 2, getIntReg(interpreter, ra));
                };
 
             let label : CoolasmLabel <- new CoolasmLabel.init("label"),
                   interpreter : CoolasmInterpreter <- interpretInstrs("call reg", new LinkedList
-                     .add(li(r0, 1003))
+                     .add(li(r0, programAddress + 3))
                      .add(callReg(r0))
                      .add(li(r0, 0))) in
                {
-                  assertIntEquals("call reg r0", 1003, getIntReg(interpreter, r0));
-                  assertIntEquals("call reg ra", 1002, getIntReg(interpreter, ra));
+                  assertIntEquals("call reg r0", programAddress + 3, getIntReg(interpreter, r0));
+                  assertIntEquals("call reg ra", programAddress + 2, getIntReg(interpreter, ra));
                };
 
             let label : CoolasmLabel <- new CoolasmLabel.init("label"),
@@ -256,13 +260,13 @@ class Main inherits Test {
                      .add(li(r0, 0))) in
                {
                   assertIntEquals("call reg r0", 0, getIntReg(interpreter, r0));
-                  assertIntEquals("call reg ra", 1001, getIntReg(interpreter, ra));
+                  assertIntEquals("call reg ra", programAddress + 1, getIntReg(interpreter, ra));
                };
 
             let label : CoolasmLabel <- new CoolasmLabel.init("label"),
                   interpreter : CoolasmInterpreter <- interpretInstrs("return", new LinkedList
                      .add(li(r0, 0))
-                     .add(li(ra, 1004))
+                     .add(li(ra, programAddress + 4))
                      .add(return)
                      .add(li(r0, 1))) in
                assertIntEquals("return", 0, getIntReg(interpreter, r0));
@@ -271,8 +275,8 @@ class Main inherits Test {
                      .add(li(r0, 1))
                      .add(push(r0))) in
                {
-                  assertIntEquals("push memory", 1, case interpreter.getMemory(2000000000) of x : Int => x; esac);
-                  assertIntEquals("push sp", 1999999999, getIntReg(interpreter, sp));
+                  assertIntEquals("push memory", 1, case interpreter.getMemory(stackAddress) of x : Int => x; esac);
+                  assertIntEquals("push sp", stackAddress - 1, getIntReg(interpreter, sp));
                };
 
             let interpreter : CoolasmInterpreter <- interpretInstrs("pop", new LinkedList
@@ -281,7 +285,7 @@ class Main inherits Test {
                      .add(pop(r1))) in
                {
                   assertIntEquals("pop r1", 1, getIntReg(interpreter, r1));
-                  assertIntEquals("pop sp", 2000000000, getIntReg(interpreter, sp));
+                  assertIntEquals("pop sp", stackAddress, getIntReg(interpreter, sp));
                };
 
             let interpreter : CoolasmInterpreter <- interpretInstrs("ld", new LinkedList
@@ -293,13 +297,13 @@ class Main inherits Test {
             let interpreter : CoolasmInterpreter <- interpretInstrs("st", new LinkedList
                      .add(li(r0, 2))
                      .add(st(sp, 1, r0))) in
-               assertIntEquals("st", 2, case interpreter.getMemory(2000000001) of x : Int => x; esac);
+               assertIntEquals("st", 2, case interpreter.getMemory(stackAddress + 1) of x : Int => x; esac);
 
             let label : CoolasmLabel <- new CoolasmLabel.init("label"),
                   interpreter : CoolasmInterpreter <- interpretInstrs("la", new LinkedList
                      .add(label)
                      .add(la(r0, label))) in
-               assertIntEquals("la", 1000, getIntReg(interpreter, r0));
+               assertIntEquals("la", programAddress, getIntReg(interpreter, r0));
 
             let interpreter : CoolasmInterpreter <- interpretInstrs("alloc", new LinkedList
                      .add(li(r0, 1))
@@ -311,10 +315,10 @@ class Main inherits Test {
                      .add(li(r3, 1))
                      .add(alloc(r3, r3))) in
                {
-                  assertIntEquals("alloc r0", 20000, getIntReg(interpreter, r0));
-                  assertIntEquals("alloc r1", 20010, getIntReg(interpreter, r1));
-                  assertIntEquals("alloc r2", 20020, getIntReg(interpreter, r2));
-                  assertIntEquals("alloc r3", 20040, getIntReg(interpreter, r3));
+                  assertIntEquals("alloc r0", allocAddress, getIntReg(interpreter, r0));
+                  assertIntEquals("alloc r1", allocAddress + 10, getIntReg(interpreter, r1));
+                  assertIntEquals("alloc r2", allocAddress + 20, getIntReg(interpreter, r2));
+                  assertIntEquals("alloc r3", allocAddress + 40, getIntReg(interpreter, r3));
                };
 
             interpretInstrsError("alloc zero", "alloc of 0", new LinkedList
@@ -348,14 +352,14 @@ class Main inherits Test {
                      .add(syscall("exit"))
                      .add(label2)
                      .add(constantLabel(label))) in
-               assertIntEquals("constant label", 1000, getIntReg(interpreter, r0));
+               assertIntEquals("constant label", programAddress, getIntReg(interpreter, r0));
 
             let interpreter : CoolasmInterpreter <- interpretIO("syscall IO.in_string",
                      getInstrsProgram(new LinkedList.add(syscall("IO.in_string"))),
                      newTestIO("syscall IO.in_string", new LinkedList.add("a"), new Collection)),
                      addr : Int <- getIntReg(interpreter, r1) in
                {
-                  assertIntEquals("syscall IO.in_string r1", 20000, addr);
+                  assertIntEquals("syscall IO.in_string r1", allocAddress, addr);
                   assertStringEquals("syscall IO.in_string string", "a", interpreter.getStringMemory(addr));
                };
 
@@ -403,7 +407,7 @@ class Main inherits Test {
                      .add(constantString("bc"))),
                   addr : Int <- getIntReg(interpreter, r1) in
                {
-                  assertIntEquals("syscall String.concat", 20000, addr);
+                  assertIntEquals("syscall String.concat", allocAddress, addr);
                   assertStringEquals("syscall String.concat", "abc", interpreter.getStringMemory(addr));
                };
 
@@ -466,7 +470,7 @@ class Main inherits Test {
                      .add(constantString("abcd"))),
                   addr : Int <- getIntReg(interpreter, r1) in
                {
-                  assertIntEquals("syscall String.substr address", 20000, getIntReg(interpreter, r1));
+                  assertIntEquals("syscall String.substr address", allocAddress, getIntReg(interpreter, r1));
                   assertStringEquals("syscall String.substr string", "bc", interpreter.getStringMemory(addr));
                };
          }

@@ -389,6 +389,23 @@ class Main inherits Test {
                      .add(label)
                      .add(constantString("a"))) in
                assertIntEquals("syscall String.length", 1, getIntReg(interpreter, r1));
+
+            let label : CoolasmLabel <- new CoolasmLabel.init("label"),
+                  label2 : CoolasmLabel <- new CoolasmLabel.init("label2"),
+                  interpreter : CoolasmInterpreter <- interpretInstrs("syscall String.concat", new LinkedList
+                     .add(la(r1, label))
+                     .add(la(r2, label2))
+                     .add(syscall("String.concat"))
+                     .add(syscall("exit"))
+                     .add(label)
+                     .add(constantString("a"))
+                     .add(label2)
+                     .add(constantString("bc"))),
+                  addr : Int <- getIntReg(interpreter, r1) in
+               {
+                  assertIntEquals("syscall String.concat", 20000, addr);
+                  assertStringEquals("syscall String.concat", "abc", interpreter.getStringMemory(addr));
+               };
          }
       else false fi
    };

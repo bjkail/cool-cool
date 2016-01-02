@@ -300,6 +300,15 @@ class Main inherits Test {
                   assertIntEquals("alloc r1", 20000, getIntReg(interpreter, r1));
                   assertIntEquals("alloc r2", 20003, getIntReg(interpreter, r2));
                };
+
+            let label : CoolasmLabel <- new CoolasmLabel.init("label"),
+                  interpreter : CoolasmInterpreter <- interpretInstrs("constant integer", new LinkedList
+                     .add(la(r0, label))
+                     .add(ld(r0, r0, 0))
+                     .add(syscall("exit"))
+                     .add(label)
+                     .add(constantInteger(1))) in
+               assertIntEquals("constant integer", 1, getIntReg(interpreter, r0));
          }
       else false fi
    };

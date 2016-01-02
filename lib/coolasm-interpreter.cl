@@ -229,6 +229,23 @@ class CoolasmInterpreterLdInstr inherits CoolasmInterpreterInstr {
    };
 };
 
+class CoolasmInterpreterStInstr inherits CoolasmInterpreterInstr {
+   dst : Int;
+   dstoff : Int;
+   src : Int;
+
+   init(dst_ : Int, dstoff_ : Int, src_ : Int) : SELF_TYPE {{
+      dst <- dst_;
+      dstoff <- dstoff_;
+      src <- src_;
+      self;
+   }};
+
+   interpret(interpreter : CoolasmInterpreter) : Object {
+      interpreter.setMemory(interpreter.getIntReg(dst) + dstoff, interpreter.getReg(src))
+   };
+};
+
 class CoolasmInterpreterSyscallExitInstr inherits CoolasmInterpreterInstr {
    interpret(interpreter : CoolasmInterpreter) : Object {
       interpreter.exit()
@@ -355,6 +372,10 @@ class CoolasmInterpreterAnalyzer inherits CoolasmInstrVisitor {
 
    visitLd(instr : CoolasmLdInstr) : Object {
       new CoolasmInterpreterLdInstr.init(instr.dst().value(), instr.src().value(), instr.srcoff())
+   };
+
+   visitSt(instr : CoolasmStInstr) : Object {
+      new CoolasmInterpreterStInstr.init(instr.dst().value(), instr.dstoff(), instr.src().value())
    };
 
    visitSyscall(instr : CoolasmSyscallInstr) : Object {

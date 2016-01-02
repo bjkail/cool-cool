@@ -280,6 +280,11 @@ class Main inherits Test {
                      .add(push(r0))
                      .add(ld(r0, sp, 1))) in
                assertIntEquals("ld", 2, getIntReg(interpreter, r0));
+
+            let interpreter : CoolasmInterpreter <- interpretInstrs("st", new LinkedList
+                     .add(li(r0, 2))
+                     .add(st(sp, 1, r0))) in
+               assertIntEquals("st", 2, case interpreter.getMemory(2000000001) of x : Int => x; esac);
          }
       else false fi
    };

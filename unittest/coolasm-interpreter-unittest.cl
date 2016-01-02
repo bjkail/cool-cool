@@ -274,6 +274,12 @@ class Main inherits Test {
                   assertIntEquals("pop r1", 1, getIntReg(interpreter, r1));
                   assertIntEquals("pop sp", 2000000000, getIntReg(interpreter, sp));
                };
+
+            let interpreter : CoolasmInterpreter <- interpretInstrs("ld", new LinkedList
+                     .add(li(r0, 2))
+                     .add(push(r0))
+                     .add(ld(r0, sp, 1))) in
+               assertIntEquals("ld", 2, getIntReg(interpreter, r0));
          }
       else false fi
    };

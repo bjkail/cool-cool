@@ -285,6 +285,12 @@ class Main inherits Test {
                      .add(li(r0, 2))
                      .add(st(sp, 1, r0))) in
                assertIntEquals("st", 2, case interpreter.getMemory(2000000001) of x : Int => x; esac);
+
+            let label : CoolasmLabel <- new CoolasmLabel.init("label"),
+                  interpreter : CoolasmInterpreter <- interpretInstrs("la", new LinkedList
+                     .add(label)
+                     .add(la(r0, label))) in
+               assertIntEquals("la", 1000, getIntReg(interpreter, r0));
          }
       else false fi
    };

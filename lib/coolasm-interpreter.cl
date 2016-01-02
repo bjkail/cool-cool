@@ -378,6 +378,10 @@ class CoolasmInterpreterAnalyzer inherits CoolasmInstrVisitor {
       new CoolasmInterpreterStInstr.init(instr.dst().value(), instr.dstoff(), instr.src().value())
    };
 
+   visitLa(instr : CoolasmLaInstr) : Object {
+      new CoolasmInterpreterLoadConstantInstr.init(instr.dst().value(), getLabel(instr.src()).pc())
+   };
+
    visitSyscall(instr : CoolasmSyscallInstr) : Object {
       let name : String <- instr.name() in
          if name = "exit" then

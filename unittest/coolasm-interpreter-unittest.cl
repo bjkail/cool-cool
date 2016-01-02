@@ -358,6 +358,12 @@ class Main inherits Test {
                   assertIntEquals("syscall IO.in_string r1", 20000, addr);
                   assertStringEquals("syscall IO.in_string string", "a", interpreter.getStringMemory(addr));
                };
+
+            let interpreter : CoolasmInterpreter <- interpretIO("syscall IO.in_int",
+                     getInstrsProgram(new LinkedList.add(syscall("IO.in_int"))),
+                     newTestIO("syscall IO.in_int", new LinkedList.add(1), new Collection)),
+                     addr : Int <- getIntReg(interpreter, r1) in
+               assertIntEquals("syscall IO.in_int r1", 1, getIntReg(interpreter, r1));
          }
       else false fi
    };

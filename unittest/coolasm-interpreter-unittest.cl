@@ -291,6 +291,15 @@ class Main inherits Test {
                      .add(label)
                      .add(la(r0, label))) in
                assertIntEquals("la", 1000, getIntReg(interpreter, r0));
+
+            let interpreter : CoolasmInterpreter <- interpretInstrs("alloc", new LinkedList
+                     .add(li(r0, 3))
+                     .add(alloc(r1, r0))
+                     .add(alloc(r2, r1))) in
+               {
+                  assertIntEquals("alloc r1", 20000, getIntReg(interpreter, r1));
+                  assertIntEquals("alloc r2", 20003, getIntReg(interpreter, r2));
+               };
          }
       else false fi
    };

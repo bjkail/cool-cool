@@ -246,6 +246,21 @@ class CoolasmInterpreterStInstr inherits CoolasmInterpreterInstr {
    };
 };
 
+class CoolasmInterpreterAllocInstr inherits CoolasmInterpreterInstr {
+   dst : Int;
+   size : Int;
+
+   init(dst_ : Int, size_ : Int) : SELF_TYPE {{
+      dst <- dst_;
+      size <- size_;
+      self;
+   }};
+
+   interpret(interpreter : CoolasmInterpreter) : Object {
+      interpreter.setReg(dst, interpreter.alloc(interpreter.getIntReg(size)))
+   };
+};
+
 class CoolasmInterpreterSyscallExitInstr inherits CoolasmInterpreterInstr {
    interpret(interpreter : CoolasmInterpreter) : Object {
       interpreter.exit()
@@ -382,6 +397,10 @@ class CoolasmInterpreterAnalyzer inherits CoolasmInstrVisitor {
       new CoolasmInterpreterLoadConstantInstr.init(instr.dst().value(), getLabel(instr.src()).pc())
    };
 
+   visitAlloc(instr : CoolasmAllocInstr) : Object {
+      new CoolasmInterpreterAllocInstr.init(instr.dst().value(), instr.size().value())
+   };
+
    visitSyscall(instr : CoolasmSyscallInstr) : Object {
       let name : String <- instr.name() in
          if name = "exit" then
@@ -393,6 +412,8 @@ class CoolasmInterpreterAnalyzer inherits CoolasmInstrVisitor {
 class CoolasmInterpreter {
    memory : IntMap <- new IntTreeMap;
    memory() : IntMap { memory };
+
+   allocAddress : Int;
 
    regs : IntMap <- new IntTreeMap;
 
@@ -428,12 +449,25 @@ class CoolasmInterpreter {
       memory.getWithInt(addr)
    };
 
+   alloc(size : Int) : Int {
+      let result : Int <- allocAddress in
+         {
+            allocAddress <- allocAddress + size;
+            result;
+         }
+   };
+
    getInstr(addr : Int) : CoolasmInterpreterInstr {
       case memory.getWithInt(addr) of x : CoolasmInterpreterInstr => x; esac
    };
 
    interpret(program : CoolasmInterpreterProgram) : Bool {{
       memory.putAll(program.memory());
+
+      allocAddress <- 1000 + memory.size();
+      if allocAddress < 20000 then
+         allocAddress <- 20000
+      else false fi;
 
       regs.putWithInt(8, 2000000000);
       regs.putWithInt(9, 2000000000);

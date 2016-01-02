@@ -266,12 +266,6 @@ class CoolasmInterpreterAllocInstr inherits CoolasmInterpreterInstr {
    };
 };
 
-class CoolasmInterpreterSyscallExitInstr inherits CoolasmInterpreterInstr {
-   interpret(interpreter : CoolasmInterpreter) : Object {
-      interpreter.exit()
-   };
-};
-
 class CoolasmInterpreterSyscallIoInStringInstr inherits CoolasmInterpreterInstr {
    interpret(interpreter : CoolasmInterpreter) : Object {
       let s : String <- interpreter.io().in_string(),
@@ -342,6 +336,12 @@ class CoolasmInterpreterSyscallStringSubstrInstr inherits CoolasmInterpreterInst
                   interpreter.setReg(1, addr);
                }
          fi
+   };
+};
+
+class CoolasmInterpreterSyscallExitInstr inherits CoolasmInterpreterInstr {
+   interpret(interpreter : CoolasmInterpreter) : Object {
+      interpreter.exit()
    };
 };
 

@@ -272,6 +272,17 @@ class CoolasmInterpreterSyscallExitInstr inherits CoolasmInterpreterInstr {
    };
 };
 
+class CoolasmInterpreterSyscallIoInStringInstr inherits CoolasmInterpreterInstr {
+   interpret(interpreter : CoolasmInterpreter) : Object {
+      let s : String <- interpreter.io().in_string(),
+            addr : Int <- interpreter.alloc(1) in
+         {
+            interpreter.setMemory(addr, s);
+            interpreter.setReg(1, addr);
+         }
+   };
+};
+
 class CoolasmInterpreterLabel {
    pc : Int;
    pc() : Int { pc };
@@ -420,13 +431,25 @@ class CoolasmInterpreterAnalyzer inherits CoolasmInstrVisitor {
 
    visitSyscall(instr : CoolasmSyscallInstr) : Object {
       let name : String <- instr.name() in
-         if name = "exit" then
-            new CoolasmInterpreterSyscallExitInstr
-         else new ObjectUtil.abortObject(self, "visitSyscall: ".concat(name)) fi
+         if name = "IO.in_string" then
+            new CoolasmInterpreterSyscallIoInStringInstr
+         else
+            if name = "exit" then
+               new CoolasmInterpreterSyscallExitInstr
+            else new ObjectUtil.abortObject(self, "visitSyscall: ".concat(name)) fi
+         fi
    };
 };
 
 class CoolasmInterpreter {
+   io : IO;
+   io() : IO { io };
+
+   init(io_ : IO) : SELF_TYPE {{
+      io <- io_;
+      self;
+   }};
+
    memory : IntMap <- new IntTreeMap;
    memory() : IntMap { memory };
 
@@ -464,6 +487,10 @@ class CoolasmInterpreter {
 
    getMemory(addr : Int) : Object {
       memory.getWithInt(addr)
+   };
+
+   getStringMemory(addr : Int) : String {
+      case getMemory(addr) of x : String => x; esac
    };
 
    alloc(size : Int) : Int {

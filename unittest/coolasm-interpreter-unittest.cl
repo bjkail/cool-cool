@@ -4,18 +4,27 @@ class Main inherits Test {
       testInstr();
    }};
 
-   interpretError(context : String, error : String, program : CoolasmProgram) : CoolasmInterpreter {
+   interpretImpl(context : String, error : String, program : CoolasmProgram, io : TestIO) : CoolasmInterpreter {
       let program : CoolasmInterpreterProgram <- new CoolasmInterpreterAnalyzer.analyze(program),
-            interpreter : CoolasmInterpreter <- new CoolasmInterpreter in
+            interpreter : CoolasmInterpreter <- new CoolasmInterpreter.init(io) in
          {
             assertBoolEquals(context.concat(" error"), error = "", interpreter.interpret(program));
             assertStringEquals(context.concat(" error"), error, interpreter.error());
+            io.assert();
             interpreter;
          }
    };
 
+   interpretError(context : String, error : String, program : CoolasmProgram) : CoolasmInterpreter {
+      interpretImpl(context, error, program, newEmptyTestIO(context))
+   };
+
+   interpretIO(context : String, program : CoolasmProgram, io : TestIO) : CoolasmInterpreter {
+      interpretImpl(context, "", program, io)
+   };
+
    interpret(context : String, program : CoolasmProgram) : CoolasmInterpreter {
-      interpretError(context, "", program)
+      interpretIO(context, program, newEmptyTestIO(context))
    };
 
    getInstrsProgram(instrs : LinkedList) : CoolasmProgram {
@@ -340,6 +349,15 @@ class Main inherits Test {
                      .add(label2)
                      .add(constantLabel(label))) in
                assertIntEquals("constant label", 1000, getIntReg(interpreter, r0));
+
+            let interpreter : CoolasmInterpreter <- interpretIO("syscall IO.in_string",
+                     getInstrsProgram(new LinkedList.add(syscall("IO.in_string"))),
+                     newTestIO("syscall IO.in_string", new LinkedList.add("a"), new Collection)),
+                     addr : Int <- getIntReg(interpreter, r1) in
+               {
+                  assertIntEquals("syscall IO.in_string r1", 20000, addr);
+                  assertStringEquals("syscall IO.in_string string", "a", interpreter.getStringMemory(addr));
+               };
          }
       else false fi
    };

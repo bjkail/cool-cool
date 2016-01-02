@@ -318,6 +318,17 @@ class Main inherits Test {
                      .add(label)
                      .add(constantString("a"))) in
                assertStringEquals("constant string", "a", case interpreter.getReg(r0.value()) of x : String => x; esac);
+
+            let label : CoolasmLabel <- new CoolasmLabel.init("label"),
+                  label2 : CoolasmLabel <- new CoolasmLabel.init("label2"),
+                  interpreter : CoolasmInterpreter <- interpretInstrs("constant label", new LinkedList
+                     .add(label)
+                     .add(la(r0, label2))
+                     .add(ld(r0, r0, 0))
+                     .add(syscall("exit"))
+                     .add(label2)
+                     .add(constantLabel(label))) in
+               assertIntEquals("constant label", 1000, getIntReg(interpreter, r0));
          }
       else false fi
    };

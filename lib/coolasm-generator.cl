@@ -219,6 +219,8 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
    backslash : String <- stringUtil.backslash();
    doubleQuote : String <- stringUtil.doubleQuote();
 
+   program : AnalyzedProgram;
+
    types : StringMap <- new StringListMap;
    typeList : Collection <- new LinkedList;
 
@@ -325,16 +327,27 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
    spArgOffset() : Int { 1 };
 
    r0 : CoolasmReg <- new CoolasmReg.init(0);
+   r0() : CoolasmReg { r0 };
    r1 : CoolasmReg <- new CoolasmReg.init(1);
+   r1() : CoolasmReg { r1 };
    r2 : CoolasmReg <- new CoolasmReg.init(2);
+   r2() : CoolasmReg { r2 };
    r3 : CoolasmReg <- new CoolasmReg.init(3);
+   r3() : CoolasmReg { r3 };
    r4 : CoolasmReg <- new CoolasmReg.init(4);
+   r4() : CoolasmReg { r4 };
    r5 : CoolasmReg <- new CoolasmReg.init(5);
+   r5() : CoolasmReg { r5 };
    r6 : CoolasmReg <- new CoolasmReg.init(6);
+   r6() : CoolasmReg { r6 };
    r7 : CoolasmReg <- new CoolasmReg.init(7);
+   r7() : CoolasmReg { r7 };
    sp : CoolasmReg <- new CoolasmReg.init(8);
+   sp() : CoolasmReg { sp };
    fp : CoolasmReg <- new CoolasmReg.init(9);
+   fp() : CoolasmReg { fp };
    ra : CoolasmReg <- new CoolasmReg.init(10);
+   ra() : CoolasmReg { ra };
 
    li(dst : CoolasmReg, value : Int) : CoolasmLiInstr { new CoolasmLiInstr.init(dst, value) };
    mov(dst : CoolasmReg, src : CoolasmReg) : CoolasmMovInstr { new CoolasmMovInstr.init(dst, src) };
@@ -499,7 +512,9 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
       instrs.addAll(instrs_)
    };
 
-   generate(program : AnalyzedProgram) : CoolasmProgram {{
+   generate(program_ : AnalyzedProgram) : CoolasmProgram {{
+      program <- program_;
+
       -- TODO: initialize Object methods
       objectType <- new CoolasmType.initBasicObject(program.objectType(), objectAttributeOffset(), typeDispatchOffset());
       objectType.initNewLabel();
@@ -661,7 +676,7 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                      if not isvoid newLabel then
                         {
                            addLabel(newLabel);
-                           generateNew(program, type);
+                           generateNew(type);
                         }
                      else false fi;
                }
@@ -709,15 +724,13 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
       new CoolasmProgram.init(instrs);
    }};
 
-   generateNew(program : AnalyzedProgram, type : CoolasmType) : Object {{
+   generateNew(type : CoolasmType) : Object {{
       addInstr(li(r0, type.allocSize()));
       addInstr(alloc(r0, r0));
       addInstr(la(r1, type.label()));
       addInstr(st(r0, objectTypeIndex(), r1).setComment("type"));
 
-      let intDefaultInitReg : CoolasmReg,
-            stringDefaultInitReg : CoolasmReg,
-            boolDefaultInitReg : CoolasmReg,
+      let varInitGen : CoolasmDefaultInitGenerator <- new CoolasmDefaultInitGenerator.init(self, program),
             exprInit : Bool in
          {
             -- Determine if there are any string attributes.
@@ -727,20 +740,9 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                      let iter : Iterator <- type.definedAttributes().iterator() in
                         while iter.next() loop
                            let attr : CoolasmAttribute <- case iter.get() of x : CoolasmAttribute => x; esac,
-                                 analyzedAttr : AnalyzedAttribute <- attr.analyzedAttribute(),
-                                 type : AnalyzedType <- analyzedAttr.type() in
+                                 analyzedAttr : AnalyzedAttribute <- attr.analyzedAttribute() in
                               {
-                                 if type = program.intType() then
-                                    intDefaultInitReg <- r1
-                                 else
-                                    if type = program.stringType() then
-                                       stringDefaultInitReg <- r2
-                                    else
-                                       if type = program.boolType() then
-                                          boolDefaultInitReg <- r3
-                                       else false fi
-                                    fi
-                                 fi;
+                                 varInitGen.add(analyzedAttr.type());
 
                                  if not isvoid analyzedAttr.expr() then
                                     exprInit <- true
@@ -749,17 +751,7 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                         pool
                pool;
 
-            if not isvoid intDefaultInitReg then
-               addInstr(la(intDefaultInitReg, labelInt0()))
-            else false fi;
-
-            if not isvoid stringDefaultInitReg then
-               addInstr(la(stringDefaultInitReg, labelStringEmpty()))
-            else false fi;
-
-            if not isvoid boolDefaultInitReg then
-               addInstr(la(boolDefaultInitReg, labelBoolFalse()))
-            else false fi;
+            varInitGen.generateSetup();
 
             -- Default initializations.
             let iter : Iterator <- type.hierarchy().iterator() in
@@ -770,20 +762,7 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                            let attr : CoolasmAttribute <- case iter.get() of x : CoolasmAttribute => x; esac,
                                  analyzedAttr : AnalyzedAttribute <- attr.analyzedAttribute(),
                                  type : AnalyzedType <-  analyzedAttr.type(),
-                                 reg : CoolasmReg <-
-                                       if type = program.intType() then
-                                          intDefaultInitReg
-                                       else
-                                          if type = program.stringType() then
-                                             stringDefaultInitReg
-                                          else
-                                             if type = program.boolType() then
-                                                boolDefaultInitReg
-                                             else
-                                                r7
-                                             fi
-                                          fi
-                                       fi in
+                                 reg : CoolasmReg <- varInitGen.getReg(type) in
                               addInstr(st(r0, attr.index(), reg).setComment(attr.id()))
                         pool
                pool;
@@ -917,4 +896,63 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
       addInstr(la(r1, getStringLabel(expr.value())));
       addInstr(callLabel(labelStringCreateConstant()));
    }};
+};
+
+class CoolasmDefaultInitGenerator {
+   gen : CoolasmGenerator;
+   program : AnalyzedProgram;
+
+   init(gen_ : CoolasmGenerator, program_ : AnalyzedProgram) : SELF_TYPE {{
+      gen <- gen_;
+      program <- program_;
+      self;
+   }};
+
+   intDefaultInitReg : CoolasmReg;
+   stringDefaultInitReg : CoolasmReg;
+   boolDefaultInitReg : CoolasmReg;
+
+   add(type : AnalyzedType) : Object {
+      if type = program.intType() then
+         intDefaultInitReg <- gen.r1()
+      else
+         if type = program.stringType() then
+            stringDefaultInitReg <- gen.r2()
+         else
+            if type = program.boolType() then
+               boolDefaultInitReg <- gen.r3()
+            else false fi
+         fi
+      fi
+   };
+
+   generateSetup() : Object {{
+      if not isvoid intDefaultInitReg then
+         gen.addInstr(gen.la(intDefaultInitReg, gen.labelInt0()))
+      else false fi;
+
+      if not isvoid stringDefaultInitReg then
+         gen.addInstr(gen.la(stringDefaultInitReg, gen.labelStringEmpty()))
+      else false fi;
+
+      if not isvoid boolDefaultInitReg then
+         gen.addInstr(gen.la(boolDefaultInitReg, gen.labelBoolFalse()))
+      else false fi;
+   }};
+
+   getReg(type : AnalyzedType) : CoolasmReg {
+      if type = program.intType() then
+         intDefaultInitReg
+      else
+         if type = program.stringType() then
+            stringDefaultInitReg
+         else
+            if type = program.boolType() then
+               boolDefaultInitReg
+            else
+               gen.r7()
+            fi
+         fi
+      fi
+   };
 };

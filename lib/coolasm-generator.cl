@@ -401,7 +401,7 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
       if isvoid labelInt0 then
          {
             labelInt0 <- new CoolasmLabel.init("Int..object.0");
-            addLabel(labelInt0);
+            systemInstrs.add(labelInt0);
             systemInstrs.add(constantLabel(intType.label()));
             systemInstrs.add(constantInteger(0));
          }
@@ -415,9 +415,9 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
       if isvoid labelStringEmpty then
          {
             labelStringEmpty <- new CoolasmLabel.init("String..object.empty");
-            addLabel(labelStringEmpty);
-            addInstr(constantLabel(stringType.label()));
-            addInstr(constantLabel(getStringLabel("")));
+            systemInstrs.add(labelStringEmpty);
+            systemInstrs.add(constantLabel(stringType.label()));
+            systemInstrs.add(constantLabel(getStringLabel("")));
          }
       else false fi;
 
@@ -429,9 +429,9 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
       if isvoid labelBoolFalse then
          {
             labelBoolFalse <- new CoolasmLabel.init("Bool..false");
-            addLabel(labelBoolFalse);
-            addInstr(constantLabel(boolType.label()));
-            addInstr(constantInteger(0));
+            systemInstrs.add(labelBoolFalse);
+            systemInstrs.add(constantLabel(boolType.label()));
+            systemInstrs.add(constantInteger(0));
          }
       else false fi;
 
@@ -443,9 +443,9 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
       if isvoid labelBoolTrue then
          {
             labelBoolTrue <- new CoolasmLabel.init("Bool..true");
-            addLabel(labelBoolTrue);
-            addInstr(constantLabel(boolType.label()));
-            addInstr(constantInteger(2));
+            systemInstrs.add(labelBoolTrue);
+            systemInstrs.add(constantLabel(boolType.label()));
+            systemInstrs.add(constantInteger(2));
          }
       else false fi;
 

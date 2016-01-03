@@ -91,7 +91,7 @@ class CoolasmInterpreterDivInstr inherits CoolasmInterpreterAbstractArithmeticIn
 class CoolasmInterpreterJmpInstr inherits CoolasmInterpreterInstr {
    pc : Int;
 
-   init(pc_ : Int) : Object {{
+   init(pc_ : Int) : SELF_TYPE {{
       pc <- pc_;
       self;
    }};
@@ -105,7 +105,7 @@ class CoolasmInterpreterBzInstr inherits CoolasmInterpreterInstr {
    reg : Int;
    pc : Int;
 
-   init(reg_ : Int, pc_ : Int) : Object {{
+   init(reg_ : Int, pc_ : Int) : SELF_TYPE {{
       reg <- reg_;
       pc <- pc_;
       self;
@@ -122,7 +122,7 @@ class CoolasmInterpreterBnzInstr inherits CoolasmInterpreterInstr {
    reg : Int;
    pc : Int;
 
-   init(reg_ : Int, pc_ : Int) : Object {{
+   init(reg_ : Int, pc_ : Int) : SELF_TYPE {{
       reg <- reg_;
       pc <- pc_;
       self;
@@ -140,7 +140,7 @@ class CoolasmInterpreterAbstractComparisonInstr inherits CoolasmInterpreterInstr
    reg2 : Int;
    pc : Int;
 
-   init(reg1_ : Int, reg2_ : Int, pc_ : Int) : Object {{
+   init(reg1_ : Int, reg2_ : Int, pc_ : Int) : SELF_TYPE {{
       pc <- pc_;
       reg1 <- reg1_;
       reg2 <- reg2_;
@@ -159,7 +159,7 @@ class CoolasmInterpreterBeqInstr inherits CoolasmInterpreterAbstractComparisonIn
 class CoolasmInterpreterCallLabelInstr inherits CoolasmInterpreterInstr {
    pc : Int;
 
-   init(pc_ : Int) : Object {{
+   init(pc_ : Int) : SELF_TYPE {{
       pc <- pc_;
       self;
    }};
@@ -173,7 +173,7 @@ class CoolasmInterpreterCallLabelInstr inherits CoolasmInterpreterInstr {
 class CoolasmInterpreterAbstractRegInstr inherits CoolasmInterpreterInstr {
    reg : Int;
 
-   init(reg_ : Int) : Object {{
+   init(reg_ : Int) : SELF_TYPE {{
       reg <- reg_;
       self;
    }};

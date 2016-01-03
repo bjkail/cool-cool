@@ -3,6 +3,8 @@ class Main inherits Test {
       testBasic();
    }};
 
+   debug : Bool;
+
    interpretImpl(context : String, error : String, program : String, io : TestIO) : CoolasmInterpreter {
       let tokenizer : Tokenizer <- new Tokenizer.init(new TestStringInputStream.init(program)),
             parser : TestFailErrorParser <- new TestFailErrorParser.init(tokenizer).initTest(self, context),
@@ -10,10 +12,18 @@ class Main inherits Test {
             lineMap : TokenizerLineMap <- tokenizer.lineMap(),
             analyzer : Analyzer <- new TestFailErrorAnalyzer.initTest(self, context),
             program : AnalyzedProgram <- analyzer.analyze(program),
-            program : CoolasmProgram <- new CoolasmGenerator.generate(program),
-            program : CoolasmInterpreterProgram <- new CoolasmInterpreterAnalyzer.analyze(program),
+            program : CoolasmProgram <-
+               let program : CoolasmProgram <- new CoolasmGenerator.generate(program) in
+                  {
+                     if debug then
+                        new CoolasmWriter.init(new IO).write(program)
+                     else false fi;
+                     program;
+                  },
+            program : CoolasmInterpreterProgram <- new CoolasmInterpreterAnalyzer.setDebug(debug).analyze(program),
             interpreter : CoolasmInterpreter <- new CoolasmInterpreter.init(io) in
          {
+            interpreter.setDebug(debug);
             assertBoolEquals(context.concat(" error"), error = "", interpreter.interpret(program));
             assertStringEquals(context.concat(" error"), error, interpreter.error());
             io.assert();

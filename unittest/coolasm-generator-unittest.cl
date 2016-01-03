@@ -37,12 +37,16 @@ class Main inherits Test {
       interpretImpl(context, "", program, io)
    };
 
+   interpretExpr(context : String, program : String, io : TestIO) : CoolasmInterpreter {
+      interpret(context, "class Main { main() : Object { ".concat(program).concat(" }; };"), io)
+   };
+
    testBasic() : Object {
       if begin("basic") then
          {
-            interpret("basic", "class Main { main() : Object { new IO.out_string(\"a\") }; };",
+            interpretExpr("basic", "new IO.out_string(\"a\")",
                   newTestIO("basic", new Collection, new LinkedList.add("a")));
-            interpret("basic", "class Main { main() : Object { new IO.out_int(0) }; };",
+            interpretExpr("basic", "new IO.out_int(0)",
                   newTestIO("basic", new Collection, new LinkedList.add(0)));
          }
       else false fi
@@ -51,7 +55,7 @@ class Main inherits Test {
    testBlock() : Object {
       if begin("block") then
          {
-            interpret("block", "class Main { main() : Object {{ new IO.out_int(0); new IO.out_int(1); }}; };",
+            interpretExpr("block", "{ new IO.out_int(0); new IO.out_int(1); }",
                   newTestIO("basic", new Collection, new LinkedList.add(0).add(1)));
          }
       else false fi
@@ -60,9 +64,9 @@ class Main inherits Test {
    testIf() : Object {
       if begin("if") then
          {
-            interpret("if true", "class Main { main() : Object { if true then new IO.out_string(\"a\") else false fi }; };",
+            interpretExpr("if true", "if true then new IO.out_string(\"a\") else false fi",
                   newTestIO("if true", new Collection, new LinkedList.add("a")));
-            interpret("if false", "class Main { main() : Object { if false then false else new IO.out_string(\"a\") fi }; };",
+            interpretExpr("if false", "if false then false else new IO.out_string(\"a\") fi",
                   newTestIO("if false", new Collection, new LinkedList.add("a")));
          }
       else false fi

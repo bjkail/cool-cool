@@ -49,3 +49,4 @@ run_test analyzer
 run_test interpreter
 run_test coolasm-writer
 run_test coolasm-interpreter
+run_test coolasm-generator

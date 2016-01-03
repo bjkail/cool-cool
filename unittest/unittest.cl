@@ -223,7 +223,7 @@ class TestIO inherits ExtendedIO {
    }};
 
    assert() : Object {
-      test.assertFalse(context.concat(" end"), outIter.next())
+      test.assertFalse(context.concat(" out_string end"), outIter.next())
    };
 };
 

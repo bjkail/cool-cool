@@ -361,6 +361,20 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
 
    systemInstrs : Collection <- new LinkedList;
 
+   labelInt0 : CoolasmLabel;
+   labelInt0() : CoolasmLabel {{
+      if isvoid labelInt0 then
+         {
+            labelInt0 <- new CoolasmLabel.init("Int..object.0");
+            systemInstrs.add(labelInt0);
+            systemInstrs.add(constantLabel(intType.label()));
+            systemInstrs.add(constantInteger(0));
+         }
+      else false fi;
+
+      labelInt0;
+   }};
+
    labelStringCreate : CoolasmLabel;
    labelStringCreate() : CoolasmLabel {{
       if isvoid labelStringCreate then
@@ -396,20 +410,6 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
       else false fi;
 
       labelStringCreateConstant;
-   }};
-
-   labelInt0 : CoolasmLabel;
-   labelInt0() : CoolasmLabel {{
-      if isvoid labelInt0 then
-         {
-            labelInt0 <- new CoolasmLabel.init("Int..object.0");
-            systemInstrs.add(labelInt0);
-            systemInstrs.add(constantLabel(intType.label()));
-            systemInstrs.add(constantInteger(0));
-         }
-      else false fi;
-
-      labelInt0;
    }};
 
    labelStringEmpty : CoolasmLabel;

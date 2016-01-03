@@ -3,6 +3,7 @@ class Main inherits Test {
       testBasic();
       testBlock();
       testIf();
+      testLet();
    }};
 
    debug : Bool;
@@ -68,6 +69,29 @@ class Main inherits Test {
                   newTestIO("if true", new Collection, new LinkedList.add("a")));
             interpretExpr("if false", "if false then false else new IO.out_string(\"a\") fi",
                   newTestIO("if false", new Collection, new LinkedList.add("a")));
+         }
+      else false fi
+   };
+
+   testLet() : Object {
+      if begin("let") then
+         {
+            interpretExpr("let", "new IO.out_int(let a : Int in 0)",
+                  newTestIO("let", new Collection, new LinkedList.add(0)));
+
+            interpretExpr("int default", "new IO.out_int(let a : Int in a)",
+                  newTestIO("int default", new Collection, new LinkedList.add(0)));
+            interpretExpr("string default", "new IO.out_string(let a : String in a)",
+                  newTestIO("string default", new Collection, new LinkedList.add("")));
+            interpretExpr("bool default", "if let a : Bool in a then false else new IO.out_int(0) fi",
+                  newTestIO("bool default", new Collection, new LinkedList.add(0)));
+
+            interpretExpr("int initialization", "new IO.out_int(let a : Int <- 1 in a)",
+                  newTestIO("int initialization", new Collection, new LinkedList.add(1)));
+            interpretExpr("string initialization", "new IO.out_string(let a : String <- \"a\" in a)",
+                  newTestIO("string initialization", new Collection, new LinkedList.add("a")));
+            interpretExpr("bool initialization", "if let a : Bool <- true in a then new IO.out_int(0) else false fi",
+                  newTestIO("bool initialization", new Collection, new LinkedList.add(0)));
          }
       else false fi
    };

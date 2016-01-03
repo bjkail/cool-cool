@@ -324,7 +324,10 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
    typeNewIndex() : Int { 3 };
    typeDispatchOffset() : Int { 4 };
 
+   -- fp is offset 0
    spArgOffset() : Int { 1 };
+   -- ra is offset 0
+   fpVarOffset(n : Int) : Int { ~1 - n };
 
    r0 : CoolasmReg <- new CoolasmReg.init(0);
    r0() : CoolasmReg { r0 };
@@ -453,7 +456,7 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
             labelStringEmpty <- new CoolasmLabel.init("String..object.empty");
             systemInstrs.add(labelStringEmpty);
             systemInstrs.add(constantLabel(stringType.label()));
-            systemInstrs.add(constantLabel(getStringLabel("")));
+            systemInstrs.add(constantString(""));
          }
       else false fi;
 
@@ -824,14 +827,71 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
    };
 
    visitWhile(expr : AnalyzedWhileExpr) : Object { new ObjectUtil.abortObject(self, "visitWhile: unimplemented") };
-   visitLet(expr : AnalyzedLetExpr) : Object { new ObjectUtil.abortObject(self, "visitLet: unimplemented") };
+
+   visitLet(expr : AnalyzedLetExpr) : Object {
+      let vars : Collection <- expr.vars(),
+            numVars : Int <- vars.size() in
+         {
+            -- Reserve frame pointer slots.
+            addInstr(li(r1, ~numVars));
+            addInstr(add(sp, sp, r1).setComment("reserve let vars"));
+
+            -- Generate variable initializations.
+            let varInitGen : CoolasmDefaultInitGenerator <- new CoolasmDefaultInitGenerator.init(self, program) in
+               {
+                  let iter : Iterator <- vars.iterator() in
+                     while iter.next() loop
+                        let var : AnalyzedLetVar <- case iter.get() of x : AnalyzedLetVar => x; esac in
+                           if isvoid var.expr() then
+                              varInitGen.add(var.object().type())
+                           else false fi
+                     pool;
+
+                  varInitGen.generateSetup();
+
+                  let iter : Iterator <- vars.iterator() in
+                     while iter.next() loop
+                        let var : AnalyzedLetVar <- case iter.get() of x : AnalyzedLetVar => x; esac in
+                           if isvoid var.expr() then
+                              let object : AnalyzedVarObject <- var.object() in
+                                 addInstr(st(fp, fpVarOffset(object.index()), varInitGen.getReg(object.type())))
+                           else false fi
+                     pool;
+
+                  let iter : Iterator <- vars.iterator() in
+                     while iter.next() loop
+                        let var : AnalyzedLetVar <- case iter.get() of x : AnalyzedLetVar => x; esac,
+                              object : AnalyzedVarObject <- var.object(),
+                              expr : AnalyzedExpr <- var.expr() in
+                           if not isvoid expr then
+                              {
+                                 expr.accept(self);
+                                 addInstr(st(fp, fpVarOffset(object.index()), r0));
+                              }
+                           else false fi
+                     pool;
+               };
+
+            -- Generate let expression.
+            expr.expr().accept(self);
+
+            -- Unreserve frame pointer slots.
+            addInstr(li(r1, numVars));
+            addInstr(add(sp, sp, r1).setComment("unreserve let vars"));
+         }
+   };
+
    visitCase(expr : AnalyzedCaseExpr) : Object { new ObjectUtil.abortObject(self, "visitCase: unimplemented") };
    visitArgumentAssignment(object : AnalyzedArgumentObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitArgumentAssignment: unimplemented") };
    visitVarAssignment(object : AnalyzedVarObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitVarAssignment: unimplemented") };
    visitAttributeAssignment(attribute : AnalyzedAttributeObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitAttributeAssignment: unimplemented") };
    visitSelf(object : AnalyzedSelfObject) : Object { new ObjectUtil.abortObject(self, "visitSelf unimplemented") };
    visitArgument(object : AnalyzedArgumentObject) : Object { new ObjectUtil.abortObject(self, "visitArgument unimplemented") };
-   visitVar(object : AnalyzedVarObject) : Object { new ObjectUtil.abortObject(self, "visitVar unimplemented") };
+
+   visitVar(object : AnalyzedVarObject) : Object {
+      addInstr(ld(r0, fp, fpVarOffset(object.index())))
+   };
+
    visitAttribute(object : AnalyzedAttributeObject) : Object { new ObjectUtil.abortObject(self, "visitAttribute unimplemented") };
 
    visitNew(expr : AnalyzedNewExpr) : Object {

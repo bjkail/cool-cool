@@ -308,6 +308,9 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
    objectTypeIndex() : Int { 0 };
    objectAttributeOffset() : Int { 1 };
 
+   intValueIndex() : Int { objectAttributeOffset() };
+   intSize() : Int { intValueIndex() + 1 };
+
    stringValueIndex() : Int { objectAttributeOffset() };
    stringSize() : Int { stringValueIndex() + 1 };
 
@@ -373,6 +376,24 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
       else false fi;
 
       labelInt0;
+   }};
+
+   labelIntCreateConstant : CoolasmLabel;
+   labelIntCreateConstant() : CoolasmLabel {{
+      if isvoid labelIntCreateConstant then
+         {
+            labelIntCreateConstant <- new CoolasmLabel.init("Int..create.constant");
+            systemInstrs.add(labelIntCreateConstant);
+            systemInstrs.add(li(r0, intSize()));
+            systemInstrs.add(alloc(r0, r0));
+            systemInstrs.add(la(r2, intType.label()));
+            systemInstrs.add(st(r0, objectTypeIndex(), r2).setComment("type"));
+            systemInstrs.add(st(r0, intValueIndex(), r1).setComment("value"));
+            systemInstrs.add(return);
+         }
+      else false fi;
+
+      labelIntCreateConstant;
    }};
 
    labelStringCreate : CoolasmLabel;
@@ -520,11 +541,18 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
          {
             ioType.setInheritsType(objectType);
             ioType.initNewLabel();
+
             ioType.addMethod(analyzedIoType.getMethod("out_string")).setAsm(new LinkedList
                   .add(ld(r1, sp, spArgOffset()).setComment("arg1"))
                   .add(li(r2, stringValueIndex()))
                   .add(add(r1, r1, r2).setComment("attribute String.value"))
                   .add(syscall("IO.out_string"))
+                  .add(return));
+
+            ioType.addMethod(analyzedIoType.getMethod("out_int")).setAsm(new LinkedList
+                  .add(ld(r1, sp, spArgOffset()).setComment("arg1"))
+                  .add(ld(r1, r1, intValueIndex()).setComment("attribute Int.value"))
+                  .add(syscall("IO.out_int"))
                   .add(return));
 
             -- TODO: initialize IO methods
@@ -848,6 +876,7 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                   addInstr(callLabel(method.label()))
                else
                   {
+                     addInstr(ld(r1, r0, objectTypeIndex()).setComment("type"));
                      addInstr(ld(r1, r1, method.index()).setComment("method ".concat(method.label().name())));
                      addInstr(callReg(r1));
                   }
@@ -873,7 +902,10 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
       fi
    };
 
-   visitConstantInt(expr : AnalyzedConstantIntExpr) : Object { new ObjectUtil.abortObject(self, "visitConstantInt: unimplemented") };
+   visitConstantInt(expr : AnalyzedConstantIntExpr) : Object {{
+      addInstr(li(r1, expr.value()));
+      addInstr(callLabel(labelIntCreateConstant()));
+   }};
 
    visitConstantString(expr : AnalyzedConstantStringExpr) : Object {{
       addInstr(la(r1, getStringLabel(expr.value())));

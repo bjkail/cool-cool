@@ -41,6 +41,8 @@ class Main inherits Test {
          {
             interpret("basic", "class Main { main() : Object { new IO.out_string(\"a\") }; };",
                   newTestIO("basic", new Collection, new LinkedList.add("a")));
+            interpret("basic", "class Main { main() : Object { new IO.out_int(0) }; };",
+                  newTestIO("basic", new Collection, new LinkedList.add(0)));
          }
       else false fi
    };

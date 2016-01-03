@@ -875,11 +875,8 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
 
    visitConstantInt(expr : AnalyzedConstantIntExpr) : Object { new ObjectUtil.abortObject(self, "visitConstantInt: unimplemented") };
 
-   visitConstantString(expr : AnalyzedConstantStringExpr) : Object {
-      let s : String <- expr.value() in
-         {
-            addInstr(la(r1, getStringLabel(s)));
-            addInstr(callLabel(labelStringCreateConstant()));
-         }
-   };
+   visitConstantString(expr : AnalyzedConstantStringExpr) : Object {{
+      addInstr(la(r1, getStringLabel(expr.value())));
+      addInstr(callLabel(labelStringCreateConstant()));
+   }};
 };

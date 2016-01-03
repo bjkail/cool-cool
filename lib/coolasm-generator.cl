@@ -377,6 +377,25 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
       labelStringCreate;
    }};
 
+   labelStringCreateConstant : CoolasmLabel;
+   labelStringCreateConstant() : CoolasmLabel {{
+      if isvoid labelStringCreateConstant then
+         {
+            labelStringCreateConstant <- new CoolasmLabel.init("String..create.constant");
+            systemInstrs.add(labelStringCreateConstant);
+            systemInstrs.add(li(r0, stringSize()));
+            systemInstrs.add(alloc(r0, r0));
+            systemInstrs.add(la(r2, stringType.label()));
+            systemInstrs.add(st(r0, objectTypeIndex(), r2).setComment("type"));
+            systemInstrs.add(ld(r1, r1, 0));
+            systemInstrs.add(st(r0, stringValueIndex(), r1).setComment("value"));
+            systemInstrs.add(return);
+         }
+      else false fi;
+
+      labelStringCreateConstant;
+   }};
+
    labelInt0 : CoolasmLabel;
    labelInt0() : CoolasmLabel {{
       if isvoid labelInt0 then
@@ -491,7 +510,8 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
             ioType.initNewLabel();
             ioType.addMethod(analyzedIoType.getMethod("out_string")).setAsm(new LinkedList
                   .add(ld(r1, sp, spArgOffset()).setComment("arg1"))
-                  .add(ld(r1, r1, stringValueIndex()).setComment("attribute String.value"))
+                  .add(li(r2, stringValueIndex()))
+                  .add(add(r1, r1, r2).setComment("attribute String.value"))
                   .add(syscall("IO.out_string"))
                   .add(return));
 
@@ -821,7 +841,7 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
       let s : String <- expr.value() in
          {
             addInstr(la(r1, getStringLabel(s)));
-            addInstr(callLabel(labelStringCreate()));
+            addInstr(callLabel(labelStringCreateConstant()));
          }
    };
 };

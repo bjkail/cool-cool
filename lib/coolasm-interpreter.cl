@@ -528,6 +528,12 @@ class CoolasmInterpreterAnalyzer inherits CoolasmInstrVisitor {
 };
 
 class CoolasmInterpreter {
+   debug : Bool;
+   setDebug(debug_ : Bool) : Object { debug <- debug_ };
+
+   debugIo : IO;
+   setDebugIo(debugIo_ : IO) : Object { debugIo <- debugIo_ };
+
    io : IO;
    io() : IO { io };
 
@@ -604,13 +610,19 @@ class CoolasmInterpreter {
       regs.putWithInt(9, 2000000000);
 
       pc <- program.start();
-      while 0 < pc loop
-         let instr : CoolasmInterpreterInstr <- getInstr(pc) in
-            {
-               instr.interpret(self);
-               pc <- pc + 1;
-            }
-      pool;
+      let debugIo : IO <- if isvoid debugIo then new IO else debugIo fi in
+         while 0 < pc loop
+            let instr : CoolasmInterpreterInstr <- getInstr(pc) in
+               {
+                  if debug then
+                     debugIo.out_string("DEBUG: coolasm-interpreter: pc=").out_int(pc)
+                           .out_string(": ").out_string(instr.type_name()).out_string("\n")
+                  else false fi;
+
+                  instr.interpret(self);
+                  pc <- pc + 1;
+               }
+         pool;
 
       error = "";
    }};

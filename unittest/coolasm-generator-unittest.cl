@@ -1,6 +1,7 @@
 class Main inherits Test {
    test() : Object {{
       testBasic();
+      testIf();
    }};
 
    debug : Bool;
@@ -40,6 +41,17 @@ class Main inherits Test {
          {
             interpret("basic", "class Main { main() : Object { new IO.out_string(\"a\") }; };",
                   newTestIO("basic", new Collection, new LinkedList.add("a")));
+         }
+      else false fi
+   };
+
+   testIf() : Object {
+      if begin("if") then
+         {
+            interpret("if true", "class Main { main() : Object { if true then new IO.out_string(\"a\") else false fi }; };",
+                  newTestIO("if true", new Collection, new LinkedList.add("a")));
+            interpret("if false", "class Main { main() : Object { if false then false else new IO.out_string(\"a\") fi }; };",
+                  newTestIO("if false", new Collection, new LinkedList.add("a")));
          }
       else false fi
    };

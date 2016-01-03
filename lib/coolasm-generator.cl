@@ -311,6 +311,8 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
    stringValueIndex() : Int { objectAttributeOffset() };
    stringSize() : Int { stringValueIndex() + 1 };
 
+   boolValueIndex() : Int { objectAttributeOffset() };
+
    typeDepthIndex() : Int { 0 };
    typeNameIndex() : Int { 1 };
    typeSizeIndex() : Int { 2 };
@@ -451,6 +453,16 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
 
       labelBoolTrue;
    }};
+
+   nextLabelId : Int;
+
+   allocLabel() : CoolasmLabel {
+      let id : Int <- nextLabelId in
+         {
+            nextLabelId <- nextLabelId + 1;
+            new CoolasmLabel.init("label.".concat(stringUtil.fromInt(id)));
+         }
+   };
 
    instrs : Collection <- new LinkedList;
 
@@ -779,7 +791,25 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
    }};
 
    visitBlock(expr : AnalyzedBlockExpr) : Object { new ObjectUtil.abortObject(self, "visitBlock: unimplemented") };
-   visitIf(expr : AnalyzedIfExpr) : Object { new ObjectUtil.abortObject(self, "visitIf: unimplemented") };
+
+   visitIf(expr : AnalyzedIfExpr) : Object {
+      let else_ : CoolasmLabel <- allocLabel(),
+            fi_ : CoolasmLabel <- allocLabel() in
+         {
+            expr.expr().accept(self);
+            addInstr(ld(r0, r0, boolValueIndex()).setComment("attribute Bool.value"));
+            addInstr(bz(r0, else_).setComment("else"));
+
+            expr.then_().accept(self);
+            addInstr(jmp(fi_).setComment("fi"));
+
+            addLabel(else_);
+            expr.else_().accept(self);
+
+            addLabel(fi_);
+         }
+   };
+
    visitWhile(expr : AnalyzedWhileExpr) : Object { new ObjectUtil.abortObject(self, "visitWhile: unimplemented") };
    visitLet(expr : AnalyzedLetExpr) : Object { new ObjectUtil.abortObject(self, "visitLet: unimplemented") };
    visitCase(expr : AnalyzedCaseExpr) : Object { new ObjectUtil.abortObject(self, "visitCase: unimplemented") };
@@ -834,7 +864,15 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
 
    visitUnary(expr : AnalyzedUnaryExpr) : Object { new ObjectUtil.abortObject(self, "visitUnary: unimplemented") };
    visitBinary(expr : AnalyzedBinaryExpr) : Object { new ObjectUtil.abortObject(self, "visitBinary: unimplemented") };
-   visitConstantBool(expr : AnalyzedConstantBoolExpr) : Object { new ObjectUtil.abortObject(self, "visitConstantBool: unimplemented") };
+
+   visitConstantBool(expr : AnalyzedConstantBoolExpr) : Object {
+      if expr.value() then
+         addInstr(la(r0, labelBoolTrue()))
+      else
+         addInstr(la(r0, labelBoolFalse()))
+      fi
+   };
+
    visitConstantInt(expr : AnalyzedConstantIntExpr) : Object { new ObjectUtil.abortObject(self, "visitConstantInt: unimplemented") };
 
    visitConstantString(expr : AnalyzedConstantStringExpr) : Object {

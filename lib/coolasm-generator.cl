@@ -818,7 +818,13 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
       addInstr(return);
    }};
 
-   visitBlock(expr : AnalyzedBlockExpr) : Object { new ObjectUtil.abortObject(self, "visitBlock: unimplemented") };
+   visitBlock(expr : AnalyzedBlockExpr) : Object {
+      let iter : Iterator <- expr.exprs().iterator() in
+         while iter.next() loop
+            let expr : AnalyzedExpr <- case iter.get() of x : AnalyzedExpr => x; esac in
+               expr.accept(self)
+         pool
+   };
 
    visitIf(expr : AnalyzedIfExpr) : Object {
       let else_ : CoolasmLabel <- allocLabel(),

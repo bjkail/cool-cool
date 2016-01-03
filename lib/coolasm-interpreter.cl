@@ -13,6 +13,14 @@ class CoolasmInterpreterProgram {
 };
 
 class CoolasmInterpreterInstr {
+   instr : CoolasmInstr;
+   instr() : CoolasmInstr { instr };
+
+   setInstr(instr_ : CoolasmInstr) : SELF_TYPE {{
+      instr <- instr_;
+      self;
+   }};
+
    interpret(interpreter : CoolasmInterpreter) : Object { new ObjectUtil.abortObject(self, "interpret: unimplemented") };
 };
 
@@ -356,6 +364,13 @@ class CoolasmInterpreterLabel {
 };
 
 class CoolasmInterpreterAnalyzer inherits CoolasmInstrVisitor {
+   debug : Bool <- true;
+
+   setDebug(debug_ : Bool) : SELF_TYPE {{
+      debug <- debug_;
+      self;
+   }};
+
    labels : StringMap <- new StringListMap;
    memory : IntMap <- new IntTreeMap;
 
@@ -395,88 +410,96 @@ class CoolasmInterpreterAnalyzer inherits CoolasmInstrVisitor {
          new CoolasmInterpreterProgram.init(memory, start.pc());
    }};
 
+   setInstr(programInstr : CoolasmInstr, instr : CoolasmInterpreterInstr) : Object {
+      if debug then
+         instr.setInstr(programInstr)
+      else
+         instr
+      fi
+   };
+
    visitLi(instr : CoolasmLiInstr) : Object {
-      new CoolasmInterpreterLoadConstantInstr.init(instr.reg().value(), instr.value())
+      setInstr(instr, new CoolasmInterpreterLoadConstantInstr.init(instr.reg().value(), instr.value()))
    };
 
    visitMov(instr : CoolasmMovInstr) : Object {
-      new CoolasmInterpreterMovInstr.init(instr.dst().value(), instr.src().value())
+      setInstr(instr, new CoolasmInterpreterMovInstr.init(instr.dst().value(), instr.src().value()))
    };
 
    visitAdd(instr : CoolasmAddInstr) : Object {
-      new CoolasmInterpreterAddInstr.init(instr.dst().value(), instr.src1().value(), instr.src2().value())
+      setInstr(instr, new CoolasmInterpreterAddInstr.init(instr.dst().value(), instr.src1().value(), instr.src2().value()))
    };
 
    visitSub(instr : CoolasmSubInstr) : Object {
-      new CoolasmInterpreterSubInstr.init(instr.dst().value(), instr.src1().value(), instr.src2().value())
+      setInstr(instr, new CoolasmInterpreterSubInstr.init(instr.dst().value(), instr.src1().value(), instr.src2().value()))
    };
 
    visitMul(instr : CoolasmMulInstr) : Object {
-      new CoolasmInterpreterMulInstr.init(instr.dst().value(), instr.src1().value(), instr.src2().value())
+      setInstr(instr, new CoolasmInterpreterMulInstr.init(instr.dst().value(), instr.src1().value(), instr.src2().value()))
    };
 
    visitDiv(instr : CoolasmDivInstr) : Object {
-      new CoolasmInterpreterDivInstr.init(instr.dst().value(), instr.src1().value(), instr.src2().value())
+      setInstr(instr, new CoolasmInterpreterDivInstr.init(instr.dst().value(), instr.src1().value(), instr.src2().value()))
    };
 
    visitJmp(instr : CoolasmJmpInstr) : Object {
-      new CoolasmInterpreterJmpInstr.init(getLabel(instr.label()).pc() - 1)
+      setInstr(instr, new CoolasmInterpreterJmpInstr.init(getLabel(instr.label()).pc() - 1))
    };
 
    visitBz(instr : CoolasmBzInstr) : Object {
-      new CoolasmInterpreterBzInstr.init(instr.reg().value(), getLabel(instr.label()).pc() - 1)
+      setInstr(instr, new CoolasmInterpreterBzInstr.init(instr.reg().value(), getLabel(instr.label()).pc() - 1))
    };
 
    visitBnz(instr : CoolasmBnzInstr) : Object {
-      new CoolasmInterpreterBnzInstr.init(instr.reg().value(), getLabel(instr.label()).pc() - 1)
+      setInstr(instr, new CoolasmInterpreterBnzInstr.init(instr.reg().value(), getLabel(instr.label()).pc() - 1))
    };
 
    visitBeq(instr : CoolasmBeqInstr) : Object {
-      new CoolasmInterpreterBeqInstr.init(instr.reg1().value(), instr.reg2().value(), getLabel(instr.label()).pc() - 1)
+      setInstr(instr, new CoolasmInterpreterBeqInstr.init(instr.reg1().value(), instr.reg2().value(), getLabel(instr.label()).pc() - 1))
    };
 
    visitBlt(instr : CoolasmBltInstr) : Object {
-      new CoolasmInterpreterBltInstr.init(instr.reg1().value(), instr.reg2().value(), getLabel(instr.label()).pc() - 1)
+      setInstr(instr, new CoolasmInterpreterBltInstr.init(instr.reg1().value(), instr.reg2().value(), getLabel(instr.label()).pc() - 1))
    };
 
    visitBle(instr : CoolasmBleInstr) : Object {
-      new CoolasmInterpreterBleInstr.init(instr.reg1().value(), instr.reg2().value(), getLabel(instr.label()).pc() - 1)
+      setInstr(instr, new CoolasmInterpreterBleInstr.init(instr.reg1().value(), instr.reg2().value(), getLabel(instr.label()).pc() - 1))
    };
 
    visitCallLabel(instr : CoolasmCallLabelInstr) : Object {
-      new CoolasmInterpreterCallLabelInstr.init(getLabel(instr.label()).pc() - 1)
+      setInstr(instr, new CoolasmInterpreterCallLabelInstr.init(getLabel(instr.label()).pc() - 1))
    };
 
    visitCallReg(instr : CoolasmCallRegInstr) : Object {
-      new CoolasmInterpreterCallRegInstr.init(instr.reg().value())
+      setInstr(instr, new CoolasmInterpreterCallRegInstr.init(instr.reg().value()))
    };
 
    visitReturn(instr : CoolasmReturnInstr) : Object {
-      new CoolasmInterpreterReturnInstr
+      setInstr(instr, new CoolasmInterpreterReturnInstr)
    };
 
    visitPush(instr : CoolasmPushInstr) : Object {
-      new CoolasmInterpreterPushInstr.init(instr.reg().value())
+      setInstr(instr, new CoolasmInterpreterPushInstr.init(instr.reg().value()))
    };
 
    visitPop(instr : CoolasmPopInstr) : Object {
-      new CoolasmInterpreterPopInstr.init(instr.reg().value())
+      setInstr(instr, new CoolasmInterpreterPopInstr.init(instr.reg().value()))
    };
 
    visitLd(instr : CoolasmLdInstr) : Object {
-      new CoolasmInterpreterLdInstr.init(instr.dst().value(), instr.src().value(), instr.srcoff())
+      setInstr(instr, new CoolasmInterpreterLdInstr.init(instr.dst().value(), instr.src().value(), instr.srcoff()))
    };
 
    visitSt(instr : CoolasmStInstr) : Object {
-      new CoolasmInterpreterStInstr.init(instr.dst().value(), instr.dstoff(), instr.src().value())
+      setInstr(instr, new CoolasmInterpreterStInstr.init(instr.dst().value(), instr.dstoff(), instr.src().value()))
    };
 
    visitLa(instr : CoolasmLaInstr) : Object {
-      new CoolasmInterpreterLoadConstantInstr.init(instr.dst().value(), getLabel(instr.src()).pc())
+      setInstr(instr, new CoolasmInterpreterLoadConstantInstr.init(instr.dst().value(), getLabel(instr.src()).pc()))
    };
 
    visitAlloc(instr : CoolasmAllocInstr) : Object {
-      new CoolasmInterpreterAllocInstr.init(instr.dst().value(), instr.size().value())
+      setInstr(instr, new CoolasmInterpreterAllocInstr.init(instr.dst().value(), instr.size().value()))
    };
 
    visitConstantInteger(instr : CoolasmConstantIntegerInstr) : Object {
@@ -494,28 +517,28 @@ class CoolasmInterpreterAnalyzer inherits CoolasmInstrVisitor {
    visitSyscall(instr : CoolasmSyscallInstr) : Object {
       let name : String <- instr.name() in
          if name = "IO.in_string" then
-            new CoolasmInterpreterSyscallIoInStringInstr
+            setInstr(instr, new CoolasmInterpreterSyscallIoInStringInstr)
          else
             if name = "IO.in_int" then
-               new CoolasmInterpreterSyscallIoInIntInstr
+               setInstr(instr, new CoolasmInterpreterSyscallIoInIntInstr)
             else
                if name = "IO.out_int" then
-                  new CoolasmInterpreterSyscallIoOutIntInstr
+                  setInstr(instr, new CoolasmInterpreterSyscallIoOutIntInstr)
                else
                   if name = "IO.out_string" then
-                     new CoolasmInterpreterSyscallIoOutStringInstr
+                     setInstr(instr, new CoolasmInterpreterSyscallIoOutStringInstr)
                   else
                      if name = "String.length" then
-                        new CoolasmInterpreterSyscallStringLengthInstr
+                        setInstr(instr, new CoolasmInterpreterSyscallStringLengthInstr)
                      else
                         if name = "String.concat" then
-                           new CoolasmInterpreterSyscallStringConcatInstr
+                           setInstr(instr, new CoolasmInterpreterSyscallStringConcatInstr)
                         else
                            if name = "String.substr" then
-                              new CoolasmInterpreterSyscallStringSubstrInstr
+                              setInstr(instr, new CoolasmInterpreterSyscallStringSubstrInstr)
                            else
                               if name = "exit" then
-                                 new CoolasmInterpreterSyscallExitInstr
+                                 setInstr(instr, new CoolasmInterpreterSyscallExitInstr)
                               else new ObjectUtil.abortObject(self, "visitSyscall: ".concat(name)) fi
                            fi
                         fi
@@ -610,13 +633,22 @@ class CoolasmInterpreter {
       regs.putWithInt(9, 2000000000);
 
       pc <- program.start();
-      let debugIo : IO <- if isvoid debugIo then new IO else debugIo fi in
+      let debugIo : IO <- if isvoid debugIo then new IO else debugIo fi,
+            writer : CoolasmWriter <- new CoolasmWriter.init(debugIo) in
          while 0 < pc loop
             let instr : CoolasmInterpreterInstr <- getInstr(pc) in
                {
                   if debug then
-                     debugIo.out_string("DEBUG: coolasm-interpreter: pc=").out_int(pc)
-                           .out_string(": ").out_string(instr.type_name()).out_string("\n")
+                     {
+                        debugIo.out_string("DEBUG: coolasm-interpreter: pc=").out_int(pc).out_string(": ");
+                        let programInstr : CoolasmInstr <- instr.instr() in
+                           if not isvoid programInstr then
+                              writer.writeInstr(programInstr)
+                           else
+                              debugIo.out_string(instr.type_name())
+                           fi;
+                        debugIo.out_string("\n");
+                     }
                   else false fi;
 
                   instr.interpret(self);

@@ -66,30 +66,32 @@ class CoolasmWriter inherits CoolasmInstrVisitor {
                instr : CoolasmInstr =>
                   {
                      io.out_string(indent);
-
-                     let comment : String <- instr.comment() in
-                        if comment = "" then
-                           instr.accept(self)
-                        else
-                           {
-                              length <- 0;
-                              instr.accept(self);
-
-                              if length < spaces.length() then
-                                 io.out_string(spaces.substr(length, spaces.length() - length))
-                              else
-                                 io.out_string(" ")
-                              fi;
-                              length <- ~1;
-
-                              io.out_string("; ").out_string(comment);
-                           }
-                        fi;
-
+                     writeInstr(instr);
                      io.out_string("\n");
                   };
             esac
          pool
+   };
+
+   writeInstr(instr : CoolasmInstr) : Object {
+      let comment : String <- instr.comment() in
+         if comment = "" then
+            instr.accept(self)
+         else
+            {
+               length <- 0;
+               instr.accept(self);
+
+               if length < spaces.length() then
+                  io.out_string(spaces.substr(length, spaces.length() - length))
+               else
+                  io.out_string(" ")
+               fi;
+               length <- ~1;
+
+               io.out_string("; ").out_string(comment);
+            }
+         fi
    };
 
    visitLi(instr : CoolasmLiInstr) : Object {

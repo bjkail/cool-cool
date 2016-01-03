@@ -359,12 +359,12 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
 
    systemInstrs : Collection <- new LinkedList;
 
-   xlabelStringCreate : CoolasmLabel;
+   labelStringCreate : CoolasmLabel;
    labelStringCreate() : CoolasmLabel {{
-      if isvoid xlabelStringCreate then
+      if isvoid labelStringCreate then
          {
-            xlabelStringCreate <- new CoolasmLabel.init("String..create");
-            systemInstrs.add(xlabelStringCreate);
+            labelStringCreate <- new CoolasmLabel.init("String..create");
+            systemInstrs.add(labelStringCreate);
             systemInstrs.add(li(r0, stringSize()));
             systemInstrs.add(alloc(r0, r0));
             systemInstrs.add(la(r2, stringType.label()));
@@ -374,63 +374,63 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
          }
       else false fi;
 
-      xlabelStringCreate;
+      labelStringCreate;
    }};
 
-   xlabelInt0 : CoolasmLabel;
+   labelInt0 : CoolasmLabel;
    labelInt0() : CoolasmLabel {{
-      if isvoid xlabelInt0 then
+      if isvoid labelInt0 then
          {
-            xlabelInt0 <- new CoolasmLabel.init("Int..object.0");
-            addLabel(xlabelInt0);
+            labelInt0 <- new CoolasmLabel.init("Int..object.0");
+            addLabel(labelInt0);
             systemInstrs.add(constantLabel(intType.label()));
             systemInstrs.add(constantInteger(0));
          }
       else false fi;
 
-      xlabelInt0;
+      labelInt0;
    }};
 
-   xlabelStringEmpty : CoolasmLabel;
+   labelStringEmpty : CoolasmLabel;
    labelStringEmpty() : CoolasmLabel {{
-      if isvoid xlabelStringEmpty then
+      if isvoid labelStringEmpty then
          {
-            xlabelStringEmpty <- new CoolasmLabel.init("String..object.empty");
-            addLabel(xlabelStringEmpty);
+            labelStringEmpty <- new CoolasmLabel.init("String..object.empty");
+            addLabel(labelStringEmpty);
             addInstr(constantLabel(stringType.label()));
             addInstr(constantLabel(getStringLabel("")));
          }
       else false fi;
 
-      xlabelStringEmpty;
+      labelStringEmpty;
    }};
 
-   xlabelBoolFalse : CoolasmLabel;
+   labelBoolFalse : CoolasmLabel;
    labelBoolFalse() : CoolasmLabel {{
-      if isvoid xlabelBoolFalse then
+      if isvoid labelBoolFalse then
          {
-            xlabelBoolFalse <- new CoolasmLabel.init("Bool..false");
-            addLabel(xlabelBoolFalse);
+            labelBoolFalse <- new CoolasmLabel.init("Bool..false");
+            addLabel(labelBoolFalse);
             addInstr(constantLabel(boolType.label()));
             addInstr(constantInteger(0));
          }
       else false fi;
 
-      xlabelBoolFalse;
+      labelBoolFalse;
    }};
 
-   xlabelBoolTrue : CoolasmLabel;
+   labelBoolTrue : CoolasmLabel;
    labelBoolTrue() : CoolasmLabel {{
-      if isvoid xlabelBoolTrue then
+      if isvoid labelBoolTrue then
          {
-            xlabelBoolTrue <- new CoolasmLabel.init("Bool..true");
-            addLabel(xlabelBoolTrue);
+            labelBoolTrue <- new CoolasmLabel.init("Bool..true");
+            addLabel(labelBoolTrue);
             addInstr(constantLabel(boolType.label()));
             addInstr(constantInteger(2));
          }
       else false fi;
 
-      xlabelBoolTrue;
+      labelBoolTrue;
    }};
 
    instrs : Collection <- new LinkedList;

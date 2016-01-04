@@ -4,6 +4,7 @@ class Main inherits Test {
       testBlock();
       testIf();
       testLet();
+      testCase();
    }};
 
    debug : Bool;
@@ -92,6 +93,42 @@ class Main inherits Test {
                   newTestIO("string initialization", new Collection, new LinkedList.add("a")));
             interpretExpr("bool initialization", "if let a : Bool <- true in a then new IO.out_int(0) else false fi",
                   newTestIO("bool initialization", new Collection, new LinkedList.add(0)));
+         }
+      else false fi
+   };
+
+   testCase() : Object {
+      if begin("case") then
+         {
+            interpretExpr("void", "case let void : Object in void of x : Object => x; esac",
+                  newTestIO("void", new Collection, new LinkedList.add("ERROR: 1: Exception: case on void\n")));
+            interpretExpr("unmatched", "case 0 of x : Bool => x; esac",
+                  newTestIO("unmatched", new Collection, new LinkedList.add("ERROR: 1: Exception: case branch not matched for type 'Int'\n")));
+
+            interpretExpr("single", "new IO.out_int(case 1 of x : Int => x; esac)",
+                  newTestIO("single", new Collection, new LinkedList.add(1)));
+            interpretExpr("unrelated", "new IO.out_int(case 0 of x : Int => 1; x : String => 0; esac)",
+                  newTestIO("unrelated", new Collection, new LinkedList.add(1)));
+            interpretExpr("unrelated 2", "new IO.out_int(case 0 of x : String => 0; x : Int => 1; esac)",
+                  newTestIO("unrelated 2", new Collection, new LinkedList.add(1)));
+            interpretExpr("ordered", "new IO.out_int(case 0 of x : Int => 1; x : Object => 0; esac)",
+                  newTestIO("ordered", new Collection, new LinkedList.add(1)));
+            interpretExpr("unordered", "new IO.out_int(case 0 of x : Object => 0; x : Int => 1; esac)",
+                  newTestIO("unordered", new Collection, new LinkedList.add(1)));
+
+            interpretExpr("object", "case 0 of x : Object => new IO.out_int(1); esac",
+                  newTestIO("object", new Collection, new LinkedList.add(1)));
+
+            interpret("hierarchy", ""
+                  .concat("class Main { main() : Object {{")
+                  .concat("  new IO.out_int(case new A of x : A => 1; esac);")
+                  .concat("  new IO.out_int(case new A of x : B => 2; esac);")
+                  .concat("  new IO.out_int(case new A of x : C => 3; esac);")
+                  .concat("}}; };")
+                  .concat("class A inherits B { a : Int; };")
+                  .concat("class B inherits C { b : Int; };")
+                  .concat("class C { c : Int; };"),
+                  newTestIO("hierarchy", new Collection, new LinkedList.add(1).add(2).add(3)));
          }
       else false fi
    };

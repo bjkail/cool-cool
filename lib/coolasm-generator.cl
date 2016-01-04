@@ -223,6 +223,7 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
 
    types : StringMap <- new StringListMap;
    typeList : Collection <- new LinkedList;
+   maxInheritsDepth : Int;
 
    objectType : CoolasmType;
    intType : CoolasmType;
@@ -242,6 +243,11 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                      analyzeType(inheritsType);
                      type.setInheritsType(inheritsType);
                   };
+
+               let inheritsDepth : Int <- type.inheritsDepth() in
+                  if maxInheritsDepth < inheritsDepth then
+                     maxInheritsDepth <- inheritsDepth
+                  else false fi;
 
                let analyzedFeatureIter : Iterator <- analyzedType.definedFeatures().iterator() in
                   while analyzedFeatureIter.next() loop
@@ -285,6 +291,16 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
          fi
    };
 
+   errorLabel : CoolasmLabel;
+
+   errorLabel() : CoolasmLabel {
+      if isvoid errorLabel then
+         errorLabel <- new CoolasmLabel.init("error")
+      else
+         errorLabel
+      fi
+   };
+
    errorLabels : IntTreeMap <- new IntTreeMap;
 
    getErrorLabel(s : String) : CoolasmLabel {
@@ -303,8 +319,30 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
          fi
    };
 
+   getExceptionMessage(line : Int, s : String) : String {
+      "ERROR: ".concat(stringUtil.fromInt(line)).concat(": Exception: ").concat(s)
+   };
+
    getExceptionLabel(line : Int, s : String) : CoolasmLabel {
-      getErrorLabel("ERROR: ".concat(stringUtil.fromInt(line)).concat(": Exception: ").concat(s).concat("\n"))
+      getErrorLabel(getExceptionMessage(line, s).concat("\n"))
+   };
+
+   caseUnmatchedErrorLabels : IntTreeMap <- new IntTreeMap;
+
+   getCaseUnmatchedExceptionLabel(line : Int) : CoolasmLabel {
+      let stringLabel : CoolasmStringLabel <- getStringLabelImpl(getExceptionMessage(line, "case branch not matched for type '")),
+            index : Int <- stringLabel.index(),
+            label : Object <- caseUnmatchedErrorLabels.getWithInt(index) in
+         if isvoid label then
+            let name : String <- "error.case.".concat(stringUtil.fromInt(index)),
+                  label : CoolasmLabel <- new CoolasmErrorLabel.initError(stringLabel, name) in
+               {
+                  caseUnmatchedErrorLabels.putWithInt(index, label);
+                  label;
+               }
+         else
+            case label of x : CoolasmLabel => x; esac
+         fi
    };
 
    objectTypeIndex() : Int { 0 };
@@ -647,10 +685,19 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                   -- ${Type}..type.hierarchy
                   -- Lay out the hierarchy in reverse prior to the type label.
                   addLabel(new CoolasmLabel.init(type.name().concat("..type.hierarchy")));
+
+                  let i : Int <- type.inheritsDepth() in
+                     while i < maxInheritsDepth loop
+                        {
+                           addInstr(constantInteger(0));
+                           i <- i + 1;
+                        }
+                     pool;
+
                   let typeIter : CoolasmType <- type in
                      while not typeIter = objectType loop
                         {
-                           addInstr(constantLabel(type.label()));
+                           addInstr(constantLabel(typeIter.label()));
                            typeIter <- typeIter.inheritsType();
                         }
                      pool;
@@ -688,30 +735,46 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
       addAllInstrs(systemInstrs);
 
       -- Generate error handlers.
-      if not errorLabels.size() = 0 then
-         let labelError : CoolasmLabel <- new CoolasmLabel.init("error") in
+      let errorLabel : CoolasmLabel <- errorLabel(),
+            iter : IntMapIterator <- errorLabels.iterator() in
+         while iter.next() loop
+            let label : CoolasmErrorLabel <- case iter.value() of x : CoolasmErrorLabel => x; esac in
+               {
+                  addLabel(label);
+                  addInstr(la(r1, label.stringLabel()));
+                  addInstr(jmp(errorLabel));
+               }
+         pool;
+
+      if not caseUnmatchedErrorLabels.size() = 0 then
+         let caseErrorLabel : CoolasmLabel <- new CoolasmLabel.init("error.case"),
+               iter : IntMapIterator <- caseUnmatchedErrorLabels.iterator() in
             {
-               let any : Bool,
-                     iter : IntMapIterator <- errorLabels.iterator() in
-                  while iter.next() loop
-                     let label : CoolasmErrorLabel <- case iter.value() of x : CoolasmErrorLabel => x; esac in
-                        {
-                           if any then
-                              addInstr(jmp(labelError))
-                           else false fi;
+               while iter.next() loop
+                  let label : CoolasmErrorLabel <- case iter.value() of x : CoolasmErrorLabel => x; esac in
+                     {
+                        addLabel(label);
+                        addInstr(la(r1, label.stringLabel()));
+                        addInstr(jmp(caseErrorLabel));
+                     }
+               pool;
 
-                           addLabel(label);
-                           addInstr(la(r0, label.stringLabel()));
-                           any <- true;
-                        }
-                  pool;
-
-               addLabel(labelError);
-               addInstr(mov(r1, sp));
-               addInstr(push(r0));
-               addInstr(syscall("IO.out_string"));
-               addInstr(syscall("exit"));
+               addLabel(caseErrorLabel);
+               addInstr(li(r3, typeNameIndex()));
+               addInstr(add(r2, r2, r3));
+               addInstr(syscall("String.concat"));
+               addInstr(la(r2, getStringLabel("'\n")));
+               addInstr(syscall("String.concat"));
+               addInstr(jmp(errorLabel()));
             }
+      else false fi;
+
+      if not isvoid errorLabel then
+         {
+            addLabel(errorLabel);
+            addInstr(syscall("IO.out_string"));
+            addInstr(syscall("exit"));
+         }
       else false fi;
 
       -- Generate string constants.
@@ -881,7 +944,82 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
          }
    };
 
-   visitCase(expr : AnalyzedCaseExpr) : Object { new ObjectUtil.abortObject(self, "visitCase: unimplemented") };
+   visitCase(expr : AnalyzedCaseExpr) : Object {{
+      expr.expr().accept(self);
+      addInstr(push(r0).setComment("reserve case var"));
+      addInstr(bz(r0, getExceptionLabel(expr.line(), "case on void")).setComment("case on void"));
+
+      -- Use r2 for getCaseUnmatchedExceptionLabel.
+      addInstr(ld(r2, r0, objectTypeIndex()).setComment("type"));
+
+      let branches : LinkedList <- new LinkedList,
+            labels : Collection <- new LinkedList,
+            objectBranch : Bool,
+            esac_ : CoolasmLabel <- allocLabel() in
+         {
+            branches.addAll(expr.branches());
+            branches.sort(new CoolasmGeneratorCaseBranchComparator);
+
+            let lastInheritsDepth : Int <- ~1,
+                  iter : Iterator <- branches.iterator() in
+               while iter.next() loop
+                  let branch : AnalyzedCaseBranch <- case iter.get() of x : AnalyzedCaseBranch => x; esac,
+                        checkType : AnalyzedType <- branch.checkType() in
+                     if checkType = program.objectType() then
+                        {
+                           -- The Object "default" branch.
+                           objectBranch <- true;
+                           branch.expr().accept(self);
+                           addInstr(jmp(esac_));
+                        }
+                     else
+                        {
+                           -- Load the nth hierarchy type of the target type.
+                           let inheritsDepth : Int <- checkType.inheritsDepth() in
+                              if not inheritsDepth = lastInheritsDepth then
+                                 {
+                                    addInstr(ld(r1, r2, ~inheritsDepth));
+                                    lastInheritsDepth <- inheritsDepth;
+                                 }
+                              else false fi;
+
+                           -- Test the hierarchy type with the branch type.
+                           let label : CoolasmLabel <- allocLabel().setComment("case ".concat(checkType.name())) in
+                              {
+                                 addInstr(la(r3, getType(checkType).label()));
+                                 addInstr(beq(r1, r3, label));
+                                 labels.add(label);
+                              };
+                        }
+                     fi
+               pool;
+
+            if not objectBranch then
+               addInstr(jmp(getCaseUnmatchedExceptionLabel(expr.line())))
+            else false fi;
+
+            let iter : Iterator <- branches.iterator(),
+                  labelIter : Iterator <- labels.iterator() in
+               while iter.next() loop
+                  let branch : AnalyzedCaseBranch <- case iter.get() of x : AnalyzedCaseBranch => x; esac in
+                     if not branch.checkType() = program.objectType() then
+                        {
+                           labelIter.next();
+                           let label : CoolasmLabel <- case labelIter.get() of x : CoolasmLabel => x; esac in
+                              {
+                                 addLabel(label);
+                                 branch.expr().accept(self);
+                                 addInstr(jmp(esac_));
+                              };
+                        }
+                     else false fi
+               pool;
+
+            addLabel(esac_);
+            addInstr(pop(r1).setComment("unreserve case var"));
+         };
+   }};
+
    visitArgumentAssignment(object : AnalyzedArgumentObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitArgumentAssignment: unimplemented") };
    visitVarAssignment(object : AnalyzedVarObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitVarAssignment: unimplemented") };
    visitAttributeAssignment(attribute : AnalyzedAttributeObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitAttributeAssignment: unimplemented") };
@@ -1014,5 +1152,22 @@ class CoolasmDefaultInitGenerator {
             fi
          fi
       fi
+   };
+};
+
+class CoolasmGeneratorCaseBranchComparator inherits Comparator {
+   compare(o1 : Object, o2 : Object) : Int {
+      let inheritsDepth1 : Int <- case o1 of x : AnalyzedCaseBranch => x.checkType().inheritsDepth(); esac,
+            inheritsDepth2 : Int <- case o2 of x : AnalyzedCaseBranch => x.checkType().inheritsDepth(); esac in
+         if inheritsDepth1 = inheritsDepth2 then
+            0
+         else
+            -- Sort highest entries first.
+            if inheritsDepth1 < inheritsDepth2 then
+               1
+            else
+               ~1
+            fi
+         fi
    };
 };

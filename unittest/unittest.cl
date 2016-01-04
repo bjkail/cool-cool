@@ -198,7 +198,17 @@ class TestIO inherits ExtendedIO {
                "expected=void, actual=".concat(actual))
       else false fi;
 
-      let expected : String <- case outIter.get() of x : String => x; esac in
+      let expected : String <-
+               case outIter.get() of
+                  x : String => x;
+                  expected : Int =>
+                     {
+                        test.failContext(context.concat(" out #").concat(new StringUtil.fromInt(outIndex)),
+                              "expected=out_int:".concat(new StringUtil.fromInt(expected))
+                              .concat(", actual=out_string:").concat(actual));
+                        "";
+                     };
+               esac in
          if not actual = expected then
             test.assertStringEquals(context.concat(" out_string #").concat(new StringUtil.fromInt(outIndex)), expected, actual)
          else false fi;
@@ -213,7 +223,17 @@ class TestIO inherits ExtendedIO {
                "expected=void, actual=".concat(new StringUtil.fromInt(actual)))
       else false fi;
 
-      let expected : Int <- case outIter.get() of x : Int => x; esac in
+      let expected : Int <-
+               case outIter.get() of
+                  x : Int => x;
+                  expected : String =>
+                     {
+                        test.failContext(context.concat(" out #").concat(new StringUtil.fromInt(outIndex)),
+                              "expected=out_string:".concat(expected)
+                              .concat(", actual=out_int:").concat(new StringUtil.fromInt(actual)));
+                        0;
+                     };
+               esac in
          if not actual = expected then
             test.assertIntEquals(context.concat(" out_int #").concat(new StringUtil.fromInt(outIndex)), expected, actual)
          else false fi;

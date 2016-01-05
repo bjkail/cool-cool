@@ -1068,7 +1068,7 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
    visitVarAssignment(object : AnalyzedVarObject, expr : AnalyzedExpr) : Object {{
       expr.accept(self);
       let index : Int <- object.index() in
-         addInstr(st(fp, fpVarOffset(index), r0).setComment("var".concat(new StringUtil.fromInt(index))));
+         addInstr(st(fp, fpVarOffset(index), r0).setComment("var".concat(stringUtil.fromInt(index))));
    }};
 
    visitAttributeAssignment(attribute : AnalyzedAttributeObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitAttributeAssignment: unimplemented") };
@@ -1079,12 +1079,12 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
 
    visitArgument(object : AnalyzedArgumentObject) : Object {
       let index : Int <- object.index() in
-         addInstr(ld(r0, fp, fpArgOffset(index)).setComment("arg".concat(new StringUtil.fromInt(index))))
+         addInstr(ld(r0, fp, fpArgOffset(index)).setComment("arg".concat(stringUtil.fromInt(index))))
    };
 
    visitVar(object : AnalyzedVarObject) : Object {
       let index : Int <- object.index() in
-         addInstr(ld(r0, fp, fpVarOffset(index)).setComment("var".concat(new StringUtil.fromInt(index))))
+         addInstr(ld(r0, fp, fpVarOffset(index)).setComment("var".concat(stringUtil.fromInt(index))))
    };
 
    visitAttribute(object : AnalyzedAttributeObject) : Object { new ObjectUtil.abortObject(self, "visitAttribute unimplemented") };

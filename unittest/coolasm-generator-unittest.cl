@@ -142,6 +142,13 @@ class Main inherits Test {
                   newTestIO("var", new Collection, new LinkedList.add(1)));
             interpretExpr("var value", "new IO.out_int(let a : Int in a <- 1)",
                   newTestIO("var value", new Collection, new LinkedList.add(1)));
+
+            interpret("argument",
+                  "class Main { main() : Object { a(0) };\na(a : Int) : Object {{ a <- 1; new IO.out_int(a); }}; };",
+                  newTestIO("argument", new Collection, new LinkedList.add(1)));
+            interpret("argument value",
+                  "class Main { main() : Object { a(0) }; a(a : Int) : Object { new IO.out_int(a <- 1) }; };",
+                  newTestIO("argument value", new Collection, new LinkedList.add(1)));
          }
       else false fi
    };

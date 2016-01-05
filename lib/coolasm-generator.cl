@@ -950,7 +950,7 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
 
    visitCase(expr : AnalyzedCaseExpr) : Object {{
       expr.expr().accept(self);
-      addInstr(push(r0).setComment("reserve case var"));
+      addInstr(push(r0).setComment("save case var"));
       addInstr(bz(r0, getExceptionLabel(expr.line(), "case on void")).setComment("case on void"));
 
       -- Use r2 for getCaseUnmatchedExceptionLabel.
@@ -1020,7 +1020,7 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                pool;
 
             addLabel(esac_);
-            addInstr(pop(r1).setComment("unreserve case var"));
+            addInstr(pop(r1).setComment("unsave case var"));
          };
    }};
 
@@ -1029,13 +1029,14 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
    visitAttributeAssignment(attribute : AnalyzedAttributeObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitAttributeAssignment: unimplemented") };
 
    visitSelf(object : AnalyzedSelfObject) : Object {
-      addInstr(ld(r0, fp, fpSelfOffset()))
+      addInstr(ld(r0, fp, fpSelfOffset()).setComment("self"))
    };
 
    visitArgument(object : AnalyzedArgumentObject) : Object { new ObjectUtil.abortObject(self, "visitArgument unimplemented") };
 
    visitVar(object : AnalyzedVarObject) : Object {
-      addInstr(ld(r0, fp, fpVarOffset(object.index())))
+      let index : Int <- object.index() in
+         addInstr(ld(r0, fp, fpVarOffset(index)).setComment("var".concat(new StringUtil.fromInt(index))))
    };
 
    visitAttribute(object : AnalyzedAttributeObject) : Object { new ObjectUtil.abortObject(self, "visitAttribute unimplemented") };

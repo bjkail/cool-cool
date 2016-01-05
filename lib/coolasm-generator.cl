@@ -36,6 +36,7 @@ class CoolasmType {
       hierarchy.addAll(inheritsType_.hierarchy());
       hierarchy.add(self);
       nextAttributeIndex <- inheritsType_.nextAttributeIndex();
+      methodDispatches.putAll(inheritsType_.methodDispatches());
       nextMethodIndex <- inheritsType_.nextMethodIndex();
       self;
    }};

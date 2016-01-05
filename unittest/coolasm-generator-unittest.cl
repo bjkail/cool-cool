@@ -149,6 +149,21 @@ class Main inherits Test {
                   "class Main inherits A { main() : Object { self.a() }; a() : Object { new IO.out_int(2) }; };"
                   .concat("class A { a() : Object { new IO.out_int(1) }; };"),
                   newTestIO("self dispatch", new Collection, new LinkedList.add(2)));
+
+            interpret("static dispatch",
+                  "class Main inherits A { main() : Object { self@A.a() }; a() : Object { new IO.out_int(2) }; };"
+                  .concat("class A { a() : Object { new IO.out_int(1) }; };"),
+                  newTestIO("static dispatch", new Collection, new LinkedList.add(1)));
+
+            interpret("override dispatch",
+                  "class Main inherits A { main() : Object { self@A.a() }; a() : Object { new IO.out_int(2) }; };"
+                  .concat("class A { a() : Object { new IO.out_int(1) }; };"),
+                  newTestIO("override dispatch", new Collection, new LinkedList.add(1)));
+
+            interpret("dispatch order",
+                  "class Main inherits IO { main() : Object { out_int(3).a(out_int(2)).b(out_int(1)) };"
+                  .concat("a(o : Object) : SELF_TYPE { out_int(4) }; b(o : Object) : SELF_TYPE { out_int(5) }; };"),
+                  newTestIO("dispatch order", new Collection, new LinkedList.add(1).add(2).add(3).add(4).add(5)));
          }
       else false fi
    };

@@ -365,7 +365,8 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
    -- fp is offset 0
    spArgOffset() : Int { 1 };
    -- ra is offset 0
-   fpVarOffset(n : Int) : Int { ~1 - n };
+   fpSelfOffset() : Int { ~1 };
+   fpVarOffset(n : Int) : Int { ~2 - n };
 
    r0 : CoolasmReg <- new CoolasmReg.init(0);
    r0() : CoolasmReg { r0 };
@@ -665,7 +666,9 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                                     addInstr(push(fp));
                                     addInstr(mov(fp, sp));
                                     addInstr(push(ra));
+                                    addInstr(push(r0));
                                     method.analyzedMethod().expr().accept(self);
+                                    addInstr(pop(r1).setComment("unreserve self"));
                                     addInstr(pop(ra));
                                     addInstr(pop(fp));
                                     addInstr(return);
@@ -1023,7 +1026,11 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
    visitArgumentAssignment(object : AnalyzedArgumentObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitArgumentAssignment: unimplemented") };
    visitVarAssignment(object : AnalyzedVarObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitVarAssignment: unimplemented") };
    visitAttributeAssignment(attribute : AnalyzedAttributeObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitAttributeAssignment: unimplemented") };
-   visitSelf(object : AnalyzedSelfObject) : Object { new ObjectUtil.abortObject(self, "visitSelf unimplemented") };
+
+   visitSelf(object : AnalyzedSelfObject) : Object {
+      addInstr(ld(r0, fp, fpSelfOffset()))
+   };
+
    visitArgument(object : AnalyzedArgumentObject) : Object { new ObjectUtil.abortObject(self, "visitArgument unimplemented") };
 
    visitVar(object : AnalyzedVarObject) : Object {

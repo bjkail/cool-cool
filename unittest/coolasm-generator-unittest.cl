@@ -5,6 +5,7 @@ class Main inherits Test {
       testIf();
       testLet();
       testCase();
+      testDispatch();
    }};
 
    debug : Bool;
@@ -129,6 +130,25 @@ class Main inherits Test {
                   .concat("class B inherits C { b : Int; };")
                   .concat("class C { c : Int; };"),
                   newTestIO("hierarchy", new Collection, new LinkedList.add(1).add(2).add(3)));
+         }
+      else false fi
+   };
+
+   testDispatch() : Object {
+      if begin("dispatch") then
+         {
+            interpret("hierarchy", "class Main inherits A { x : Bool; }; class A { main() : Object { new IO.out_int(1) }; };",
+                  newTestIO("hierarchy", new Collection, new LinkedList.add(1)));
+
+            interpret("implicit self dispatch",
+                  "class Main inherits A { main() : Object { a() }; a() : Object { new IO.out_int(2) }; };"
+                  .concat("class A { a() : Object { new IO.out_int(1) }; };"),
+                  newTestIO("implicit self dispatch", new Collection, new LinkedList.add(2)));
+
+            interpret("self dispatch",
+                  "class Main inherits A { main() : Object { self.a() }; a() : Object { new IO.out_int(2) }; };"
+                  .concat("class A { a() : Object { new IO.out_int(1) }; };"),
+                  newTestIO("self dispatch", new Collection, new LinkedList.add(2)));
          }
       else false fi
    };

@@ -1064,7 +1064,13 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
    }};
 
    visitArgumentAssignment(object : AnalyzedArgumentObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitArgumentAssignment: unimplemented") };
-   visitVarAssignment(object : AnalyzedVarObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitVarAssignment: unimplemented") };
+
+   visitVarAssignment(object : AnalyzedVarObject, expr : AnalyzedExpr) : Object {{
+      expr.accept(self);
+      let index : Int <- object.index() in
+         addInstr(st(fp, fpVarOffset(index), r0).setComment("var".concat(new StringUtil.fromInt(index))));
+   }};
+
    visitAttributeAssignment(attribute : AnalyzedAttributeObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitAttributeAssignment: unimplemented") };
 
    visitSelf(object : AnalyzedSelfObject) : Object {

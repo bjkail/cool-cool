@@ -5,6 +5,7 @@ class Main inherits Test {
       testIf();
       testLet();
       testCase();
+      testAssignment();
       testDispatch();
    }};
 
@@ -130,6 +131,17 @@ class Main inherits Test {
                   .concat("class B inherits C { b : Int; };")
                   .concat("class C { c : Int; };"),
                   newTestIO("hierarchy", new Collection, new LinkedList.add(1).add(2).add(3)));
+         }
+      else false fi
+   };
+
+   testAssignment() : Object {
+      if begin("assignment") then
+         {
+            interpretExpr("var", "new IO.out_int(let a : Int in { a <- 1; a; })",
+                  newTestIO("var", new Collection, new LinkedList.add(1)));
+            interpretExpr("var value", "new IO.out_int(let a : Int in a <- 1)",
+                  newTestIO("var value", new Collection, new LinkedList.add(1)));
          }
       else false fi
    };

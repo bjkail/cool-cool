@@ -363,11 +363,54 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
    typeNewIndex() : Int { 3 };
    typeDispatchOffset() : Int { 4 };
 
-   -- fp is offset 0
-   spArgOffset() : Int { 1 };
-   -- ra is offset 0
+   numArgs : Int;
+
+   -- Frameless stack layout:
+   --  arg0
+   --  arg1
+   --  ...
+   --  argN-1
+   --  void         <-- sp
+
+   spFramelessArgOffset(n : Int) : Int { numArgs - n };
+
+   beginFramelessMethod(method : CoolasmMethod) : CoolasmMethod {{
+      numArgs <- method.analyzedMethod().formalTypes().size();
+      method;
+   }};
+
+   -- Stack layout:
+   --   arg0
+   --   arg1
+   --   ...
+   --   argN-1
+   --   saved fp
+   --   saved ra    <-- fp
+   --   saved self
+   --   var0
+   --   var1
+   --   ...
+   --   varN-1
+   --   void        <-- sp
+
+   fpArgOffset(n : Int) : Int { 1 + numArgs - n };
    fpSelfOffset() : Int { ~1 };
    fpVarOffset(n : Int) : Int { ~2 - n };
+
+   beginMethod(method : CoolasmMethod) : Object {{
+      addInstr(push(fp));
+      addInstr(mov(fp, sp));
+      addInstr(push(ra));
+      addInstr(push(r0).setComment("save self"));
+      beginFramelessMethod(method);
+   }};
+
+   endMethod() : Object {{
+      addInstr(pop(r1).setComment("unsave self"));
+      addInstr(pop(ra));
+      addInstr(pop(fp));
+      addInstr(return);
+   }};
 
    r0 : CoolasmReg <- new CoolasmReg.init(0);
    r0() : CoolasmReg { r0 };
@@ -600,18 +643,20 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
             ioType.setInheritsType(objectType);
             ioType.initNewLabel();
 
-            ioType.addMethod(analyzedIoType.getMethod("out_string")).setAsm(new LinkedList
-                  .add(ld(r1, sp, spArgOffset()).setComment("arg1"))
-                  .add(li(r2, stringValueIndex()))
-                  .add(add(r1, r1, r2).setComment("attribute String.value"))
-                  .add(syscall("IO.out_string"))
-                  .add(return));
+            let method : CoolasmMethod <- beginFramelessMethod(ioType.addMethod(analyzedIoType.getMethod("out_string"))) in
+               method.setAsm(new LinkedList
+                     .add(ld(r1, sp, spFramelessArgOffset(0)).setComment("arg0"))
+                     .add(li(r2, stringValueIndex()))
+                     .add(add(r1, r1, r2).setComment("attribute String.value"))
+                     .add(syscall("IO.out_string"))
+                     .add(return));
 
-            ioType.addMethod(analyzedIoType.getMethod("out_int")).setAsm(new LinkedList
-                  .add(ld(r1, sp, spArgOffset()).setComment("arg1"))
-                  .add(ld(r1, r1, intValueIndex()).setComment("attribute Int.value"))
-                  .add(syscall("IO.out_int"))
-                  .add(return));
+            let method : CoolasmMethod <- beginFramelessMethod(ioType.addMethod(analyzedIoType.getMethod("out_int"))) in
+               method.setAsm(new LinkedList
+                     .add(ld(r1, sp, spFramelessArgOffset(0)).setComment("arg0"))
+                     .add(ld(r1, r1, intValueIndex()).setComment("attribute Int.value"))
+                     .add(syscall("IO.out_int"))
+                     .add(return));
 
             -- TODO: initialize IO methods
             types.putWithString(ioType.name(), ioType);
@@ -664,15 +709,9 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                            let asm : Collection <- method.asm() in
                               if isvoid asm then
                                  {
-                                    addInstr(push(fp));
-                                    addInstr(mov(fp, sp));
-                                    addInstr(push(ra));
-                                    addInstr(push(r0));
+                                    beginMethod(method);
                                     method.analyzedMethod().expr().accept(self);
-                                    addInstr(pop(r1).setComment("unreserve self"));
-                                    addInstr(pop(ra));
-                                    addInstr(pop(fp));
-                                    addInstr(return);
+                                    endMethod();
                                  }
                               else
                                  addAllInstrs(asm)
@@ -1032,7 +1071,10 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
       addInstr(ld(r0, fp, fpSelfOffset()).setComment("self"))
    };
 
-   visitArgument(object : AnalyzedArgumentObject) : Object { new ObjectUtil.abortObject(self, "visitArgument unimplemented") };
+   visitArgument(object : AnalyzedArgumentObject) : Object {
+      let index : Int <- object.index() in
+         addInstr(ld(r0, fp, fpArgOffset(index)).setComment("arg".concat(new StringUtil.fromInt(index))))
+   };
 
    visitVar(object : AnalyzedVarObject) : Object {
       let index : Int <- object.index() in
@@ -1055,7 +1097,7 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                   let expr : AnalyzedExpr <- case argIter.get() of x : AnalyzedExpr => x; esac in
                      {
                         expr.accept(self);
-                        addInstr(push(r0).setComment("push arg".concat(stringUtil.fromInt(index + 1))));
+                        addInstr(push(r0).setComment("push arg".concat(stringUtil.fromInt(index))));
                      }
                pool;
 

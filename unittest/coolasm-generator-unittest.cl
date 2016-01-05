@@ -164,6 +164,17 @@ class Main inherits Test {
                   "class Main inherits IO { main() : Object { out_int(3).a(out_int(2)).b(out_int(1)) };"
                   .concat("a(o : Object) : SELF_TYPE { out_int(4) }; b(o : Object) : SELF_TYPE { out_int(5) }; };"),
                   newTestIO("dispatch order", new Collection, new LinkedList.add(1).add(2).add(3).add(4).add(5)));
+
+            interpret("dispatch void",
+                  "class Main { main() : Int { let void : Main in void.void() }; void() : Int { 0 }; };",
+                  newTestIO("dispatch void", new Collection, new LinkedList.add("ERROR: 1: Exception: dispatch on void\n")));
+
+            interpret("dispatch arg",
+                  "class Main { main() : Object { new IO.out_int(a(1)) }; a(a : Int) : Int { a }; };",
+                  newTestIO("dispatch arg", new Collection, new LinkedList.add(1)));
+            interpret("dispatch arg 2",
+                  "class Main { main() : Object { new IO.out_int(a(1, 2)) }; a(a : Int, b : Int) : Int { b }; };",
+                  newTestIO("dispatch arg 2", new Collection, new LinkedList.add(2)));
          }
       else false fi
    };

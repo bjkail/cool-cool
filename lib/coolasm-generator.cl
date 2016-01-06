@@ -157,6 +157,7 @@ class CoolasmAttribute {
    init(index_ : Int, analyzedAttribute_ : AnalyzedAttribute) : SELF_TYPE {{
       index <- index_;
       analyzedAttribute <- analyzedAttribute_;
+      id <- analyzedAttribute_.id();
       self;
    }};
 };
@@ -1075,7 +1076,17 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
          addInstr(st(fp, fpVarOffset(index), r0).setComment("var".concat(stringUtil.fromInt(index))));
    }};
 
-   visitAttributeAssignment(attribute : AnalyzedAttributeObject, expr : AnalyzedExpr) : Object { new ObjectUtil.abortObject(self, "visitAttributeAssignment: unimplemented") };
+   visitAttributeAssignment(object : AnalyzedAttributeObject, expr : AnalyzedExpr) : Object {
+      let attr : AnalyzedAttribute <- object.attribute(),
+            type : CoolasmType <- getType(attr.containingType()),
+            id : String <- attr.id(),
+            attr : CoolasmAttribute <- type.getAttribute(id) in
+         {
+            expr.accept(self);
+            addInstr(ld(r1, fp, fpSelfOffset()).setComment("self"));
+            addInstr(st(r1, attr.index(), r0).setComment(type.name().concat(".").concat(id)));
+         }
+   };
 
    visitSelf(object : AnalyzedSelfObject) : Object {
       addInstr(ld(r0, fp, fpSelfOffset()).setComment("self"))
@@ -1091,7 +1102,16 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
          addInstr(ld(r0, fp, fpVarOffset(index)).setComment("var".concat(stringUtil.fromInt(index))))
    };
 
-   visitAttribute(object : AnalyzedAttributeObject) : Object { new ObjectUtil.abortObject(self, "visitAttribute unimplemented") };
+   visitAttribute(object : AnalyzedAttributeObject) : Object {
+      let attr : AnalyzedAttribute <- object.attribute(),
+            type : CoolasmType <- getType(attr.containingType()),
+            id : String <- attr.id(),
+            attr : CoolasmAttribute <- type.getAttribute(id) in
+         {
+            addInstr(ld(r0, fp, fpSelfOffset()).setComment("self"));
+            addInstr(ld(r0, r0, attr.index()).setComment(type.name().concat(".").concat(id)));
+         }
+   };
 
    visitNew(expr : AnalyzedNewExpr) : Object {
       let type : CoolasmType <- getType(expr.type()) in

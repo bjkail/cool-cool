@@ -138,6 +138,13 @@ class Main inherits Test {
    testAssignment() : Object {
       if begin("assignment") then
          {
+            interpret("attribute",
+                  "class Main { a : Int; main() : Object {{ a <- 1; new IO.out_int(a); }}; };",
+                  newTestIO("attribute", new Collection, new LinkedList.add(1)));
+            interpret("attribute value",
+                  "class Main { a : Int; main() : Object { new IO.out_int(a <- 1) }; };",
+                  newTestIO("attribute value", new Collection, new LinkedList.add(1)));
+
             interpretExpr("var", "new IO.out_int(let a : Int in { a <- 1; a; })",
                   newTestIO("var", new Collection, new LinkedList.add(1)));
             interpretExpr("var value", "new IO.out_int(let a : Int in a <- 1)",

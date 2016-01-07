@@ -478,12 +478,12 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
       labelInt0;
    }};
 
-   labelIntCreateConstant : CoolasmLabel;
-   labelIntCreateConstant() : CoolasmLabel {{
-      if isvoid labelIntCreateConstant then
+   labelIntCreate : CoolasmLabel;
+   labelIntCreate() : CoolasmLabel {{
+      if isvoid labelIntCreate then
          {
-            labelIntCreateConstant <- new CoolasmLabel.init("Int..create.constant");
-            systemInstrs.add(labelIntCreateConstant);
+            labelIntCreate <- new CoolasmLabel.init("Int..create");
+            systemInstrs.add(labelIntCreate);
             systemInstrs.add(li(r0, intSize()));
             systemInstrs.add(alloc(r0, r0));
             systemInstrs.add(la(r2, intType.label()));
@@ -493,7 +493,7 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
          }
       else false fi;
 
-      labelIntCreateConstant;
+      labelIntCreate;
    }};
 
    labelStringCreate : CoolasmLabel;
@@ -506,31 +506,13 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
             systemInstrs.add(alloc(r0, r0));
             systemInstrs.add(la(r2, stringType.label()));
             systemInstrs.add(st(r0, objectTypeIndex(), r2).setComment("type"));
-            systemInstrs.add(st(r0, stringValueIndex(), r1).setComment("value"));
-            systemInstrs.add(return);
-         }
-      else false fi;
-
-      labelStringCreate;
-   }};
-
-   labelStringCreateConstant : CoolasmLabel;
-   labelStringCreateConstant() : CoolasmLabel {{
-      if isvoid labelStringCreateConstant then
-         {
-            labelStringCreateConstant <- new CoolasmLabel.init("String..create.constant");
-            systemInstrs.add(labelStringCreateConstant);
-            systemInstrs.add(li(r0, stringSize()));
-            systemInstrs.add(alloc(r0, r0));
-            systemInstrs.add(la(r2, stringType.label()));
-            systemInstrs.add(st(r0, objectTypeIndex(), r2).setComment("type"));
             systemInstrs.add(ld(r1, r1, 0));
             systemInstrs.add(st(r0, stringValueIndex(), r1).setComment("value"));
             systemInstrs.add(return);
          }
       else false fi;
 
-      labelStringCreateConstant;
+      labelStringCreate;
    }};
 
    labelStringEmpty : CoolasmLabel;
@@ -1187,12 +1169,12 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
 
    visitConstantInt(expr : AnalyzedConstantIntExpr) : Object {{
       addInstr(li(r1, expr.value()));
-      addInstr(callLabel(labelIntCreateConstant()));
+      addInstr(callLabel(labelIntCreate()));
    }};
 
    visitConstantString(expr : AnalyzedConstantStringExpr) : Object {{
       addInstr(la(r1, getStringLabel(expr.value())));
-      addInstr(callLabel(labelStringCreateConstant()));
+      addInstr(callLabel(labelStringCreate()));
    }};
 };
 

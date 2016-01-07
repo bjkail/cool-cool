@@ -1154,7 +1154,15 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
 
                   addLabel(labelEnd);
                }
-         else new ObjectUtil.abortObject(self, "visitUnary: unimplemented ".concat(op)) fi;
+         else
+            if op = "~" then
+               {
+                  addInstr(ld(r0, r0, intValueIndex()).setComment("attribute Int.value"));
+                  addInstr(sub(r1, r7, r0).setComment("complement"));
+                  addInstr(callLabel(labelIntCreate()));
+               }
+            else new ObjectUtil.abortObject(self, "visitUnary: unimplemented ".concat(op)) fi
+         fi;
    }};
 
    visitBinary(expr : AnalyzedBinaryExpr) : Object { new ObjectUtil.abortObject(self, "visitBinary: unimplemented") };

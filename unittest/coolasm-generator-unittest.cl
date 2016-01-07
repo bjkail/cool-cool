@@ -219,6 +219,9 @@ class Main inherits Test {
                   newTestIO("isvoid string", new Collection, new LinkedList.add(1)));
             interpretExpr("isvoid self", "if isvoid self then false else new IO.out_int(1) fi",
                   newTestIO("isvoid self", new Collection, new LinkedList.add(1)));
+
+            interpretExpr("complement", "new IO.out_int(~1)",
+                  newTestIO("complement", new Collection, new LinkedList.add(~1)));
          }
       else false fi
    };

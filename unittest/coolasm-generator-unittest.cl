@@ -222,6 +222,11 @@ class Main inherits Test {
 
             interpretExpr("complement", "new IO.out_int(~1)",
                   newTestIO("complement", new Collection, new LinkedList.add(~1)));
+
+            interpretExpr("not false", "if not false then new IO.out_int(1) else false fi",
+                  newTestIO("not false", new Collection, new LinkedList.add(1)));
+            interpretExpr("not true", "if not true then false else new IO.out_int(1) fi",
+                  newTestIO("not true", new Collection, new LinkedList.add(1)));
          }
       else false fi
    };

@@ -530,30 +530,34 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
    }};
 
    labelBoolFalse : CoolasmLabel;
-   labelBoolFalse() : CoolasmLabel {{
+   labelBoolTrue : CoolasmLabel;
+
+   -- labelBoolFalse() + labelBoolTrueOffset() = labelBoolTrue()
+   labelBoolTrueOffset() : Int { 2 };
+
+   initLabelBool() : Object {{
       if isvoid labelBoolFalse then
          {
             labelBoolFalse <- new CoolasmLabel.init("Bool..false");
             systemInstrs.add(labelBoolFalse);
             systemInstrs.add(constantLabel(boolType.label()));
             systemInstrs.add(constantInteger(0));
-         }
-      else false fi;
 
-      labelBoolFalse;
-   }};
-
-   labelBoolTrue : CoolasmLabel;
-   labelBoolTrue() : CoolasmLabel {{
-      if isvoid labelBoolTrue then
-         {
             labelBoolTrue <- new CoolasmLabel.init("Bool..true");
             systemInstrs.add(labelBoolTrue);
             systemInstrs.add(constantLabel(boolType.label()));
-            systemInstrs.add(constantInteger(2));
+            systemInstrs.add(constantInteger(labelBoolTrueOffset()));
          }
       else false fi;
+   }};
 
+   labelBoolFalse() : CoolasmLabel {{
+      initLabelBool();
+      labelBoolFalse;
+   }};
+
+   labelBoolTrue() : CoolasmLabel {{
+      initLabelBool();
       labelBoolTrue;
    }};
 
@@ -1161,7 +1165,17 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                   addInstr(sub(r1, r7, r0).setComment("complement"));
                   addInstr(callLabel(labelIntCreate()));
                }
-            else new ObjectUtil.abortObject(self, "visitUnary: unimplemented ".concat(op)) fi
+            else
+               if op = "not" then
+                  {
+                     -- value is either 0 (false) or 1 (true)
+                     -- result = labelBoolTrue - value
+                     addInstr(ld(r0, r0, boolValueIndex()).setComment("attribute Bool.value"));
+                     addInstr(la(r1, labelBoolTrue()));
+                     addInstr(sub(r0, r1, r0).setComment("not"));
+                  }
+               else new ObjectUtil.abortObject(self, "visitUnary: unimplemented ".concat(op)) fi
+            fi
          fi;
    }};
 

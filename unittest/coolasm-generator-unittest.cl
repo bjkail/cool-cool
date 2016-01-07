@@ -7,6 +7,7 @@ class Main inherits Test {
       testCase();
       testAssignment();
       testDispatch();
+      testUnary();
    }};
 
    debug : Bool;
@@ -201,6 +202,23 @@ class Main inherits Test {
             interpret("dispatch arg 2",
                   "class Main { main() : Object { new IO.out_int(a(1, 2)) }; a(a : Int, b : Int) : Int { b }; };",
                   newTestIO("dispatch arg 2", new Collection, new LinkedList.add(2)));
+         }
+      else false fi
+   };
+
+   testUnary() : Object {
+      if begin("unary") then
+         {
+            interpretExpr("isvoid void", "if isvoid let a : Object in a then new IO.out_int(1) else false fi",
+                  newTestIO("isvoid void", new Collection, new LinkedList.add(1)));
+            interpretExpr("isvoid int", "if isvoid 0 then false else new IO.out_int(1) fi",
+                  newTestIO("isvoid int", new Collection, new LinkedList.add(1)));
+            interpretExpr("isvoid bool", "if isvoid false then false else new IO.out_int(1) fi",
+                  newTestIO("isvoid bool", new Collection, new LinkedList.add(1)));
+            interpretExpr("isvoid string", "if isvoid \"\" then false else new IO.out_int(1) fi",
+                  newTestIO("isvoid string", new Collection, new LinkedList.add(1)));
+            interpretExpr("isvoid self", "if isvoid self then false else new IO.out_int(1) fi",
+                  newTestIO("isvoid self", new Collection, new LinkedList.add(1)));
          }
       else false fi
    };

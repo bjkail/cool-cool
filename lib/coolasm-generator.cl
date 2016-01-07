@@ -1155,7 +1155,26 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
          }
    };
 
-   visitUnary(expr : AnalyzedUnaryExpr) : Object { new ObjectUtil.abortObject(self, "visitUnary: unimplemented") };
+   visitUnary(expr : AnalyzedUnaryExpr) : Object {{
+      expr.expr().accept(self);
+
+      let op : String <- expr.op() in
+         if op = "isvoid" then
+            let labelIsvoid : CoolasmLabel <- allocLabel(),
+                  labelEnd : CoolasmLabel <- allocLabel() in
+               {
+                  addInstr(bz(r0, labelIsvoid).setComment("isvoid"));
+                  addInstr(la(r0, labelBoolFalse()));
+                  addInstr(jmp(labelEnd));
+
+                  addLabel(labelIsvoid);
+                  addInstr(la(r0, labelBoolTrue()));
+
+                  addLabel(labelEnd);
+               }
+         else new ObjectUtil.abortObject(self, "visitUnary: unimplemented ".concat(op)) fi;
+   }};
+
    visitBinary(expr : AnalyzedBinaryExpr) : Object { new ObjectUtil.abortObject(self, "visitBinary: unimplemented") };
 
    visitConstantBool(expr : AnalyzedConstantBoolExpr) : Object {

@@ -8,6 +8,7 @@ class Main inherits Test {
       testAssignment();
       testDispatch();
       testUnary();
+      testBinary();
    }};
 
    debug : Bool;
@@ -227,6 +228,15 @@ class Main inherits Test {
                   newTestIO("not false", new Collection, new LinkedList.add(1)));
             interpretExpr("not true", "if not true then false else new IO.out_int(1) fi",
                   newTestIO("not true", new Collection, new LinkedList.add(1)));
+         }
+      else false fi
+   };
+
+   testBinary() : Object {
+      if begin("binary") then
+         {
+            interpretExpr("add", "new IO.out_int(1 + 2)",
+                  newTestIO("add", new Collection, new LinkedList.add(3)));
          }
       else false fi
    };

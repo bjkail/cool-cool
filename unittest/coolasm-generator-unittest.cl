@@ -240,6 +240,9 @@ class Main inherits Test {
 
             interpretExpr("subtract", "new IO.out_int(3 - 2)",
                   newTestIO("subtract", new Collection, new LinkedList.add(1)));
+
+            interpretExpr("multiply", "new IO.out_int(2 * 3)",
+                  newTestIO("multiply", new Collection, new LinkedList.add(6)));
          }
       else false fi
    };

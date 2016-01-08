@@ -243,6 +243,12 @@ class Main inherits Test {
 
             interpretExpr("multiply", "new IO.out_int(2 * 3)",
                   newTestIO("multiply", new Collection, new LinkedList.add(6)));
+
+            interpretExpr("divide", "new IO.out_int(6 / 3)",
+                  newTestIO("divide", new Collection, new LinkedList.add(2)));
+
+            interpretExpr("divide 0", "new IO.out_int(1 / 0)",
+                  newTestIO("divide 0", new Collection, new LinkedList.add("ERROR: 1: Exception: divide by 0\n")));
          }
       else false fi
    };

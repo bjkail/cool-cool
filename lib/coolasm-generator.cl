@@ -1209,7 +1209,17 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                      addInstr(mul(r1, r1, r0));
                      addInstr(callLabel(labelIntCreate()));
                   }
-               else new ObjectUtil.abortObject(self, "visitBinary: unimplemented ".concat(op)) fi
+               else
+                  if op = "/" then
+                     {
+                        addInstr(ld(r1, r1, intValueIndex()).setComment("attribute Int.value"));
+                        addInstr(ld(r0, r0, intValueIndex()).setComment("attribute Int.value"));
+                        addInstr(bz(r0, getExceptionLabel(expr.line(), "divide by 0")).setComment("divide by 0"));
+                        addInstr(div(r1, r1, r0));
+                        addInstr(callLabel(labelIntCreate()));
+                     }
+                  else new ObjectUtil.abortObject(self, "visitBinary: unimplemented ".concat(op)) fi
+               fi
             fi
          fi;
    }};

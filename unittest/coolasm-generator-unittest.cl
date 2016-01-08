@@ -237,6 +237,9 @@ class Main inherits Test {
          {
             interpretExpr("add", "new IO.out_int(1 + 2)",
                   newTestIO("add", new Collection, new LinkedList.add(3)));
+
+            interpretExpr("subtract", "new IO.out_int(3 - 2)",
+                  newTestIO("subtract", new Collection, new LinkedList.add(1)));
          }
       else false fi
    };

@@ -1149,7 +1149,19 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
 
    visitNew(expr : AnalyzedNewExpr) : Object {
       let type : CoolasmType <- getType(expr.type()) in
-         addInstr(callLabel(type.newLabel()))
+         if type = intType then
+            addInstr(la(r0, labelInt0()))
+         else
+            if type = stringType then
+               addInstr(la(r0, labelStringEmpty()))
+            else
+               if type = boolType then
+                  addInstr(la(r0, labelBoolFalse()))
+               else
+                  addInstr(callLabel(type.newLabel()))
+               fi
+            fi
+         fi
    };
 
    visitDispatch(expr : AnalyzedDispatchExpr) : Object {

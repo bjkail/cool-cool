@@ -252,16 +252,22 @@ class Main inherits Test {
 
             interpretExpr("equal int", "new IO.out_int(if 0 = 0 then 1 else 0 fi)",
                   newTestIO("equal int", new Collection, new LinkedList.add(1)));
+            interpretExpr("equal int new", "new IO.out_int(if 0 = new Int then 1 else 0 fi)",
+                  newTestIO("equal int new", new Collection, new LinkedList.add(1)));
             interpretExpr("equal int 2", "new IO.out_int(if 0 = 1 then 1 else 0 fi)",
                   newTestIO("equal int 2", new Collection, new LinkedList.add(0)));
 
             interpretExpr("equal bool", "new IO.out_int(if false = false then 1 else 0 fi)",
                   newTestIO("equal bool", new Collection, new LinkedList.add(1)));
+            interpretExpr("equal bool new", "new IO.out_int(if false = new Bool then 1 else 0 fi)",
+                  newTestIO("equal bool new", new Collection, new LinkedList.add(1)));
             interpretExpr("equal bool 2", "new IO.out_int(if false = true then 1 else 0 fi)",
                   newTestIO("equal bool 2", new Collection, new LinkedList.add(0)));
 
             interpretExpr("equal string", "new IO.out_int(if \"a\" = \"a\" then 1 else 0 fi)",
                   newTestIO("equal string", new Collection, new LinkedList.add(1)));
+            interpretExpr("equal string new", "new IO.out_int(if \"\" = new String then 1 else 0 fi)",
+                  newTestIO("equal string new", new Collection, new LinkedList.add(1)));
             interpretExpr("equal string 2", "new IO.out_int(if \"\" = \"a\" then 1 else 0 fi)",
                   newTestIO("equal string 2", new Collection, new LinkedList.add(0)));
 

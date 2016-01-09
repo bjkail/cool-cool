@@ -1250,9 +1250,9 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
 
    visitBinary(expr : AnalyzedBinaryExpr) : Object {{
       expr.left().accept(self);
-      addInstr(push(r0));
+      addInstr(push(r0).setComment("save left"));
       expr.right().accept(self);
-      addInstr(pop(r1));
+      addInstr(pop(r1).setComment("unsave left"));
 
       let op : String <- expr.op() in
          if op = "+" then

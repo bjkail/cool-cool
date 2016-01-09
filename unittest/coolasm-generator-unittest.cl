@@ -6,6 +6,7 @@ class Main inherits Test {
       testLet();
       testCase();
       testAssignment();
+      testNew();
       testDispatch();
       testUnary();
       testBinary();
@@ -162,6 +163,24 @@ class Main inherits Test {
       else false fi
    };
 
+   testNew() : Object {
+      if begin("new") then
+         {
+            interpretExpr("bool", "new IO.out_int(if new Bool then 1 else 0 fi)",
+                  newTestIO("bool", new Collection, new LinkedList.add(0)));
+
+            interpretExpr("int", "new IO.out_int(new Int)",
+                  newTestIO("int", new Collection, new LinkedList.add(0)));
+
+            interpretExpr("string", "new IO.out_string(new String)",
+                  newTestIO("string", new Collection, new LinkedList.add("")));
+
+            interpret("self", "class Main { a : Int; main() : Object { new IO.out_int(new SELF_TYPE.a()) }; a() : Int { a }; };",
+                  newTestIO("self", new Collection, new LinkedList.add(0)));
+         }
+      else false fi
+   };
+
    testDispatch() : Object {
       if begin("dispatch") then
          {
@@ -273,6 +292,8 @@ class Main inherits Test {
 
             interpretExpr("equal self", "new IO.out_int(if self = self then 1 else 0 fi)",
                   newTestIO("equal self", new Collection, new LinkedList.add(1)));
+            interpretExpr("equal self new", "new IO.out_int(if self = new SELF_TYPE then 1 else 0 fi)",
+                  newTestIO("equal self new", new Collection, new LinkedList.add(0)));
 
             interpretExpr("equal void", "new IO.out_int(if let void : Object in void = void then 1 else 0 fi)",
                   newTestIO("equal void", new Collection, new LinkedList.add(1)));

@@ -1290,8 +1290,7 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                            then
                               addInstr(callLabel(labelObjectEqual()))
                            else
-                              let labelFalse : CoolasmLabel <- allocLabel(),
-                                    labelTrue : CoolasmLabel <- allocLabel(),
+                              let labelTrue : CoolasmLabel <- allocLabel(),
                                     labelEnd : CoolasmLabel <- allocLabel() in
                                  {
                                     if if leftType = intType then
@@ -1300,16 +1299,17 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                                           leftType = stringType
                                        fi
                                     then
-                                       {
-                                          addInstr(ld(r1, r1, valueIndex()).setComment("attribute ".concat(leftType.name()).concat(" value")));
-                                          addInstr(ld(r0, r0, valueIndex()).setComment("attribute ".concat(leftType.name()).concat(" value")));
-                                          addInstr(beq(r1, r0, labelTrue).setComment("value equal"));
-                                       }
+                                       let labelFalse : CoolasmLabel <- allocLabel() in
+                                          {
+                                             addInstr(ld(r1, r1, valueIndex()).setComment("attribute ".concat(leftType.name()).concat(" value")));
+                                             addInstr(ld(r0, r0, valueIndex()).setComment("attribute ".concat(leftType.name()).concat(" value")));
+                                             addInstr(beq(r1, r0, labelTrue).setComment("value equal"));
+                                             addLabel(labelFalse);
+                                          }
                                     else
                                        addInstr(beq(r1, r0, labelTrue).setComment("equal"))
                                     fi;
 
-                                    addLabel(labelFalse);
                                     addInstr(la(r0, labelBoolFalse()));
                                     addInstr(jmp(labelEnd));
 

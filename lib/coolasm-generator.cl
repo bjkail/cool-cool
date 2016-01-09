@@ -236,6 +236,14 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
       case types.getWithString(type.name()) of x : CoolasmType => x; esac
    };
 
+   getTypeAllowSelf(type : AnalyzedType) : CoolasmType {
+      if type.isSelfType() then
+         let void : CoolasmType in void
+      else
+         case types.getWithString(type.name()) of x : CoolasmType => x; esac
+      fi
+   };
+
    analyzeType(type : CoolasmType) : Object {
       if type.analyze() then
          let analyzedType : AnalyzedType <- type.analyzedType() in
@@ -350,13 +358,16 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
    objectTypeIndex() : Int { 0 };
    objectAttributeOffset() : Int { 1 };
 
-   intValueIndex() : Int { objectAttributeOffset() };
+   -- Index of value attribute for Int, String, and Bool.
+   valueIndex() : Int { objectAttributeOffset() };
+
+   intValueIndex() : Int { valueIndex() };
    intSize() : Int { intValueIndex() + 1 };
 
-   stringValueIndex() : Int { objectAttributeOffset() };
+   stringValueIndex() : Int { valueIndex() };
    stringSize() : Int { stringValueIndex() + 1 };
 
-   boolValueIndex() : Int { objectAttributeOffset() };
+   boolValueIndex() : Int { valueIndex() };
 
    typeDepthIndex() : Int { 0 };
    typeNameIndex() : Int { 1 };
@@ -561,6 +572,43 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
       labelBoolTrue;
    }};
 
+   labelObjectEqual : CoolasmLabel;
+   labelObjectEqual() : CoolasmLabel {{
+      labelBoolFalse();
+      labelBoolTrue();
+
+      if isvoid labelObjectEqual then
+         let labelFalse : CoolasmLabel <- allocLabel(),
+               labelTrue : CoolasmLabel <- allocLabel() in
+            {
+               labelObjectEqual <- new CoolasmLabel.init("Object..equal");
+               systemInstrs.add(labelObjectEqual);
+
+               systemInstrs.add(beq(r1, r0, labelTrue).setComment("equal"));
+               systemInstrs.add(bz(r1, labelFalse).setComment("left void"));
+               systemInstrs.add(bz(r0, labelFalse).setComment("right void"));
+               systemInstrs.add(la(r2, boolType.label()));
+               systemInstrs.add(ld(r3, r1, objectTypeIndex()).setComment("type"));
+               systemInstrs.add(ble(r2, r3, labelFalse).setComment("left non-value"));
+               systemInstrs.add(ld(r3, r1, objectTypeIndex()).setComment("type"));
+               systemInstrs.add(ble(r2, r3, labelFalse).setComment("right non-value"));
+               systemInstrs.add(ld(r1, r1, valueIndex()).setComment("attribute basic value"));
+               systemInstrs.add(ld(r0, r0, valueIndex()).setComment("attribute basic value"));
+               systemInstrs.add(beq(r1, r0, labelTrue).setComment("value equal"));
+
+               systemInstrs.add(labelFalse);
+               systemInstrs.add(la(r0, labelBoolFalse()));
+               systemInstrs.add(return);
+
+               systemInstrs.add(labelTrue);
+               systemInstrs.add(la(r0, labelBoolTrue()));
+               systemInstrs.add(return);
+            }
+      else false fi;
+
+      labelObjectEqual;
+   }};
+
    nextLabelId : Int;
 
    allocLabel() : CoolasmLabel {
@@ -592,7 +640,7 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
       objectType <- new CoolasmType.initBasicObject(program.objectType(), objectAttributeOffset(), typeDispatchOffset());
       objectType.initNewLabel();
 
-      -- Int, String, and Bool are the only type addresses less than Object.
+      -- labelObjectEqual relies on {Int,String} < Bool < {other}.
       let analyzedIntType : AnalyzedType <- program.intType() in
          {
             intType <- new CoolasmType.initBasic(analyzedIntType);
@@ -1218,7 +1266,49 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                         addInstr(div(r1, r1, r0));
                         addInstr(callLabel(labelIntCreate()));
                      }
-                  else new ObjectUtil.abortObject(self, "visitBinary: unimplemented ".concat(op)) fi
+                  else
+                     if op = "=" then
+                        let leftType : CoolasmType <- getTypeAllowSelf(expr.left().type()),
+                              rightType : CoolasmType <- getTypeAllowSelf(expr.right().type()) in
+                           if if leftType = objectType then
+                                 true
+                              else
+                                 rightType = objectType
+                              fi
+                           then
+                              addInstr(callLabel(labelObjectEqual()))
+                           else
+                              let labelFalse : CoolasmLabel <- allocLabel(),
+                                    labelTrue : CoolasmLabel <- allocLabel(),
+                                    labelEnd : CoolasmLabel <- allocLabel() in
+                                 {
+                                    if if leftType = intType then
+                                          true
+                                       else
+                                          leftType = stringType
+                                       fi
+                                    then
+                                       {
+                                          addInstr(ld(r1, r1, valueIndex()).setComment("attribute ".concat(leftType.name()).concat(" value")));
+                                          addInstr(ld(r0, r0, valueIndex()).setComment("attribute ".concat(leftType.name()).concat(" value")));
+                                          addInstr(beq(r1, r0, labelTrue).setComment("value equal"));
+                                       }
+                                    else
+                                       addInstr(beq(r1, r0, labelTrue).setComment("equal"))
+                                    fi;
+
+                                    addLabel(labelFalse);
+                                    addInstr(la(r0, labelBoolFalse()));
+                                    addInstr(jmp(labelEnd));
+
+                                    addLabel(labelTrue);
+                                    addInstr(la(r0, labelBoolTrue()));
+
+                                    addLabel(labelEnd);
+                                 }
+                           fi
+                     else new ObjectUtil.abortObject(self, "visitBinary: unimplemented ".concat(op)) fi
+                  fi
                fi
             fi
          fi;

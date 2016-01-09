@@ -249,6 +249,43 @@ class Main inherits Test {
 
             interpretExpr("divide 0", "new IO.out_int(1 / 0)",
                   newTestIO("divide 0", new Collection, new LinkedList.add("ERROR: 1: Exception: divide by 0\n")));
+
+            interpretExpr("equal int", "new IO.out_int(if 0 = 0 then 1 else 0 fi)",
+                  newTestIO("equal int", new Collection, new LinkedList.add(1)));
+            interpretExpr("equal int 2", "new IO.out_int(if 0 = 1 then 1 else 0 fi)",
+                  newTestIO("equal int 2", new Collection, new LinkedList.add(0)));
+
+            interpretExpr("equal bool", "new IO.out_int(if false = false then 1 else 0 fi)",
+                  newTestIO("equal bool", new Collection, new LinkedList.add(1)));
+            interpretExpr("equal bool 2", "new IO.out_int(if false = true then 1 else 0 fi)",
+                  newTestIO("equal bool 2", new Collection, new LinkedList.add(0)));
+
+            interpretExpr("equal string", "new IO.out_int(if \"a\" = \"a\" then 1 else 0 fi)",
+                  newTestIO("equal string", new Collection, new LinkedList.add(1)));
+            interpretExpr("equal string 2", "new IO.out_int(if \"\" = \"a\" then 1 else 0 fi)",
+                  newTestIO("equal string 2", new Collection, new LinkedList.add(0)));
+
+            interpretExpr("equal self", "new IO.out_int(if self = self then 1 else 0 fi)",
+                  newTestIO("equal self", new Collection, new LinkedList.add(1)));
+
+            interpretExpr("equal void", "new IO.out_int(if let void : Object in void = void then 1 else 0 fi)",
+                  newTestIO("equal void", new Collection, new LinkedList.add(1)));
+            interpretExpr("equal void int", "new IO.out_int(if let left : Object, right : Object <- 1 in left = right then 1 else 0 fi)",
+                  newTestIO("equal void int", new Collection, new LinkedList.add(0)));
+            interpretExpr("equal int void", "new IO.out_int(if let left : Object <- 1, right : Object in left = right then 1 else 0 fi)",
+                  newTestIO("equal int void", new Collection, new LinkedList.add(0)));
+            interpretExpr("equal void bool", "new IO.out_int(if let left : Object, right : Object <- false in left = right then 1 else 0 fi)",
+                  newTestIO("equal void bool", new Collection, new LinkedList.add(0)));
+            interpretExpr("equal bool void", "new IO.out_int(if let left : Object <- false, right : Object in left = right then 1 else 0 fi)",
+                  newTestIO("equal bool void", new Collection, new LinkedList.add(0)));
+            interpretExpr("equal void string", "new IO.out_int(if let left : Object, right : Object <- \"\" in left = right then 1 else 0 fi)",
+                  newTestIO("equal void string", new Collection, new LinkedList.add(0)));
+            interpretExpr("equal string void", "new IO.out_int(if let left : Object <- \"\", right : Object in left = right then 1 else 0 fi)",
+                  newTestIO("equal string void", new Collection, new LinkedList.add(0)));
+            interpretExpr("equal void new", "new IO.out_int(if let left : Object, right : Object <- new Object in left = right then 1 else 0 fi)",
+                  newTestIO("equal void new", new Collection, new LinkedList.add(0)));
+            interpretExpr("equal new void", "new IO.out_int(if let left : Object <- new Object, right : Object in left = right then 1 else 0 fi)",
+                  newTestIO("equal new void", new Collection, new LinkedList.add(0)));
          }
       else false fi
    };

@@ -1314,12 +1314,10 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                                           {
                                              addInstr(ld(r1, r1, valueIndex()).setComment("attribute ".concat(leftType.name()).concat(" value")));
                                              addInstr(ld(r0, r0, valueIndex()).setComment("attribute ".concat(leftType.name()).concat(" value")));
-                                             addInstr(beq(r1, r0, labelTrue).setComment("value equal"));
-                                             addLabel(labelFalse);
                                           }
-                                    else
-                                       addInstr(beq(r1, r0, labelTrue).setComment("equal"))
-                                    fi;
+                                    else false fi;
+
+                                    addInstr(beq(r1, r0, labelTrue).setComment("equal"));
 
                                     addInstr(la(r0, labelBoolFalse()));
                                     addInstr(jmp(labelEnd));

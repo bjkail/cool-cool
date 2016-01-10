@@ -625,6 +625,11 @@ class Main inherits Test {
                   "let left : Object, right : Object <- new Object in left = right"));
             assertFalse("equal new void", interpretBoolExpr("equal new void",
                   "let left : Object <- new Object, right : Object in left = right"));
+
+            assertFalse("equal bool int", interpretBoolExpr("equal bool int",
+                  "let left : Object <- false, right : Object <- true in left = right"));
+            assertFalse("uva equal bool int", interpretBoolExpr("uva equal bool int",
+                  "let left : Object <- false, right : Object <- true in left = right"));
          }
       else false fi
    };

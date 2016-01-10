@@ -313,6 +313,11 @@ class Main inherits Test {
                   newTestIO("equal void new", new Collection, new LinkedList.add(0)));
             interpretExpr("equal new void", "new IO.out_int(if let left : Object <- new Object, right : Object in left = right then 1 else 0 fi)",
                   newTestIO("equal new void", new Collection, new LinkedList.add(0)));
+
+            interpretExpr("equal bool int", "new IO.out_int(if let left : Object <- false, right : Object <- 0 in left = right then 1 else 0 fi)",
+                  newTestIO("equal bool int", new Collection, new LinkedList.add(0)));
+            interpretExpr("equal int bool", "new IO.out_int(if let left : Object <- 0, right : Object <- false in left = right then 1 else 0 fi)",
+                  newTestIO("equal int bool", new Collection, new LinkedList.add(0)));
          }
       else false fi
    };

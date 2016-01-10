@@ -590,8 +590,10 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                systemInstrs.add(la(r2, boolType.label()));
                systemInstrs.add(ld(r3, r1, objectTypeIndex()).setComment("type"));
                systemInstrs.add(ble(r2, r3, labelFalse).setComment("left non-value"));
-               systemInstrs.add(ld(r3, r1, objectTypeIndex()).setComment("type"));
+               systemInstrs.add(ld(r3, r0, objectTypeIndex()).setComment("type"));
                systemInstrs.add(ble(r2, r3, labelFalse).setComment("right non-value"));
+               -- At this point, r1/r0 are either Int or String, so we can load
+               -- their values (integer or raw string) and compare.
                systemInstrs.add(ld(r1, r1, valueIndex()).setComment("attribute basic value"));
                systemInstrs.add(ld(r0, r0, valueIndex()).setComment("attribute basic value"));
                systemInstrs.add(beq(r1, r0, labelTrue).setComment("value equal"));

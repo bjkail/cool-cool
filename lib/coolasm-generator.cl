@@ -1327,7 +1327,25 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                                     addLabel(labelEnd);
                                  }
                            fi
-                     else new ObjectUtil.abortObject(self, "visitBinary: unimplemented ".concat(op)) fi
+                     else
+                        if op = "<" then
+                           let labelTrue : CoolasmLabel <- allocLabel(),
+                                 labelEnd : CoolasmLabel <- allocLabel() in
+                              {
+                                 addInstr(ld(r1, r1, intValueIndex()).setComment("attribute Int.value"));
+                                 addInstr(ld(r0, r0, intValueIndex()).setComment("attribute Int.value"));
+                                 addInstr(blt(r1, r0, labelTrue).setComment("less"));
+
+                                 addInstr(la(r0, labelBoolFalse()));
+                                 addInstr(jmp(labelEnd));
+
+                                 addLabel(labelTrue);
+                                 addInstr(la(r0, labelBoolTrue()));
+
+                                 addLabel(labelEnd);
+                              }
+                        else new ObjectUtil.abortObject(self, "visitBinary: unimplemented ".concat(op)) fi
+                     fi
                   fi
                fi
             fi

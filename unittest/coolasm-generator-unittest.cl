@@ -269,6 +269,13 @@ class Main inherits Test {
             interpretExpr("divide 0", "new IO.out_int(1 / 0)",
                   newTestIO("divide 0", new Collection, new LinkedList.add("ERROR: 1: Exception: divide by 0\n")));
 
+            interpretExpr("less", "new IO.out_int(if 0 < 1 then 1 else 0 fi)",
+                  newTestIO("less", new Collection, new LinkedList.add(1)));
+            interpretExpr("less 2", "new IO.out_int(if 0 < 0 then 1 else 0 fi)",
+                  newTestIO("less 2", new Collection, new LinkedList.add(0)));
+            interpretExpr("less 3", "new IO.out_int(if 1 < 0 then 1 else 0 fi)",
+                  newTestIO("less 3", new Collection, new LinkedList.add(0)));
+
             interpretExpr("equal int", "new IO.out_int(if 0 = 0 then 1 else 0 fi)",
                   newTestIO("equal int", new Collection, new LinkedList.add(1)));
             interpretExpr("equal int new", "new IO.out_int(if 0 = new Int then 1 else 0 fi)",

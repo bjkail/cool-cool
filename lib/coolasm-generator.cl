@@ -1310,11 +1310,10 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                                           leftType = stringType
                                        fi
                                     then
-                                       let labelFalse : CoolasmLabel <- allocLabel() in
-                                          {
-                                             addInstr(ld(r1, r1, valueIndex()).setComment("attribute ".concat(leftType.name()).concat(" value")));
-                                             addInstr(ld(r0, r0, valueIndex()).setComment("attribute ".concat(leftType.name()).concat(" value")));
-                                          }
+                                       {
+                                          addInstr(ld(r1, r1, valueIndex()).setComment("attribute ".concat(leftType.name()).concat(" value")));
+                                          addInstr(ld(r0, r0, valueIndex()).setComment("attribute ".concat(leftType.name()).concat(" value")));
+                                       }
                                     else false fi;
 
                                     addInstr(beq(r1, r0, labelTrue).setComment("equal"));

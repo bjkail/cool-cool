@@ -575,7 +575,7 @@ class CoolasmInterpreter {
    pc : Int;
    pc() : Int { pc };
    setPc(pc_ : Int) : Object { pc <- pc_ };
-   exit() : Object { pc <- ~1 };
+   exit() : Object { pc <- ~2 };
 
    error : String;
    error() : String { error };
@@ -635,7 +635,7 @@ class CoolasmInterpreter {
       pc <- program.start();
       let debugIo : IO <- if isvoid debugIo then new IO else debugIo fi,
             writer : CoolasmWriter <- new CoolasmWriter.init(debugIo) in
-         while 0 < pc loop
+         while 0 <= pc loop
             let instr : CoolasmInterpreterInstr <- getInstr(pc) in
                {
                   if debug then

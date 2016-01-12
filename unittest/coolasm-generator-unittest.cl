@@ -350,6 +350,17 @@ class Main inherits Test {
                   newTestIO("string abort", new Collection, new LinkedList.add("abort\n")));
             interpretExpr("object abort", "new Object.abort()",
                   newTestIO("object abort", new Collection, new LinkedList.add("abort\n")));
+
+            interpretExpr("self type_name", "new IO.out_string(type_name())",
+                  newTestIO("bool type_name", new Collection, new LinkedList.add("Main")));
+            interpretExpr("bool type_name", "new IO.out_string(false.type_name())",
+                  newTestIO("bool type_name", new Collection, new LinkedList.add("Bool")));
+            interpretExpr("int type_name", "new IO.out_string(0.type_name())",
+                  newTestIO("int type_name", new Collection, new LinkedList.add("Int")));
+            interpretExpr("string type_name", "new IO.out_string(\"\".type_name())",
+                  newTestIO("string type_name", new Collection, new LinkedList.add("String")));
+            interpretExpr("object type_name", "new IO.out_string(new Object.type_name())",
+                  newTestIO("object type_name", new Collection, new LinkedList.add("Object")));
          }
       else false fi
    };

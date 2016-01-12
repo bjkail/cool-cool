@@ -534,6 +534,24 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
       labelStringCreate;
    }};
 
+   labelStringCreateRaw : CoolasmLabel;
+   labelStringCreateRaw() : CoolasmLabel {{
+      if isvoid labelStringCreateRaw then
+         {
+            labelStringCreateRaw <- new CoolasmLabel.init("String..create.raw");
+            systemInstrs.add(labelStringCreateRaw);
+            systemInstrs.add(li(r0, stringSize()));
+            systemInstrs.add(alloc(r0, r0));
+            systemInstrs.add(la(r2, stringType.label()));
+            systemInstrs.add(st(r0, objectTypeIndex(), r2).setComment("type"));
+            systemInstrs.add(st(r0, stringValueIndex(), r1).setComment("value"));
+            systemInstrs.add(return);
+         }
+      else false fi;
+
+      labelStringCreateRaw;
+   }};
+
    labelStringEmpty : CoolasmLabel;
    labelStringEmpty() : CoolasmLabel {{
       if isvoid labelStringEmpty then
@@ -646,50 +664,40 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
    generate(program_ : AnalyzedProgram) : CoolasmProgram {{
       program <- program_;
 
-      -- TODO: initialize Object methods
-      let analyzedObjectType : AnalyzedType <- program.objectType() in
-         {
-            objectType <- new CoolasmType.initBasicObject(program.objectType(), objectAttributeOffset(), typeDispatchOffset());
-            objectType.initNewLabel();
+      objectType <- new CoolasmType.initBasicObject(program.objectType(), objectAttributeOffset(), typeDispatchOffset());
+      objectType.initNewLabel();
 
-            let method : CoolasmMethod <- beginFramelessMethod(objectType.addMethod(analyzedObjectType.getMethod("abort"))) in
+      intType <- new CoolasmType.initBasic(program.intType());
+      stringType <- new CoolasmType.initBasic(program.stringType());
+      boolType <- new CoolasmType.initBasic(program.boolType());
+
+      -- labelObjectEqual relies on {Int,String} < Bool < {other}.
+      types.putWithString(intType.name(), intType);
+      typeList.add(intType);
+
+      types.putWithString(stringType.name(), stringType);
+      typeList.add(stringType);
+
+      types.putWithString(boolType.name(), boolType);
+      typeList.add(boolType);
+
+      types.putWithString(objectType.name(), objectType);
+      typeList.add(objectType);
+
+      let type : AnalyzedType <- program.objectType() in
+         {
+            let method : CoolasmMethod <- beginFramelessMethod(objectType.addMethod(type.getMethod("abort"))) in
                method.setAsm(new LinkedList
                      .add(la(r1, getStringLabel("abort\n")))
                      .add(syscall("IO.out_string"))
                      .add(syscall("exit")));
+
+            let method : CoolasmMethod <- beginFramelessMethod(objectType.addMethod(type.getMethod("type_name"))) in
+               method.setAsm(new LinkedList
+                     .add(ld(r0, r0, objectTypeIndex()).setComment("type"))
+                     .add(ld(r1, r0, typeNameIndex()).setComment("type name"))
+                     .add(jmp(labelStringCreateRaw())));
          };
-
-      -- labelObjectEqual relies on {Int,String} < Bool < {other}.
-      let analyzedIntType : AnalyzedType <- program.intType() in
-         {
-            intType <- new CoolasmType.initBasic(analyzedIntType);
-            intType.setInheritsType(objectType);
-
-            types.putWithString(intType.name(), intType);
-            typeList.add(intType);
-         };
-
-      let analyzedStringType : AnalyzedType <- program.stringType() in
-         {
-            stringType <- new CoolasmType.initBasic(analyzedStringType);
-            stringType.setInheritsType(objectType);
-
-            -- TODO: initialize String methods
-            types.putWithString(stringType.name(), stringType);
-            typeList.add(stringType);
-         };
-
-      let analyzedBoolType : AnalyzedType <- program.boolType() in
-         {
-            boolType <- new CoolasmType.initBasic(analyzedBoolType);
-            boolType.setInheritsType(objectType);
-
-            types.putWithString(boolType.name(), boolType);
-            typeList.add(boolType);
-         };
-
-      types.putWithString(objectType.name(), objectType);
-      typeList.add(objectType);
 
       let analyzedIoType : AnalyzedType <- program.ioType(),
             ioType : CoolasmType <- new CoolasmType.initBasic(analyzedIoType) in
@@ -716,6 +724,10 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
             types.putWithString(ioType.name(), ioType);
             typeList.add(ioType);
          };
+
+      intType.setInheritsType(objectType);
+      stringType.setInheritsType(objectType);
+      boolType.setInheritsType(objectType);
 
       -- Create CoolasmType
       let analyzedTypeIter : Iterator <- program.definedTypes().iterator() in

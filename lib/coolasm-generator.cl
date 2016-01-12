@@ -101,19 +101,27 @@ class CoolasmType {
    nextMethodIndex : Int;
    nextMethodIndex() : Int { nextMethodIndex };
 
+   allocNextMethodIndex() : Int {
+      let index : Int <- nextMethodIndex in
+         {
+            nextMethodIndex <- index + 1;
+            index;
+         }
+   };
+
    addMethod(analyzedMethod : AnalyzedMethod) : CoolasmMethod {
       let id : String <- analyzedMethod.id(),
             index : Int <-
-               let old : CoolasmMethod <- inheritsType.getMethod(analyzedMethod.id()) in
-                  if isvoid old then
-                     let index : Int <- nextMethodIndex in
-                        {
-                           nextMethodIndex <- index + 1;
-                           index;
-                        }
-                  else
-                     old.index()
-                  fi,
+               if isvoid inheritsType then
+                  allocNextMethodIndex()
+               else
+                  let old : CoolasmMethod <- inheritsType.getMethod(analyzedMethod.id()) in
+                     if isvoid old then
+                        allocNextMethodIndex()
+                     else
+                        old.index()
+                     fi
+               fi,
             method : CoolasmMethod <- new CoolasmMethod.init(self, index, analyzedMethod) in
          {
             methods.putWithString(method.id(), method);
@@ -639,8 +647,17 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
       program <- program_;
 
       -- TODO: initialize Object methods
-      objectType <- new CoolasmType.initBasicObject(program.objectType(), objectAttributeOffset(), typeDispatchOffset());
-      objectType.initNewLabel();
+      let analyzedObjectType : AnalyzedType <- program.objectType() in
+         {
+            objectType <- new CoolasmType.initBasicObject(program.objectType(), objectAttributeOffset(), typeDispatchOffset());
+            objectType.initNewLabel();
+
+            let method : CoolasmMethod <- beginFramelessMethod(objectType.addMethod(analyzedObjectType.getMethod("abort"))) in
+               method.setAsm(new LinkedList
+                     .add(la(r1, getStringLabel("abort\n")))
+                     .add(syscall("IO.out_string"))
+                     .add(syscall("exit")));
+         };
 
       -- labelObjectEqual relies on {Int,String} < Bool < {other}.
       let analyzedIntType : AnalyzedType <- program.intType() in

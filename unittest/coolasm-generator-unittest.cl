@@ -10,6 +10,7 @@ class Main inherits Test {
       testDispatch();
       testUnary();
       testBinary();
+      testBasicClasses();
    }};
 
    debug : Bool;
@@ -332,6 +333,23 @@ class Main inherits Test {
                   newTestIO("equal bool int", new Collection, new LinkedList.add(0)));
             interpretExpr("equal int bool", "new IO.out_int(if let left : Object <- 0, right : Object <- false in left = right then 1 else 0 fi)",
                   newTestIO("equal int bool", new Collection, new LinkedList.add(0)));
+         }
+      else false fi
+   };
+
+   testBasicClasses() : Object {
+      if begin("basicClasses") then
+         {
+            interpretExpr("self abort", "abort()",
+                  newTestIO("self abort", new Collection, new LinkedList.add("abort\n")));
+            interpretExpr("bool abort", "false.abort()",
+                  newTestIO("bool abort", new Collection, new LinkedList.add("abort\n")));
+            interpretExpr("int abort", "0.abort()",
+                  newTestIO("int abort", new Collection, new LinkedList.add("abort\n")));
+            interpretExpr("string abort", "\"\".abort()",
+                  newTestIO("string abort", new Collection, new LinkedList.add("abort\n")));
+            interpretExpr("object abort", "new Object.abort()",
+                  newTestIO("object abort", new Collection, new LinkedList.add("abort\n")));
          }
       else false fi
    };

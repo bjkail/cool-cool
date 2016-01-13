@@ -361,6 +361,26 @@ class Main inherits Test {
                   newTestIO("string type_name", new Collection, new LinkedList.add("String")));
             interpretExpr("object type_name", "new IO.out_string(new Object.type_name())",
                   newTestIO("object type_name", new Collection, new LinkedList.add("Object")));
+
+            interpretExpr("bool copy", "new IO.out_int(if not false.copy() then 1 else 0 fi)",
+                  newTestIO("bool copy", new Collection, new LinkedList.add(1)));
+            interpretExpr("bool copy 2", "new IO.out_int(if not true.copy() then 1 else 0 fi)",
+                  newTestIO("bool copy 2", new Collection, new LinkedList.add(0)));
+            interpretExpr("int copy", "new IO.out_int(0.copy())",
+                  newTestIO("int copy", new Collection, new LinkedList.add(0)));
+            interpretExpr("int copy 2", "new IO.out_int(1.copy())",
+                  newTestIO("int copy 2", new Collection, new LinkedList.add(1)));
+            interpretExpr("string copy", "new IO.out_string(\"\".copy())",
+                  newTestIO("string copy", new Collection, new LinkedList.add("")));
+            interpretExpr("string copy 2", "new IO.out_string(\"a\".copy())",
+                  newTestIO("string copy 2", new Collection, new LinkedList.add("a")));
+            interpretExpr("object copy", "new IO.out_string(new Object.copy().type_name())",
+                  newTestIO("object copy", new Collection, new LinkedList.add("Object")));
+            interpret("attribute copy",
+                  "class Main { a : A <- new A; b : Int; a() : Int { a.a() + b };"
+                  .concat("main() : Object { let c : Main <- copy() in { a.a(); b <- 4; new IO.out_int(c.a()); } }; };")
+                  .concat("class A { a : Int; a() : Int { a <- a + 1 }; };"),
+                  newTestIO("attribute copy", new Collection, new LinkedList.add(2)));
          }
       else false fi
    };

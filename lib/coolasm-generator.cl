@@ -187,14 +187,26 @@ class CoolasmMethod {
    label : CoolasmLabel;
    label() : CoolasmLabel { label };
 
+   sharedLabel : Bool;
+   sharedLabel() : Bool { sharedLabel };
+   setSharedLabel(label_ : CoolasmLabel) : Object {{
+      label <- label_;
+      sharedLabel <- true;
+   }};
+
    index : Int;
    index() : Int { index };
 
-   init(containingType_ : CoolasmType, index_ : Int, analyzedMethod_ : AnalyzedMethod) : SELF_TYPE {{
+   initBasic(containingType_ : CoolasmType, index_ : Int, analyzedMethod_ : AnalyzedMethod) : SELF_TYPE {{
       containingType <- containingType_;
       index <- index_;
       analyzedMethod <- analyzedMethod_;
       id <- analyzedMethod.id();
+      self;
+   }};
+
+   init(containingType : CoolasmType, index : Int, analyzedMethod : AnalyzedMethod) : SELF_TYPE {{
+      initBasic(containingType, index, analyzedMethod);
       label <- new CoolasmLabel.init(containingType.name().concat(".").concat(id));
       self;
    }};
@@ -483,6 +495,19 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
 
    systemInstrs : Collection <- new LinkedList;
 
+   labelObjectCopyValue : CoolasmLabel;
+   labelObjectCopyValue() : CoolasmLabel {{
+      if isvoid labelObjectCopyValue then
+         {
+            labelObjectCopyValue <- new CoolasmLabel.init("Object..copy.value");
+            systemInstrs.add(labelObjectCopyValue);
+            systemInstrs.add(return);
+         }
+      else false fi;
+
+      labelObjectCopyValue;
+   }};
+
    labelInt0 : CoolasmLabel;
    labelInt0() : CoolasmLabel {{
       if isvoid labelInt0 then
@@ -697,6 +722,26 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                      .add(ld(r0, r0, objectTypeIndex()).setComment("type"))
                      .add(ld(r1, r0, typeNameIndex()).setComment("type name"))
                      .add(jmp(labelStringCreateRaw())));
+
+            let method : CoolasmMethod <- objectType.addMethod(type.getMethod("copy")) in
+               let labelLoop : CoolasmLabel <- allocLabel(),
+                     labelWhile : CoolasmLabel <- allocLabel() in
+                  method.setAsm(new LinkedList
+                        .add(ld(r1, r0, objectTypeIndex()).setComment("type"))
+                        .add(ld(r1, r1, typeSizeIndex()).setComment("type size"))
+                        .add(add(r2, r0, r1).setComment("self end"))
+                        .add(alloc(r0, r1))
+                        .add(add(r1, r0, r1).setComment("copy end"))
+                        .add(li(r3, 1).setComment("const decrement"))
+                        .add(jmp(labelWhile).setComment("while"))
+                        .add(labelLoop)
+                        .add(sub(r1, r1, r3).setComment("decrement copy pointer"))
+                        .add(sub(r2, r2, r3).setComment("decrement self pointer"))
+                        .add(ld(r4, r2, 0).setComment("load copy value"))
+                        .add(st(r1, 0, r4).setComment("store copy value"))
+                        .add(labelWhile)
+                        .add(blt(r0, r1, labelLoop).setComment("loop"))
+                        .add(return));
          };
 
       let analyzedIoType : AnalyzedType <- program.ioType(),
@@ -728,6 +773,24 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
       intType.setInheritsType(objectType);
       stringType.setInheritsType(objectType);
       boolType.setInheritsType(objectType);
+
+      let type : AnalyzedType <- program.intType() in
+         {
+            let method : CoolasmMethod <- intType.addMethod(type.getMethod("copy")) in
+               method.setSharedLabel(labelObjectCopyValue());
+         };
+
+      let type : AnalyzedType <- program.stringType() in
+         {
+            let method : CoolasmMethod <- stringType.addMethod(type.getMethod("copy")) in
+               method.setSharedLabel(labelObjectCopyValue());
+         };
+
+      let type : AnalyzedType <- program.boolType() in
+         {
+            let method : CoolasmMethod <- boolType.addMethod(type.getMethod("copy")) in
+               method.setSharedLabel(labelObjectCopyValue());
+         };
 
       -- Create CoolasmType
       let analyzedTypeIter : Iterator <- program.definedTypes().iterator() in
@@ -769,20 +832,22 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                let iter : Iterator <- type.definedMethods().iterator() in
                   while iter.next() loop
                      let method : CoolasmMethod <- case iter.get() of x : CoolasmMethod => x; esac in
-                        {
-                           addLabel(method.label());
+                        if not method.sharedLabel() then
+                           {
+                              addLabel(method.label());
 
-                           let asm : Collection <- method.asm() in
-                              if isvoid asm then
-                                 {
-                                    beginMethod(method);
-                                    method.analyzedMethod().expr().accept(self);
-                                    endMethod();
-                                 }
-                              else
-                                 addAllInstrs(asm)
-                              fi;
-                        }
+                              let asm : Collection <- method.asm() in
+                                 if isvoid asm then
+                                    {
+                                       beginMethod(method);
+                                       method.analyzedMethod().expr().accept(self);
+                                       endMethod();
+                                    }
+                                 else
+                                    addAllInstrs(asm)
+                                 fi;
+                           }
+                        else false fi
                   pool
          pool;
 
@@ -945,6 +1010,7 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
             -- Expression initializations.
             if exprInit then
                {
+                  addInstr(push(ra));
                   addInstr(push(r0));
 
                   let iter : Iterator <- type.hierarchy().iterator() in
@@ -965,6 +1031,7 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                      pool;
 
                   addInstr(pop(r0));
+                  addInstr(pop(ra));
                }
             else false fi;
          };

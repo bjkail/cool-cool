@@ -381,6 +381,11 @@ class Main inherits Test {
                   .concat("main() : Object { let c : Main <- copy() in { a.a(); b <- 4; new IO.out_int(c.a()); } }; };")
                   .concat("class A { a : Int; a() : Int { a <- a + 1 }; };"),
                   newTestIO("attribute copy", new Collection, new LinkedList.add(2)));
+
+            interpretExpr("length 0", "new IO.out_int(\"\".length())",
+                  newTestIO("length 0", new Collection, new LinkedList.add(0)));
+            interpretExpr("length 1", "new IO.out_int(\"a\".length())",
+                  newTestIO("length 1", new Collection, new LinkedList.add(1)));
          }
       else false fi
    };

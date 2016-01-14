@@ -771,21 +771,27 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
          };
 
       intType.setInheritsType(objectType);
-      stringType.setInheritsType(objectType);
-      boolType.setInheritsType(objectType);
-
       let type : AnalyzedType <- program.intType() in
          {
             let method : CoolasmMethod <- intType.addMethod(type.getMethod("copy")) in
                method.setSharedLabel(labelObjectCopyValue());
          };
 
+      stringType.setInheritsType(objectType);
       let type : AnalyzedType <- program.stringType() in
          {
             let method : CoolasmMethod <- stringType.addMethod(type.getMethod("copy")) in
                method.setSharedLabel(labelObjectCopyValue());
+
+            let method : CoolasmMethod <- stringType.addMethod(type.getMethod("length")) in
+               method.setAsm(new LinkedList
+                     .add(li(r1, stringValueIndex()))
+                     .add(add(r1, r0, r1).setComment("attribute String.value"))
+                     .add(syscall("String.length"))
+                     .add(jmp(labelIntCreate())));
          };
 
+      boolType.setInheritsType(objectType);
       let type : AnalyzedType <- program.boolType() in
          {
             let method : CoolasmMethod <- boolType.addMethod(type.getMethod("copy")) in

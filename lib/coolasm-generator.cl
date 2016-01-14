@@ -789,6 +789,15 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                      .add(add(r1, r0, r1).setComment("attribute String.value"))
                      .add(syscall("String.length"))
                      .add(jmp(labelIntCreate())));
+
+            let method : CoolasmMethod <- beginFramelessMethod(stringType.addMethod(type.getMethod("concat"))) in
+               method.setAsm(new LinkedList
+                     .add(li(r3, stringValueIndex()))
+                     .add(add(r1, r0, r3).setComment("attribute String.value"))
+                     .add(ld(r2, sp, spFramelessArgOffset(0)).setComment("arg0"))
+                     .add(add(r2, r2, r3).setComment("attribute String.value"))
+                     .add(syscall("String.concat"))
+                     .add(jmp(labelStringCreate())));
          };
 
       boolType.setInheritsType(objectType);

@@ -386,6 +386,15 @@ class Main inherits Test {
                   newTestIO("length 0", new Collection, new LinkedList.add(0)));
             interpretExpr("length 1", "new IO.out_int(\"a\".length())",
                   newTestIO("length 1", new Collection, new LinkedList.add(1)));
+
+            interpretExpr("concat 0 0", "new IO.out_string(\"\".concat(\"\"))",
+                  newTestIO("concat 0 0", new Collection, new LinkedList.add("")));
+            interpretExpr("concat 1 0", "new IO.out_string(\"a\".concat(\"\"))",
+                  newTestIO("concat 1 0", new Collection, new LinkedList.add("a")));
+            interpretExpr("concat 0 1", "new IO.out_string(\"\".concat(\"a\"))",
+                  newTestIO("concat 0 1", new Collection, new LinkedList.add("a")));
+            interpretExpr("concat 1 1", "new IO.out_string(\"a\".concat(\"b\"))",
+                  newTestIO("concat 1 1", new Collection, new LinkedList.add("ab")));
          }
       else false fi
    };

@@ -395,6 +395,28 @@ class Main inherits Test {
                   newTestIO("concat 0 1", new Collection, new LinkedList.add("a")));
             interpretExpr("concat 1 1", "new IO.out_string(\"a\".concat(\"b\"))",
                   newTestIO("concat 1 1", new Collection, new LinkedList.add("ab")));
+
+            interpretExpr("substr begin low", "\"\".substr(~1, 0)",
+                  newTestIO("substr begin low", new Collection, new LinkedList.add("ERROR: 0: Exception: String.substr out of range\n")));
+            interpretExpr("substr begin high", "\"\".substr(1, 0)",
+                  newTestIO("substr begin high", new Collection, new LinkedList.add("ERROR: 0: Exception: String.substr out of range\n")));
+            interpretExpr("substr length low", "\"\".substr(0, ~1)",
+                  newTestIO("substr length low", new Collection, new LinkedList.add("ERROR: 0: Exception: String.substr out of range\n")));
+            interpretExpr("substr length high", "\"\".substr(0, 1)",
+                  newTestIO("substr length high", new Collection, new LinkedList.add("ERROR: 0: Exception: String.substr out of range\n")));
+
+            interpretExpr("substr 0 0 0", "new IO.out_string(\"\".substr(0, 0))",
+                  newTestIO("substr 0 0 0", new Collection, new LinkedList.add("")));
+            interpretExpr("substr 1 0 1", "new IO.out_string(\"a\".substr(0, 1))",
+                  newTestIO("substr 1 0 1", new Collection, new LinkedList.add("a")));
+            interpretExpr("substr 1 1 0", "new IO.out_string(\"a\".substr(1, 0))",
+                  newTestIO("substr 1 1 0", new Collection, new LinkedList.add("")));
+            interpretExpr("substr 2 0 1", "new IO.out_string(\"ab\".substr(0, 1))",
+                  newTestIO("substr 2 0 1", new Collection, new LinkedList.add("a")));
+            interpretExpr("substr 2 1 1", "new IO.out_string(\"ab\".substr(1, 1))",
+                  newTestIO("substr 2 1 1", new Collection, new LinkedList.add("b")));
+            interpretExpr("substr 2 0 2", "new IO.out_string(\"ab\".substr(0, 2))",
+                  newTestIO("substr 2 0 2", new Collection, new LinkedList.add("ab")));
          }
       else false fi
    };

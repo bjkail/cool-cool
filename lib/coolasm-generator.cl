@@ -1296,6 +1296,7 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                      {
                         expr.accept(self);
                         addInstr(push(r0).setComment("push arg".concat(stringUtil.fromInt(index))));
+                        index <- index + 1;
                      }
                pool;
 

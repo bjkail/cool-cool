@@ -382,6 +382,9 @@ class Main inherits Test {
                   .concat("class A { a : Int; a() : Int { a <- a + 1 }; };"),
                   newTestIO("attribute copy", new Collection, new LinkedList.add(2)));
 
+            interpretExpr("in_string", "new IO.out_string(new IO.in_string())",
+                  newTestIO("in_string", new LinkedList.add("a"), new LinkedList.add("a")));
+
             interpretExpr("length 0", "new IO.out_int(\"\".length())",
                   newTestIO("length 0", new Collection, new LinkedList.add(0)));
             interpretExpr("length 1", "new IO.out_int(\"a\".length())",

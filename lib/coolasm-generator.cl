@@ -765,6 +765,11 @@ class CoolasmGenerator inherits AnalyzedExprVisitor {
                      .add(syscall("IO.out_int"))
                      .add(return));
 
+            let method : CoolasmMethod <- ioType.addMethod(analyzedIoType.getMethod("in_string")) in
+               method.setAsm(new LinkedList
+                     .add(syscall("IO.in_string"))
+                     .add(jmp(labelStringCreate())));
+
             -- TODO: initialize IO methods
             types.putWithString(ioType.name(), ioType);
             typeList.add(ioType);

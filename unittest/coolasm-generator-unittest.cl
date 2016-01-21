@@ -385,6 +385,9 @@ class Main inherits Test {
             interpretExpr("in_string", "new IO.out_string(new IO.in_string())",
                   newTestIO("in_string", new LinkedList.add("a"), new LinkedList.add("a")));
 
+            interpretExpr("in_int", "new IO.out_int(new IO.in_int())",
+                  newTestIO("in_int", new LinkedList.add(123), new LinkedList.add(123)));
+
             interpretExpr("length 0", "new IO.out_int(\"\".length())",
                   newTestIO("length 0", new Collection, new LinkedList.add(0)));
             interpretExpr("length 1", "new IO.out_int(\"a\".length())",
